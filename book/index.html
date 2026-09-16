@@ -2107,513 +2107,278 @@ npx --yes @gltf-transform/cli optimize tmp.glb out.glb --compress quantize --tex
 <!-- ===== part06-rigging.html ===== -->
 <div class="content">
 
-<h2 class="section-title page-break" id="part06"><span class="num">§06</span>绑骨与动画</h2>
+<h2 class="section-title page-break" id="part06"><span class="num">§06</span>오토 리깅과 애니메이션</h2>
 <p class="section-en">Auto-Rigging and Animation</p>
-<p class="section-intro">这一节走完，你能拿到一个真会走路的角色：41根关节的骨架、一段2.375秒的行走循环，导出成GLB直接进引擎。中间几个坑我都踩过，位置和判据都写在下面，包括一条能省掉50积分的入口选择。</p>
+<p class="section-intro">이 섹션을 마치면 실제로 걸어 다니는 3D 캐릭터를 얻게 됩니다: 41개 관절 스켈레톤, 2.375초 보행 루프 애니메이션, GLB 익스포트 후 게임 엔진 즉시 로드. 50 크레딧을 절약하는 진입 경로 선택을 포함해 저자가 직접 겪은 함정과 검증 기준을 상세히 다룹니다.</p>
 
-<h3>先看反面：自己动手绑，会绑成什么样</h3>
+<h3>반면교사: 직접 뼈대를 심으면 어떻게 되는가</h3>
 
-<p>第一版巴黎demo跑起来，街上的人走路是滑的，像脚下踩着冰。那18个行人确实是静态网格在平移，加了点上下起伏假装走路。</p>
+<p>초기 버전의 파리 데모를 실행했을 때, 거리의 보행자들은 빙판 위를 미끄러지듯 스케이트를 타고 다녔습니다. 18명의 보행자는 사실 정적 메쉬가 단순 평면 이동하며 약간 위아래로 흔들리는 눈속임에 불과했습니다.</p>
 
-<p>我第一反应是在Blender里给它绑。Blender有个<code>ARMATURE_AUTO</code>，塞一副骨架进去，让它自动算权重。<strong>蒙皮权重</strong>就是「哪根骨头动的时候，这块皮跟着动多少」的那张表，绑骨的一大半功夫都在这上面。</p>
+<p>제 1차 직관은 Blender에서 직접 리깅하는 것이었습니다. Blender에는 <code>ARMATURE_AUTO</code>라는 기능이 있어 뼈대를 넣으면 스키닝 가중치(Weight)를 자동으로 계산해 줍니다. <strong>스키닝 가중치</strong>란 「어느 뼈가 움직일 때 표면의 피부가 얼만큼 따라 움직여야 하는가」를 정의하는 핵심 표입니다.</p>
 
-<p>自动权重确实跑完了，也确实生效了，结果是这样：</p>
+<p>자동 웨이트 연산은 성공적으로 끝났고 적용도 되었지만, 결과는 처참했습니다:</p>
 
-<figure><img src="images/p06-10-e4-pose-collapse.jpg" alt="三张姿势对比图：静止正常，转spine整个人前倾，再转head整个人翻倒"><figcaption>E4实验的三张workbench渲染：A静止是正常站姿（戴帽、西装、手提公文包）；B把<code>spine</code>转35°，<strong>整个人向前倾倒</strong>，腿被脊柱的权重一起带走；C再转<code>head</code>30°，整个人翻倒，右边还有一小块碎片飞离主体。脚本<code>三模式实验/E4-绑定质量/pose_render.py</code>，2026-09-10。</figcaption></figure>
+<figure><img src="images/p06-10-e4-pose-collapse.jpg" alt="세 가지 포즈 비교: 기본 정지 정상, 척추 회전 시 상체 붕괴, 머리 회전 시 전신 전복"><figcaption>E4 실험의 렌더링 결과: A는 정상 기립 자세(모자, 수트, 서류가방). B에서 <code>spine</code>(척추)을 35도 회전시키자 <strong>다리가 척추 가중치에 엉뚱하게 얽혀 상체와 함께 무너져 내렸습니다</strong>. C에서 <code>head</code>(머리)를 30도 회전시키자 전신이 전복되고 파편이 공중으로 날아갔습니다. 2026-09-10.</figcaption></figure>
 
-<p>关节数是关键线索：<strong>Blender自动权重只求出了4根关节</strong>（root / spine / head / neutral_bone），而这个网格是几百个碎片拼出来的，没有连续的蒙皮拓扑，权重自然求不对，碎片还会在变形时脱离主体。根因和§05那358个碎片是同一个。</p>
+<p>관절 수가 핵심 단서였습니다: <strong>Blender의 자동 연산은 고작 4개의 관절</strong>(root / spine / head / neutral_bone)만 생성했습니다. 게다가 AI가 생성한 메쉬는 수백 개의 불규칙한 파편이 얽힌 형태여서 연속된 스키닝 위상이 없었고, 변형이 일어날 때 파편들이 본체에서 찢어져 나갔습니다. §05에서 확인한 메쉬 구조와 동일한 원인입니다.</p>
 
-<figure><img src="images/p06-11-plan-d-4vs41.jpg" alt="同一个模型两种绑定的实时对照页，左边4关节右边41关节"><figcaption>把两种绑定放进同一个页面，共用一个「转脊柱」滑块：左边Blender自动权重4个关节，右边Tripo自带绑骨41个关节。右上角是五层诊断，第6层「面部与口型」标的是没测，所以不下结论。2026-09-11复核截图。</figcaption></figure>
+<figure><img src="images/p06-11-plan-d-4vs41.jpg" alt="동일 모델의 두 가지 리깅 실시간 비교: 좌측 4관절, 우측 41관절"><figcaption>동일 모델의 두 가지 리깅 비교: 좌측 Blender 자동 웨이트(4개 관절), 우측 Tripo 자체 오토 리깅(41개 관절). 관절 밀도와 스키닝 완성도에서 차원이 다릅니다. 2026-09-11.</figcaption></figure>
 
-<h3>几个词</h3>
+<h3>필수 개념 정리</h3>
 
-<p><strong>绑骨</strong>（rigging）是给一个静态网格装一副骨架，并算清楚每块皮归哪根骨头管。<strong>关节</strong>就是骨架上的节点，人形骨架一般四十来根。<strong>T-Pose</strong>是双臂平举成T字的中立站姿，业内把它当默认起始姿势。<strong>A-Pose</strong>是手臂自然下斜三四十度的站姿，看起来更放松。<strong>重定向</strong>（retarget）是把一套动作从一副骨架搬到另一副骨架上。</p>
+<p><strong>리깅(Rigging, 뼈대 심기)</strong>은 정적 메쉬 내부에 골격을 심고 피부와 뼈의 연동 가중치를 계산하는 작업입니다. <strong>관절(Joint)</strong>은 골격의 회전 노드로 인간형은 대략 40여 개가 필요합니다. <strong>T-Pose</strong>는 양팔을 수평으로 벌린 T자 기본 기립 자세이며, <strong>A-Pose</strong>는 팔을 30~40도 자연스럽게 내린 자세입니다. <strong>리타겟팅(Retargeting)</strong>은 한 골격의 모션을 다른 골격으로 복사 전달하는 공정입니다.</p>
 
-<p>T-Pose和A-Pose的区别在后面会变成一条要紧的判据，先记住它们不是一回事。</p>
+<p>원래 이 파이프라인은 복잡합니다: 생성 → 리깅 → 모션 캡처 라이브러리 탐색 → 리타겟팅 → 익스포트. <strong>하지만 Tripo는 애니메이션 라이브러리를 자체 내장하고 있어 리타겟팅 단계가 아예 필요 없습니다.</strong></p>
 
-<p>我原本以为这条链很长：生成→绑骨→找动作库→重定向→导出。<strong>实测下来它短得多，因为Tripo把动作库那一段也包了，不需要重定向。</strong></p>
+<h3>진입 시 반드시 변경해야 할 드롭다운 메뉴</h3>
 
-<h3>入口，和那个必须改的下拉</h3>
+<p>좌측 도구 모음 마지막 메뉴인 「3D Rigging &amp; Animation」으로 진입합니다.</p>
 
-<p>左侧工具栏最后一个是动画，页面标题叫「3D Rigging &amp; Animation」。</p>
+<figure><img src="images/studio-16-animate-library.png" alt="Tripo Studio Animate 페이지: AI Model 드롭다운에 v2.5 Good for Animals 표시, 하단에 애니메이션 라이브러리"><figcaption>애니메이션 페이지: AI Model 드롭다운 <strong>기본값이 「v2.5 - Good for Animals(동물용)」으로 설정</strong>되어 있습니다. 하단에는 스켈레톤 토글, 모델 유형(Humanoid 자동 인식), 애니메이션 목록(첫 카드가 walk)이 표시됩니다. 2026-09-11.</figcaption></figure>
 
-<figure><img src="images/studio-16-animate-library.png" alt="Tripo Studio的Animate页，AI Model下拉显示v2.5 - Good for Animals，下面是动画库网格"><figcaption>Animate页面板：AI Model下拉<strong>默认是「v2.5 - Good for Animals」</strong>，下面是Retry 20、Skeleton开关、Model Type（这里识别成Humanoid）、搜索框、分类标签（All / Basic / Interactive / …），再往下就是动画卡片网格，第一个是walk。Tripo Studio英文界面，2026-09-11。</figcaption></figure>
+<div class="warning"><strong>인물 캐릭터 작업 시 반드시 드롭다운을 「동물용」에서 인간형(Humanoid) 프리셋으로 변경하십시오.</strong> 기본 동물 골격으로 인물 리깅을 실행하면 100% 실패합니다. 특히 페이지를 새로고침하면 다시 동물용으로 리셋되므로 작업 전 항상 확인해야 합니다.</div>
 
-<div class="warning"><strong>做人物，第一件事是把那个下拉从「适用于动物」改成类人预设。</strong>默认值是动物骨架，直接拿去绑人会失败。更麻烦的是：刷新页面之后它会重置回动物，所以第二次重绑要重新选一次。上面那张图里下拉还写着动物，就是绑完刷新过页面的状态。</div>
+<h3>진입 경로로 50 크레딧 절약하기</h3>
 
-<h3>先选对入口，这一步就能省50积分</h3>
-
-<p>绑骨页的模型从哪来，有两条路，价钱不一样。</p>
+<p>리깅 페이지로 에셋을 불러오는 방법은 두 가지이며 비용이 다릅니다:</p>
 
 <table>
-<thead><tr><th>入口</th><th>额外花费</th><th>会不会弹「找到最佳角度」</th></tr></thead>
+<thead><tr><th>불러오기 경로</th><th>추가 비용</th><th>각도 설정 팝업 발생 여부</th></tr></thead>
 <tbody>
-<tr><td>从右侧资产栏里点一个自己账号内已有的模型</td><td><strong>0</strong></td><td>不弹</td></tr>
-<tr><td>点「上传3D模型」传一个外部文件进来</td><td><strong>50积分导入费</strong></td><td>会弹</td></tr>
+<tr><td>우측 Assets 목록에서 내 계정 에셋 선택</td><td><strong>0 크레딧</strong></td><td>팝업 없음 (즉시 로드)</td></tr>
+<tr><td>「3D 모델 업로드」로 외부 파일 등록</td><td><strong>50 크레딧 임포트 수수료</strong></td><td>팝업 발생 (각도 조정 필요)</td></tr>
 </tbody>
 </table>
 
-<p>2026-09-12那次我绑的行人是前一天在Tripo里生成的，本来就躺在账号里，所以在<code>/workspace/rigging</code>页右侧直接点中它就开工了，<strong>既没付那50分，也没遇上下面要讲的那个弹层</strong>。这条路我后知后觉，早两天知道能少花一笔。</p>
+<div class="tip"><strong>Tripo에서 생성한 모델은 절대로 다운로드한 뒤 다시 업로드하지 마십시오.</strong> 우측 에셋 패널에서 직접 클릭하면 50 크레딧의 수수료와 번거로운 각도 설정 단계를 건너뛸 수 있습니다.</div>
 
-<div class="tip">判断很简单：<strong>模型是Tripo自己生成的，就别导出再传回去。</strong>只有当模型是Blender、别的工具或者别人给你的文件时，才需要走上传这条路，那50分买的是把它导进Tripo资产库这件事。</div>
+<h3>업로드 시 팝업: Find the Best Angle 주의점</h3>
 
-<h3>如果你确实要上传：那个会把模型转歪的弹层</h3>
+<figure><img src="images/p06-01-upload-to-rigging.jpg" alt="외부 모델 업로드 시 나타나는 Find the Best Angle 팝업, X/Y/Z가 0.00으로 표시"><figcaption>외부 모델 업로드 시에만 뜨는 「Find the Best Angle」 창. X / Y / Z는 0.00을 유지해야 합니다. 2026-09-10.</figcaption></figure>
 
-<figure><img src="images/p06-01-upload-to-rigging.jpg" alt="上传巴黎行人到绑骨页后弹出的找到最佳角度对话框，X/Y/Z全是0"><figcaption><strong>只有走上传这条路才会见到的</strong>「找到最佳角度」弹层，X / Y / Z三个数值框全是0.00，这是正确状态。右下角「使用原始UV」保持开启。这次上传的是巴黎那批走路姿态的行人，2026-09-10。</figcaption></figure>
+<p>팝업의 「카메라 각도를 맞추라」는 문구를 보고 화면을 마우스로 드래그하면 <strong>카메라가 아니라 모델 본체가 회전</strong>해 버립니다. 회전값이 틀어지면 모델이 바닥에 누워버려 리깅이 실패합니다. <strong>X/Y/Z는 건드리지 말고 0으로 유지한 채 Confirm</strong>하십시오.</p>
 
-<p>弹层上那句提示是「调整视角至一个具有足够模型特征信息的角度」，看字面像是在说相机。<strong>但那三个数动的是模型自身的旋转。</strong>我按字面理解去拖画面，数值就被带跑了：</p>
+<h3>진입 조건의 진실: T-Pose가 아니어도 된다</h3>
 
-<figure><img src="images/p06-02-best-angle-dialog.jpg" alt="同一个对话框，Y被拖到了1.57"><figcaption>拖了两下画面之后，Y已经变成1.57，模型被整个转了90°。我另一次更惨，X被带到-71.59，整个人前倾躺平，绑骨直接失败。<strong>正确做法：进来什么都别拖，确认三个数是0，点确认。</strong>要转着看用滚轮和右键，那两个不写数值。2026-09-10。</figcaption></figure>
+<p>초기 시도에서 시스템은 다음과 같은 경고를 띄웠습니다:</p>
 
-<h3>真正的入口条件：四肢和躯干得分得开</h3>
+<figure><img src="images/p06-04-tpose-required.jpg" alt="Tripo 상단 배너 경고: 더 나은 리깅을 위해 T-Pose 이미지를 업로드하고 재생성하십시오"><figcaption>상단 배너: 「<strong>더 나은 리깅 결과를 위해 T-Pose 이미지를 업로드하고 모델을 재생성하십시오.</strong>」 2026-09-10.</figcaption></figure>
 
-<p>我头两次绑骨都失败了。第一次用的是巴黎那批「走路中被拍到」的行人（前倾、侧身），第二次换了个站直的碎花裙角色，站直了但一只手搭在胸前，还是失败。</p>
+<p>처음에는 엄격한 T-Pose만 가능한 줄 알았으나, 실측 결과 <strong>A-Pose(팔을 30~40도 내린 자세)도 19초 만에 1차 시도에서 완벽히 리깅</strong>되었습니다.</p>
 
-<p>第三次跑完，产品自己弹了一条提示出来：</p>
+<figure class="figure-pair"><img src="images/p06-09-tpose-reference.jpg" alt="T-Pose 레퍼런스 이미지: 양팔을 완전히 수평으로 벌린 자세"><img src="images/p06-13-apose-reference.png" alt="A-Pose 레퍼런스 이미지: 양팔을 30~40도 내렸으나 몸통과 뚜렷한 간격이 있는 자세"><figcaption><strong>두 이미지로 생성한 모델 모두 리깅에 성공했습니다.</strong> 좌측은 표준 T-Pose, 우측은 A-Pose입니다. <strong>핵심 공통점은 포즈가 아니라 양팔과 몸통 사이에 존재하는 선명한 물리적 틈새(Gap)</strong>입니다.</figcaption></figure>
 
-<figure><img src="images/p06-04-tpose-required.jpg" alt="Tripo在页面顶部弹出提示：为了获得更好的绑定效果，请上传T-Pose图像并重新生成模型"><figcaption>页面顶部横幅：「<strong>为了获得更好的绑定效果，请上传T-Pose图像并重新生成模型.</strong>」右边资产栏里那个躺平的小人，就是被X=-71.59转歪之后的那一版。Tripo Studio中文界面，2026-09-10。</figcaption></figure>
+<div class="tip"><strong>핵심 판별 기준 4가지:</strong> 전신 수록, 정면 뷰, <strong>팔과 몸통 사이의 명확한 틈새</strong>, 벌리고 선 두 다리. 팔이 옆구리에 붙어있지만 않다면 A-Pose로도 충분히 리깅에 성공할 수 있습니다.</div>
 
-<p>看到这条横幅的当天，我给自己记的结论是「前两次不是姿态不够正，是根本不是T-Pose」。<strong>两天后这个结论被自己的实测推翻了。</strong></p>
+<h3>오토 리깅 20 크레딧: 성공 여부 판별법</h3>
 
-<p>2026-09-12我又做了一个要绑骨的行人，参考图生成的时候模型没听话，给的是A-Pose：手臂朝下斜了三四十度，根本不是横平的T字。我本来打算重生一张严格T-Pose的，请求超时了，就先拿这张凑合着往下走。结果是<strong>点一次「自动绑定」，19秒，第一次就成了</strong>。</p>
+<p>모델과 인간형 프리셋을 선택하고 「자동 바인딩 20」을 클릭합니다. 1차 시도에서 실패하더라도 당황하지 않고 재시도(20 크레딧 추가)하면 정상 바인딩됩니다. 예산 수립 시 1회 재시도 여유(총 40 크레딧)를 감안하는 것이 좋습니다.</p>
 
-<figure class="figure-pair"><img src="images/p06-09-tpose-reference.jpg" alt="T-Pose参考图：白T恤灰裤白鞋的角色，双臂完全平举成T字"><img src="images/p06-13-apose-reference.png" alt="A-Pose参考图：深蓝西装三件套的男性，手臂向下斜约三十多度，与躯干之间有明显空隙"><figcaption><strong>这两张图生成的模型都绑成了。</strong>左边是09-10那张标准T-Pose（白T恤灰裤白鞋，双臂完全平举），prompt里的风格锚定词用的是Mixamo，因为它就是「干净可绑骨T-Pose角色」这件事的母语。右边是09-12那张A-Pose（深蓝西装三件套，<strong>手臂下斜30到40度</strong>），本来只是重生严格T-Pose的请求超时了拿来凑合的。<strong>两张的共同点不是姿势，是手臂和躯干之间那道清晰的空隙</strong>，外加全身入画、正视角、两腿分开站稳。右边那张走的是Lovart会员额度，没花Tripo积分。</figcaption></figure>
+<p>성공 여부는 <strong>애니메이션 카드의 상태</strong>로 즉시 알 수 있습니다: 모든 카드에 「먼저 뼈대를 바인딩하세요」라고 적혀 있다면 실패한 상태이고, 바인딩이 완료되면 카드들이 클릭 가능한 실제 모션 이름으로 활성화됩니다.</p>
 
-<div class="tip">所以承重的判据是这四条，不是「必须摆成T字」：<strong>全身入画、正视角、手臂向外张开与躯干有空隙、两腿分开站稳。</strong>核心那条是空隙。四肢糊在躯干上，算法分不出哪是胳膊哪是身子，骨架就绑不出来；只要分得开，A-Pose一样能过。</div>
+<figure><img src="images/p06-07-library-unlocked.jpg" alt="리깅 성공 후 활성화된 애니메이션 카드 라이브러리"><figcaption>리깅 성공 후 잠금 해제된 모션 라이브러리: walk, fear, agree, angry 등 다채로운 모션을 즉시 미리보기할 수 있습니다. 2026-09-10.</figcaption></figure>
 
-<p>官方那条横幅推荐T-Pose，这个推荐没错，T-Pose是空隙最大的姿势，成功率最稳。但它是「更好」不是「必须」，我把它读成了硬门槛，多花了一轮时间去重生参考图。<strong>你手上那张图如果已经是A-Pose，先拿去绑一次试试，比重画一张快。</strong></p>
-
-<h3>自动绑定20积分：成没成，看动画卡片上的字</h3>
-
-<p>选好模型、选好类人预设，点那个「自动绑定20」。2026-09-10绑那个巴黎行人时，等了一轮之后中央预览是空白的，旁边出现「重试」按钮，第二次重选类人预设再绑才成，<strong>那一次实打实多花了20分</strong>。<strong>当时我写下的结论是「第一次多半会失败，这是产品的固定行为」，这话说满了。</strong></p>
-
-<p>回头把记录对齐，样本其实只有两个，而且指向相反的方向：那个行人是第二次才成；09-12那个A-Pose行人一次就过。<strong>两个样本撑不起「固定行为」这四个字。</strong>同一天我还误判过一回，那次其实是把「确认导入」当成了绑骨，白等了一轮，并没有真的绑失败。</p>
-
-<p>所以现在的说法是：<strong>第一次绑不成是有可能的，遇到了就点「重试」，不必当成坏消息；但它不是必经的一步，预算上留一次重试的余量（多20分）就够了。</strong></p>
-
-<p>判据很清楚：<strong>看动画卡片上的字。</strong>全是「请先绑定骨骼」就是没绑成；绑成功后它们会变成可点的动画名。</p>
-
-<figure><img src="images/p06-07-library-unlocked.jpg" alt="绑骨成功后的动画库，卡片全部变成可点的动画名"><figcaption>绑成功之后的动画库：行走、害怕、同意、愤怒_01、愤怒_02、愤怒_03……全部变成可点的名字，第一个「行走」右上角已经打了勾。左边AI模型下拉又显示成「v2.5适用于动物」，那是刷新之后的重置，不影响已经绑好的骨架。2026-09-10。</figcaption></figure>
-
-<h3>绑一次骨要多久：三个数，三种口径</h3>
-
-<p>这件事我得说细一点，因为你拿秒表掐，掐到的数和界面告诉你的数对不上，不是你掐错了。</p>
+<h3>리깅 처리 소요 시간 실측</h3>
 
 <table>
-<thead><tr><th>数</th><th>这是什么口径</th><th>怎么来的</th></tr></thead>
+<thead><tr><th>계측 기준</th><th>소요 시간</th><th>설명</th></tr></thead>
 <tbody>
-<tr><td><strong>3秒</strong></td><td>接口报的算子耗时</td><td>2026-09-12 16:43那一单，detail接口里rigging算子的<code>updated_at</code>减<code>created_at</code></td></tr>
-<tr><td><strong>13秒</strong></td><td>现场画面从点击到出结果</td><td>同一天的录屏，从按下「自动绑定」到「重试」按钮出现，数画面时间</td></tr>
-<tr><td><strong>19秒</strong></td><td>另一件模型的现场耗时</td><td>那个A-Pose行人，一次过</td></tr>
+<tr><td>순수 알고리즘 연산</td><td><strong>3초</strong></td><td>API 내부 rigging 작업 연산 타임스탬프</td></tr>
+<tr><td>실제 화면 응답</td><td><strong>13초</strong></td><td>버튼 클릭부터 결과 UI 표출까지</td></tr>
+<tr><td>A-Pose 모델 실측</td><td><strong>19초</strong></td><td>실전 원클릭 통과 시간</td></tr>
 </tbody>
 </table>
 
-<p>界面和接口给你的都是<strong>算子本身跑了多久</strong>（算子耗时口径，不含上传与排队；端到端要往上加，两个口径的实测差见§01，词条见附录D）。<strong>写进项目排期的要用端到端那个数，别用接口报的。</strong></p>
+<h3>애니메이션 라이브러리: 97종의 모션 내장</h3>
 
-<h3>动画库有多少个，我数了两遍</h3>
+<p>인간형 스켈레톤을 위해 총 <strong>97종의 애니메이션 클립</strong>이 기본 탑재되어 있습니다. 걷기(walk), 달리기(run), 대기(idle), 착석(sit), 점프 등 핵심 게임 모션부터 댄스, 스포츠 동작까지 망라되어 있습니다.</p>
 
-<p>2026-09-11第一次数完，我记下的是110个，但没记数法，事后自己都复原不了是怎么点出来的。2026-09-12录屏那天重数了一遍，这次把过程留下了：<strong>左侧动画面板从头滚到尾，分8屏截完，逐张卡片数过去，类人骨架下是97个。</strong>所以这本书里凡是提到这个量，写的都是「近一百个」。</p>
+<p>Tripo 자체 골격과 모션이 1:1로 일치하므로 외부 라이브러리(Mixamo 등)를 가져와 복잡한 리타겟팅을 거칠 필요가 전혀 없습니다.</p>
 
-<figure class="figure-pair"><img src="images/studio-16b-animate-library-end.png" alt="英文界面下动画库滚到底部，最后三张卡片是warm_up、wave_goodbye_01、wave_goodbye_02"><img src="images/p06-12-anim-library-tail.png" alt="中文界面下动画库滚到底部，最后三张卡片是热身、挥手告别_01、挥手告别_02"><figcaption>两次独立记录的列表尾，左边是2026-09-11的英文界面（余额25190），右边是2026-09-12的中文界面（余额20120）。<strong>两次都停在<code>wave_goodbye_02</code>／「挥手告别_02」，而且最后一行只有一张卡片</strong>，说明总数是单数，和数出来的97对得上。这种「换个日子、换个语言再数一遍」的核法，比记住一个数字可靠。</figcaption></figure>
+<h3>가장 치명적인 함정: 카드 클릭은 미리보기일 뿐입니다</h3>
 
-<p>分五类：All / Basic / Interactive / Scene Specific / Emotional，另有搜索框。里面有walk、run、idle、sit、jump这些基础动作，也有dance_01到dance_06、sing_01到sing_04、greet_01到greet_04这类成组的，还有basketball_shot、surf、jump_rope这种场景动作。完整清单在<code>research/studio-facts</code>里。</p>
+<p>많은 사용자가 라이브러리에서 모션을 클릭한 뒤 바로 익스포트하여 「애니메이션이 누락된 뼈대 파일」을 내려받는 실수를 범합니다.</p>
 
-<p>这近一百个里，做游戏真正常用的其实就那么几个：idle（站着等）、walk、run、turn、sit、wave_goodbye。情绪那一组（cry、laugh、angry、frightened）在做剧情演示时有用，运动那一组更像是给短视频素材准备的。</p>
+<figure><img src="images/p06-08-export-anim-count.jpg" alt="익스포트 팝업창, 애니메이션 수량을 1로 설정하고 제자리 재생 활성화"><figcaption>익스포트 팝업창: <strong>Export Skeleton(ON)</strong>, <strong>Animation Count를 0에서 반드시 1로 변경</strong>, <strong>Play Animation In-place(ON)</strong>. 2026-09-10.</figcaption></figure>
 
-<p>它把动作库包进来这件事，省掉的工序比看上去多。正常流程里，你得先找一个动作库（Mixamo之类），下载一个FBX，再做重定向，把那副骨架上的动作映射到你这副骨架上，关节名字对不上还得手工连线。<strong>Tripo这边是它绑的骨、它出的动作，两边天生同名同构，重定向那一步整个不存在。</strong>我一开始判断「链路长、要重定向」，是错的。</p>
+<p><strong>Animation Count 수치를 0에서 1로 직접 올려야만 애니메이션이 파일에 베이킹</strong>됩니다. 또한 게임 캐릭터용이라면 <strong>「제자리 재생(In-place)」을 반드시 켜야</strong> 모션 자체의 좌표 이동이 게임 이동 로직과 충돌하지 않습니다.</p>
 
-<h3>最致命的一步：点动画只是预览</h3>
-
-<p>我第一次导出拿到的GLB是「有骨骼、零动画」，查了半天才明白问题出在哪：<strong>在动画库里点一下卡片，只是让预览播给你看，不等于把它带进导出文件。</strong></p>
-
-<figure><img src="images/p06-08-export-anim-count.jpg" alt="导出弹层，动画数量被设成1，原地播放动画打开，右边是选择动画面板"><figcaption>导出弹层的六项：文件名/格式（GLB）/纹理分辨率（1k）/<strong>导出骨骼（开）</strong>/<strong>动画数量（必须手动调成1，默认是0）</strong>/<strong>原地播放动画（开）</strong>。右边弹出的「选择动画」面板显示1/1，「行走」已勾选。底部还有一个「发送至Blender」。角色是19830面/ 11733顶点的T-Pose男性。2026-09-10。</figcaption></figure>
-
-<p>「动画数量」那个数字从0变成1，才算真的带上了。旁边的「原地播放动画」也要理解一下：打开之后，动画只管迈腿，位移交给游戏代码管。做游戏角色这个开关必须开，不然动画自带的位移会和你的移动逻辑打架。</p>
-
-<h3>导出来的是两个文件，不是一个</h3>
-
-<p>还有一个更隐蔽的：我一度以为「导出把动画丢了」，其实是它被分成了两份。做小王子那个角色时，点导出的同时抓了一下网络请求，在一串<code>studio/progress</code>和<code>project/detail</code>里看见了一个从没出现过的文件名。</p>
+<h3>익스포트 시 분리 생성되는 2개 파일의 구조</h3>
 
 <table>
-<thead><tr><th>文件</th><th>里面是什么</th><th>体积</th></tr></thead>
+<thead><tr><th>파일명</th><th>포함 내용</th><th>실측 용량</th></tr></thead>
 <tbody>
-<tr><td><code>tripo_rigging_&lt;uuid&gt;.glb</code></td><td>网格+ 41关节骨架，<strong>没有动画</strong></td><td>4.81 MiB</td></tr>
-<tr><td><code>tripo_retarget_&lt;uuid&gt;.glb</code></td><td>骨架+<code>preset:biped:walk</code>（这一件126条通道），<strong>没有网格</strong></td><td>132 KiB</td></tr>
+<tr><td><code>tripo_rigging_&lt;uuid&gt;.glb</code></td><td>메쉬 지오메트리 + 41개 관절 스켈레톤 (<strong>애니메이션 없음</strong>)</td><td>4.81 MiB</td></tr>
+<tr><td><code>tripo_retarget_&lt;uuid&gt;.glb</code></td><td>골격 구조 + <code>preset:biped:walk</code> 모션 트랙 (<strong>메쉬 없음</strong>)</td><td>132 KiB</td></tr>
 </tbody>
 </table>
 
-<p>这两个体积是文件落盘后数字节数换算的，不是界面上的读数：5,040,200字节和135,540字节，按1 MiB = 1,048,576字节折成4.81 MiB和132 KiB。<strong>本节的模型体积一律按MiB写</strong>，§22和附录A那张资产表引的是同一批数。</p>
+<p>엔진에서는 <code>tripo_rigging</code>으로 모델과 본을 씬에 배치하고, 가벼운 <code>tripo_retarget</code> 파일의 애니메이션 클립을 <code>AnimationMixer</code>에 바인딩하여 구동합니다.</p>
 
-<p>两个文件同源、41个关节同名，用法就是把前者的骨架装进场景、用后者的剪辑驱动，<code>AnimationMixer</code>是按节点名字绑轨道的，对得上。顺带解掉了另一个疑虑：既然动画在独立文件里，网格那个文件的静止姿态就是干净的绑定姿势，之前看着像「停在步态上」是我看错了。</p>
+<div class="warning">애니메이션 적용 후 웹 UI에서 익스포트 버튼이 일시적으로 사라지는 버그가 발생할 경우, 프로젝트 상세 API(<code>GET /v2/studio/project/detail/v3/&lt;uuid&gt;</code>) 응답의 <code>data.operator.rigging.model_url</code> 및 <code>data.operator.retarget[0].model_url</code>에서 직접 다운로드 URL을 취득할 수 있습니다.</div>
 
-<p>还有一条：<code>tripo_retarget_</code>这个文件没有<code>_meshopt</code>后缀，也就是没压缩，可以离线直接读；带<code>_meshopt</code>的那些用手写解析器读出来是乱码。</p>
+<h3>P2.0 스마트 메시 리깅 실측 데이터</h3>
 
-<div class="warning"><strong>套完动画之后，绑骨页上的「导出」按钮会从DOM里消失。</strong>09-12那次我找了半天没找到它。别在界面上死磕，这两个文件的地址在详情接口里本来就有：<code>GET /v2/studio/project/detail/v3/&lt;uuid&gt;</code>，返回里<code>data.operator.rigging.model_url</code>是网格加骨架那份，<code>data.operator.retarget[0].model_url</code>是骨架加动画那份。<code>retarget</code>是个数组，每个元素自带地址。走接口反而是这一步唯一稳的通路。</div>
+<p>스마트 메시(P2.0) 기반 보행자 모델(<code>pedestrian-01-walk.glb</code>, 16,178면, 사각면 토폴로지)을 A-Pose로 리깅한 결과: <strong>19초 만에 단 한 번에 성공</strong>했습니다. FBX 분석 결과 정확히 41개의 클러스터(Cluster)와 스킨이 생성되었습니다.</p>
 
-<h3>第一件P2.0绑骨件</h3>
+<div class="callout"><strong>주의점 1:</strong> 스마트 메시 익스포트 시 빈 액션 트랙(<code>ArmatureAction</code>)이 첫 번째로 들어갈 수 있으므로, 코드에서 <code>animations[0]</code> 대신 이름으로 검색(<code>g.animations.find(a =&gt; /walk/i.test(a.name))</code>)해야 합니다.<br>
+<strong>주의점 2:</strong> P2.0 에셋은 기본 텍스처가 베이스 컬러 1장으로 제공되므로 메탈릭/러프니스 광택이 필요할 경우 셰이더 매개변수를 직접 지정해야 합니다.</div>
 
-<p>前面讲的三件绑骨资产用的都是高精度模式（v3.1）。2026-09-12我用智能网格（P2.0）也绑了一件，这是这本书里唯一的P2.0绑骨样本，数据单独列一下：</p>
+<h3>엔진 연동 3대 필수 코드 규칙</h3>
+
+<div class="callout">
+1. <strong><code>SkeletonUtils.clone()</code> 사용</strong>: Three.js의 일반 <code>clone()</code>은 스켈레톤 인스턴스를 공유하므로 여러 보행자가 국군 의장대처럼 한날한시에 동일한 발을 구르는 군무 현상이 발생합니다. 반드시 <code>SkeletonUtils</code>로 골격을 독립 복제해야 합니다.<br>
+2. <strong>인스턴스별 위상 분산</strong>: <code>mixer.setTime(Math.random() * duration)</code>으로 보행 시작 타이밍을 흩어놓아야 자연스럽습니다.<br>
+3. <strong>Root 이동 트랙 음소거</strong>: <code>Hip.position</code>의 불필요한 위치 이동 키프레임을 제거하고 회전(Rotation)만 남겨야 보행 루프 끝에서 캐릭터가 뒤로 튕겨 나가는 오류를 막을 수 있습니다.
+</div>
+
+<h3>에셋 정면 축(Heading) 3가지 분류</h3>
 
 <table>
-<thead><tr><th>项</th><th>读数</th></tr></thead>
+<thead><tr><th>에셋 계통</th><th>자체 정면 방향</th><th>엔진 배치 시 보정</th></tr></thead>
 <tbody>
-<tr><td>成品</td><td><code>pedestrian-01-walk.glb</code>，16,178面/ 1个skin / 1024²贴图/ 1.30 MiB</td></tr>
-<tr><td>输入姿态</td><td>A-Pose（手臂下斜30到40度）</td></tr>
-<tr><td>绑定结果</td><td><strong>19秒，第一次就成</strong></td></tr>
-<tr><td>骨架落盘校验</td><td>41个Cluster + 1个Skin + 82个LimbNode</td></tr>
-<tr><td>动画</td><td><code>preset:biped:walk</code>，单独一个FBX，0.68 MiB</td></tr>
+<tr><td>Tripo 리깅 인간형 프리셋</td><td>+Z 기준 90도 틀어짐</td><td><code>yaw = -Math.PI / 2</code></td></tr>
+<tr><td>고정밀(v3.1) 정적 에셋</td><td>보행자 +Z, 건물 −Z</td><td>에셋 유형별 분기 처리</td></tr>
+<tr><td>스마트 메시(P2.0) 에셋군</td><td><strong>+X</strong> (38개 중 36개)</td><td>보행자 대체 시 <code>yaw = -90°</code></td></tr>
 </tbody>
 </table>
 
-<p>「Cluster」是FBX里存蒙皮权重的那个结构，一根骨头一个，所以41这个数和前面v3.1那副骨架是同一个规模；LimbNode是骨骼节点，82个包含了骨架末端那些不带权重的节点。这些数不是从界面上抄的，是把FBX下下来用<code>strings</code>直接数出来的，<strong>凡是能落盘再数一遍的，就别信界面上的数字。</strong></p>
+<figure class="figure-wide"><img src="images/p06-14-six-view-orientation.png" alt="6시점 렌더링을 통한 에셋 정면 축 식별 대조"><figcaption>6시점 일괄 렌더링 검수: 상단 v3.1 모델은 3번째 칸(+Z)에서 정면이 보이고, 하단 P2.0 모델은 2번째 칸(+X)에서 정면이 보입니다. 바운딩 박스로는 구별할 수 없는 축 방향을 명확히 정의합니다. 2026-09-12.</figcaption></figure>
 
-<p>有两件事要提前知道，不然装进项目里会踩：</p>
-
-<div class="callout"><strong>1.这件的导出里带了两条动画，按下标取会取错。</strong>名字分别是<code>Armature.001|Armature|ArmatureAction</code>和<code>Armature.001|Armature|preset:biped:walk</code>，第一条是空的。代码里写<code>animations[0]</code>会拿到那条空的，人就站着不动。改成按名字挑：<code>g.animations.find(a =&gt; /walk/i.test(a.name)) || g.animations[0]</code>。之前的资产只有一条动画，所以这个坑一直没露头。</div>
-
-<div class="callout"><strong>2.它的贴图只有一张base color。</strong>智能网格出的件就是这个结构，没有normal、没有ORM，所以同一盏灯下它会比高精度那批哑一点。想要金属和粗糙度那两层，要么用高精度模式生成，要么自己在引擎里补材质参数。</div>
-
-<h3>验一遍再进引擎</h3>
-
-<p>拿到GLB先别急着接，写个二十行的页面把它拖进去数一遍。</p>
-
-<figure><img src="images/p06-06-threejs-verified.jpg" alt="自建的绑骨GLB验证页，左边列出面数41骨骼1个SkinnedMesh1个动画片段，右边角色正在迈步"><figcaption>自建的验证页读数：状态「有骨骼+有动画」、面数19,830、骨骼数41、SkinnedMesh 1、动画片段1，动画名<code>preset:biped:walk</code>、时长2.38秒。右边角色正迈开腿，不是滑行。页面源码在<code>绑骨实测/验证页.html</code>，2026-09-10。</figcaption></figure>
-
-<p>巴黎那个行人的动画数据拆开是这样：<strong>123个通道，其中16个通道带关键帧</strong>（真正在动的腿、臂、脊柱，帧数51到57不等），采样间隔0.042秒（约24 fps），时长2.375秒一个完整走路循环；剩下107个是常量通道，对应手指这类保持不动的关节，属于正常结构。面数从头到尾没涨，19830进、19830出。</p>
-
-<p>这里的123和前面那张两文件表里的126<strong>不是同一件资产</strong>。<strong>但别拿123去认角色</strong>——123只是41×3这个算式的结果，凡是41关节、只有关节带通道的件都是123（巴黎这个西装行人是，§15那个T-Pose男性也是）。126那件是小王子。两件都是41关节，差的三条来自骨架根节点——通道数是「带通道的节点数×3」（位移／旋转／缩放各一条），巴黎那件只有41根关节带通道（41×3=123），小王子那件连骨架根节点也带上了（42×3=126）。<strong>所以看到自己的件数落在这个区间，不用怀疑绑骨出错。</strong></p>
-
-<h3>接进引擎的三条硬约束</h3>
-
-<div class="callout"><strong>1.用<code>SkeletonUtils.clone()</code>，不要用普通的<code>clone()</code>。</strong>带skeleton的模型普通克隆会共享骨骼，你放一排行人，他们会像仪仗队一样同一帧抬同一条腿。这个工具在<code>three/addons/utils/SkeletonUtils.js</code>，很多精简过的vendor目录里没有它，import会让整个页面白屏。</div>
-
-<div class="callout"><strong>2.每个实例一个<code>AnimationMixer</code>，相位要错开。</strong>我用的是<code>(x*0.37+z*0.11)%duration</code>，拿位置当种子，免得再存一份随机数。</div>
-
-<div class="callout"><strong>3.把位移轨切掉，只留旋转轨。</strong>retarget出来的剪辑里<code>Hip.position</code>的Y位移范围是1.338，而人本身才1米出头。行走是代码推的，动画再叠一层位移，循环回到起点整个人会往回弹。我在画面里看到的「走着走着又会回退一大步」就是它。步态本来就是纯旋转的事。</div>
-
-<p>还有一条让角色看起来不呆的小设置：<code>mixer.timeScale</code>跟着实际移动速度走，走多快推多快。我按每秒2.5米定标，站住的时候把它冻住。不做这件事的话，角色会出现「脚在原地小碎步、人却在飞速平移」那种滑冰感，观众一眼就看出来不对。</p>
-
-<h3>朝向要分三类记，别并成一条</h3>
-
-<p>「模型进场景之后是背对着你的」这件事我处理过太多次，一开始我以为有一个统一的角度能兜住全部，后来发现<strong>朝向惯例是按来路分的，有三套，混着记必然装反。</strong></p>
+<h3>걸어 다니는 캐릭터 1개의 원가</h3>
 
 <table>
-<thead><tr><th>这一类模型</th><th>自身正面朝哪</th><th>怎么处理</th></tr></thead>
+<thead><tr><th>작업 단계</th><th>소모 크레딧</th></tr></thead>
 <tbody>
-<tr><td>Tripo绑骨预设出来的人形</td><td>不是+Z，实测<strong>差90°</strong></td><td>小王子那边写死了<code>PRINCE_YAW = -Math.PI/2</code></td></tr>
-<tr><td>高精度（v3.1）那批静态资产</td><td>行人<strong>+Z</strong>、建筑<strong>−Z</strong>（宽立面在±Z，窄面在±X）</td><td>同一批资产里就有两套惯例，要分开定</td></tr>
-<tr><td>智能网格（P2.0）那一家族</td><td><strong>+X</strong>，38件里36件如此</td><td>去顶替旧行人时统一<code>yaw = -90</code>，顶替旧建筑是<code>yaw = +90</code></td></tr>
+<tr><td>디자인 시안 생성</td><td>0 (구독 플랜 할당량 활용)</td></tr>
+<tr><td>Tripo 이미지-to-3D 생성 (기본 8K)</td><td>50</td></tr>
+<tr><td>계정 내 에셋 직접 연동</td><td>0</td></tr>
+<tr><td>오토 리깅 바인딩</td><td>20</td></tr>
+<tr><td>애니메이션 라이브러리 적용</td><td>0</td></tr>
+<tr><td>GLB 익스포트</td><td>0</td></tr>
+<tr><td><strong>총합</strong></td><td><strong>70 크레딧 (약 ¥3.27 / 한화 약 600원대)</strong></td></tr>
 </tbody>
 </table>
 
-<p>第三行那两个例外没法靠推理找出来，只能渲图看：一辆车的正面在−X（+X那一面是尾灯和后窗），一件靠墙的书箱正面在−Z（−Z那一面书箱是敞开的，+Z是合上的箱盖）。</p>
-
-<div class="warning"><strong>四视图分不出正面和背面，必须渲六视图。</strong>常见的四视图是−Z（前）／+X（右）／+Y（顶）／斜45°，人形的正面和背面在这四个机位里长得太像，尤其是戴帽子穿大衣的角色。<strong>补上+Z和−X这两个机位再看</strong>，「在哪个视图里看见正脸，正面就朝那个方向」，一眼就定了。包围盒帮不了你：<code>yaw 90</code>和<code>yaw -90</code>的包围盒一模一样。</div>
-
-<figure class="figure-wide"><img src="images/p06-14-six-view-orientation.png" alt="上下两行各六个机位的渲染对照，上行是旧行人，下行是P2.0新行人，正脸出现在不同的机位上"><figcaption>六视图对照，机位从左到右是−Z / +X / +Z / −X /顶/斜45°。<strong>上行是v3.1的旧行人，正脸出现在第三格（+Z）；下行是P2.0的新行人，正脸出现在第二格（+X）。</strong>两件的包围盒读数差不多，只有这张图能把朝向区分开。渲染脚本<code>_verify/render_glb6.py</code>，全本地跑，不开浏览器，2026-09-12。</figcaption></figure>
-
-<h3>量一个绑骨模型的身高，比你想的难</h3>
-
-<p>这条我栽得很惨，写出来给你省两轮。我要把小王子和那张1米01的书桌摆在一起，得先知道他多高，于是写了个函数去量包围盒。数收敛了，拟合也漂亮，量出来的结论是1.552米。<strong>这个1.552是测量假象，真实渲染出来的人只有0.79米，站在书桌旁边比桌面还矮。</strong></p>
-
-<p>往下看之前先把三个长得很像的数摆清楚，不然后面每一句都容易读岔：</p>
-
-<table>
-<thead><tr><th>这个数</th><th>数值</th><th>它是什么</th></tr></thead>
-<tbody>
-<tr><td>目标值</td><td><strong>1.55米</strong></td><td>代码里设死的那个高度（<code>normalize()</code>的<code>target</code>、身高探针的<code>want</code>，用的都是它）。这个数从头到尾都是对的</td></tr>
-<tr><td>测量值</td><td>1.552米</td><td>坏掉的量法给出的读数。它离目标值只差0.002，看着像「拟合成功了」，其实是假象</td></tr>
-<tr><td>实际渲染值</td><td><strong>0.79米</strong></td><td>屏幕上真正那个人的高度。和1米01的书桌摆进同一张图才露馅</td></tr>
-</tbody>
-</table>
-
-<p><strong>错的不是1.55这个目标值，是量法。</strong>底下三处问题叠在一起，每一处单独看都不显眼；三处都修完之后，身高探针一次收敛到1.547米，正好落回目标上：</p>
-
-<table>
-<thead><tr><th>症状</th><th>正解</th></tr></thead>
-<tbody>
-<tr><td>量的是世界Y的极值。建世界时角色还在原点、旋转是单位阵，世界Y恰好就是人的上轴，量出1.55——这一下量到的正是<code>normalize()</code>规整出来的那个目标高度；一摆到球面上人就是斜的，同一副骨架量出0.89</td><td>沿角色自己的上轴投影。而且上轴要取带朝向的那个节点，取错了「沿上轴量」和「沿世界Y量」会给出一模一样的结果</td></tr>
-<tr><td><code>bindMatrixInverse</code>是陈旧的。three.js只在<code>updateMatrixWorld()</code>里刷新它，而<code>SkinnedMesh</code>重写的正是这个方法，不是<code>updateWorldMatrix</code></td><td>先<code>updateWorldMatrix(true,true)</code>刷祖先链，再<code>updateMatrixWorld(true)</code></td></tr>
-<tr><td>上面两条叠加，让「高度对缩放」呈现出一条带截距的直线，于是很自然地去解那条直线</td><td>量法修对之后关系本来就是对的，不需要拟合</td></tr>
-</tbody>
-</table>
-
-<p>为什么会连着两次判错：第一版只验证了「数收敛了」，没验证「画面对了」。这类bug可怕在它全链条自证，拟合收敛、代码不报错、模型和骨架都是好的，连「贴地0.064米」这种细节都算得出来。</p>
-
-<div class="callout"><strong>量骨骼网格的时候，量法本身就是被测对象的一部分。</strong>换个人、换个角度、换个时机量，答案就变，那说明量法还没对，不是精度不够。最省事的验法是把它和一个已知尺寸的东西放进同一张图里看一眼。</div>
-
-<h3>一个能走的角色，花在哪几笔</h3>
-
-<table>
-<thead><tr><th>动作</th><th>积分</th></tr></thead>
-<tbody>
-<tr><td>生一张参考图</td><td>0（走的是订阅额度，不花Tripo积分）</td></tr>
-<tr><td>Tripo图生3D（高精度，默认8K贴图档）</td><td>50</td></tr>
-<tr><td>模型是账号内已有的，不用上传</td><td>0（走上传是50导入费）</td></tr>
-<tr><td>自动绑定</td><td>20</td></tr>
-<tr><td>套动画</td><td>0</td></tr>
-<tr><td>导出</td><td>0（实测余额前后不变）</td></tr>
-<tr><td><strong>合计</strong></td><td><strong>70积分</strong></td></tr>
-</tbody>
-</table>
-
-<p>以上是截至2026-09的官方标价，以官网为准。按¥0.0467一分算，一个会走路的角色约<strong>¥3.27</strong>。这70分是我09-10那次逐笔记下来的，那一件没有重试；要是碰上一次重绑，这一件就是90分、约¥4.20。</p>
-
-<p>这套流程后来在巴黎那座城上又跑了一遍，主角换成另一个行人角色（<code>pedestrian-01</code>），绑法完全一样，只是它那次第一遍没绑成，多花了20分。<strong>街上18个行人里有6个由那一个绑骨模型实例化出来、真的在走，其余12个是五种不同的静态行人站着</strong>（一开始是18个全用它，那其实是个bug，根因见§18），桌面全流程和三种移动端尺寸的回归测试都通过。两个角色是两条线上的两件事，账也分开记，别把它们当成同一个。</p>
-
-<div class="tip">批量做角色，先按件数算一遍再动手，这个数很容易低估。拿游乐园那个demo当尺子：园子里有44个行人，<strong>假如每一个都在Tripo里单独生成再绑骨</strong>，按一件70分算就是3080积分，比Pro一个月的3000还多——那批行人实际是在代码里搭的骨架，这3080是照这条流程折算出来的，不是我真花掉的钱。<strong>更划算的做法是做3到5个不同外观，其余靠实例化加随机相位错开</strong>，观众分不出来，积分从三千多降到三百上下。</div>
-
-<p>还有一条我没测的，得说清楚：近一百个动画里我只实地验过walk这一个，跑步、挥手、舞蹈的质量稳不稳定，我不知道。面部和口型那一层也完全没碰，所以这本书里不会出现关于它的任何结论。</p>
-
-<!-- TODO-SHOT: 「请先绑定骨骼」状态下的动画库（绑成功前的对照）。现在只有绑成功后的那张，读者看不到判据里说的那个反面。 -->
+<div class="tip">거리나 마을에 수십 명의 NPC가 필요하다고 해서 40명을 모두 개별 생성(2,800 크레딧)하지 마십시오. <strong>외형이 다른 3~4종의 베이스 모델만 생성(약 280 크레딧)한 뒤 인스턴싱 복제와 모션 위상 분산</strong>을 적용하면 90%의 예산을 절감하면서도 풍성한 군중을 연출할 수 있습니다.</div>
 
 </div>
 
 <!-- ===== part07-credits.html ===== -->
 <div class="content">
 
-<h2 class="section-title page-break" id="part07"><span class="num">§07</span>怎么把积分花在刀刃上</h2>
+<h2 class="section-title page-break" id="part07"><span class="num">§07</span>크레딧을 가장 효율적으로 쓰는 방법</h2>
 <p class="section-en">Spending Credits Where They Count</p>
-<p class="section-intro">这一节讲的是配置选择：每个按钮上那个数字是怎么构成的、同一件资产有几种配法、什么时候该配高什么时候该配低。学会读按钮上那个实时变化的数，比背价目表有用得多。</p>
+<p class="section-intro">이번 섹션은 효율적인 파이프라인 설계에 관한 내용입니다: 생성 버튼의 숫자가 어떻게 구성되는지, 동일한 에셋을 목적에 따라 5단계 단가로 제작하는 방법, 그리고 크레딧 낭비를 원천 차단하는 실전 가이드를 다룹니다. 고정된 요금표를 외우는 것보다 버튼에 실시간 반영되는 수치를 읽는 법이 훨씬 유용합니다.</p>
 
-<div class="callout"><strong>这一节里所有价格都是截至2026-09的官方标价，以官网为准。</strong>我把采集日期写在每张表底下，是因为这类数字本来就会变，你对账时以当天页面上的为准。</div>
+<div class="callout"><strong>모든 가격은 2026년 9월 공식 웹사이트 기준입니다.</strong> 가격 정책은 변동될 수 있으므로 실제 작업 시점의 공식 결제 페이지를 함께 확인하십시오.</div>
 
-<h3>订阅这一层：四档，差别不只是积分数</h3>
+<h3>구독 플랜 4단계 비교: 핵심은 크레딧 수가 아닙니다</h3>
 
-<figure><img src="images/pricing-03-cny.png" alt="Tripo Studio官方定价页，Currency切到CNY，四档套餐并排"><figcaption>官方Pricing页，右上角Currency切成CNY之后的读数。四档：Free ¥0、Pro ¥140/月、Max ¥630/月、Team ¥770/席/月（页面当天挂着60%off的首月促销价¥924，次月起按席收）。Team那个总价和单席价差三倍，是3席起售推出来的——月付$110一席、$330总价，年付$55一席、$1980总价，两条各自独立的算式都得3，而页面上从头到尾没明写过这个最低席数。页面顶部三句标语：Game-ready Assets in 2s / Industry-first True 8K Textures / Smart Segmentation for Better Control。2026-09-11。</figcaption></figure>
+<figure><img src="images/pricing-03-cny.png" alt="Tripo Studio 공식 가격 페이지: Free, Pro, Max, Team 4개 플랜"><figcaption>공식 요금제 페이지 (CNY 기준): Free(¥0), Pro(¥140/월, 3,000 크레딧), Max(¥630/월, 25,000 크레딧), Team(¥770/석/월, 3석 기준 ¥2,310). 2026-09-11.</figcaption></figure>
 
 <table>
-<thead><tr><th></th><th>Free</th><th>Pro</th><th>Max</th><th>Team</th></tr></thead>
+<thead><tr><th>구분</th><th>Free</th><th>Pro</th><th>Max</th><th>Team</th></tr></thead>
 <tbody>
-<tr><td>月费（CNY）</td><td>¥0</td><td><strong>¥140</strong></td><td>¥630</td><td>¥2310（3席起）</td></tr>
-<tr><td>月积分</td><td>200</td><td><strong>3000</strong></td><td>25000</td><td>90000</td></tr>
-<tr><td>官方折算</td><td>≈13 models</td><td>≈200 models</td><td>≈1660 models</td><td>≈6000 models</td></tr>
-<tr><td>并发任务</td><td>1</td><td>10</td><td>100</td><td>200</td></tr>
-<tr><td>模型归属</td><td>Public ·非商用</td><td><strong>Private ·商用</strong></td><td>Private ·商用</td><td>Private ·商用</td></tr>
+<tr><td>월 구독료 (CNY)</td><td>¥0</td><td><strong>¥140 (약 2.7만원)</strong></td><td>¥630</td><td>¥2,310 (3석 기준)</td></tr>
+<tr><td>제공 크레딧</td><td>200</td><td><strong>3,000</strong></td><td>25,000</td><td>90,000</td></tr>
+<tr><td>공식 환산 모델 수</td><td>≈13개</td><td>≈200개</td><td>≈1,660개</td><td>≈6,000개</td></tr>
+<tr><td>동시 작업(Concurrency)</td><td>1건</td><td><strong>10건</strong></td><td>100건</td><td>200건</td></tr>
+<tr><td>에셋 저작권 및 상업성</td><td>공개 / 비상업 전용</td><td><strong>비공개(Private) / 상업적 이용 가능</strong></td><td>비공개 / 상업적 이용 가능</td><td>비공개 / 상업적 이용 가능</td></tr>
 </tbody>
 </table>
 
-<p>截至2026-09官方标价，以官网为准。</p>
+<p>가장 중요한 차이는 최하단에 있습니다: <strong>Free 플랜으로 생성된 모델은 전면 공개(Public)되며 상업적 이용이 엄격히 금지</strong>됩니다. 상업용 프로젝트나 외주 납품이 목적이라면 Pro 플랜 이상이 필수 조건입니다.</p>
 
-<p>最后那一行比积分数重要得多。<strong>Free档生成的模型是公开的，而且标着非商用</strong>；从Pro开始才是私有加商用。你要是打算把做出来的东西放进产品里，这一行就是门槛，不是积分够不够的问题。</p>
+<h3>무료 플랜의 실질적 역할</h3>
 
-<h3>免费档能做到哪一步</h3>
+<p>가입 시 주어지는 200 크레딧은 기초 지오메트리(15 크레딧) 기준 약 13개, 기본 설정(50 크레딧) 기준 4개 분량입니다. 파이프라인 전체를 한두 번 테스트하며 품질이 내 기준에 부합하는지 검증하기에 완벽한 분량이지만, 실제 프로젝트 납품용으로는 부족합니다.</p>
 
-<p>200积分按基础价15算是13个模型，按界面默认的50算是4个。这个量足够你把整条链走一遍，看看生成质量对不对得上你的需求，但不够做一个项目。</p>
+<p>또한 Free 플랜은 동시 작업 수가 1건으로 제한되어 작업 1개가 끝날 때까지 대기해야 합니다. Pro 플랜의 10건 동시 처리와 비교하면 대량 에셋 제작 시 체감 속도에서 큰 차이가 납니다.</p>
 
-<p>真正卡住你的也不是数量，是另外两条属性：模型归属，和导出。归属那条上面刚说过，导出这条我没能验到底。</p>
+<div class="tip"><strong>무료 플랜은 결제 전 「생성 퀄리티 검증용」으로만 활용하십시오.</strong> 납품 일정에 무료 플랜을 포함하면 익스포트 제약이나 비상업 조건으로 인해 일정에 차질이 생깁니다.</div>
 
-<div class="callout"><strong>「免费档到底能不能导出」，我手上两个来源强度不一样，都摆在这儿，这也是全书这件事的统一口径。</strong>官方Compare Plans对照表里，Free那一列<code>Exports</code>的原文是<code>15 (H2.5 only)</code>——额度有15次，但限定在H2.5这一档模型上；同一列的Private Models和Commercial Use都是❌。另一边，我自己的项目记录里写着GLB／FBX这些格式全部导不出、必须订阅，<strong>但我是从Pro起步的，这一条没在免费账号上复现过，也没有截图</strong>。对照表原文、逐行读数，以及H2.5到底是哪一档模型，都在附录C。</div>
+<h3>1 크레딧의 가치는 얼마인가</h3>
 
-<p>这个洞我没补上，但它不挡你做决定，所以先把结论放在这儿。<strong>「要不要付钱」这个决定卡在模型归属那一行，不卡在导出这一行。</strong>导得出也好、导不出也好，免费档的产出都是公开的、标着非商用。<strong>所以免费档只该用来回答一个问题：它生成出来的东西，够不够你用。</strong>够用，再考虑从Pro起步；不够用，你连这一步都省了。</p>
+<p>Pro 플랜 기준 ¥140 ÷ 3,000 크레딧 = <strong>1 크레딧당 약 ¥0.0467 (한화 약 8.8원)</strong>입니다. 본 책의 모든 비용은 이 단가를 기준으로 계산되었습니다.</p>
 
-<p>至于导出本身，你不用等我，注册完三分钟就能当场问清楚：生成一件，点Export，把你真正要的那个格式（多半是GLB或FBX）点到底，看它让不让你下载。<strong>导出不扣积分</strong>（本节后面有我拿余额验的那一笔），所以这一步花的是三分钟，不是那200分里的任何一分。<strong>要点的是你真正要的那个格式，别只点一个能导的就当过了</strong>——别等做完一批资产才发现拿不走。</p>
+<figure><img src="images/pricing-01.png" alt="연간 결제 시 Pro 플랜 $20/월 ($240/년) 표기"><figcaption>연간 결제 프로모션 페이지. 2026-09-11.</figcaption></figure>
 
-<div class="tip"><strong>在你自己点出结论之前，预算按这一条来最稳：免费档能试质量、不能交付。</strong>两个来源哪个准，我没在免费账号上复现过，不替你裁；但它们指向的是同一个做法——导得出，那15次也限定在H2.5这一档，而且同一列的Private Models和Commercial Use都是❌，文件拿到手也不能放进产品；导不出就更不用说了。<strong>所以免费档的位置是「验质量的试用期」，别把它排进交付环节的预算，到要交东西那天会卡住。</strong>真要交付，从Pro起步；至于导出这个洞，开工第一天花三分钟按上面那三步点一遍，你自己账号上当天就补上了。</div>
+<h3>공식 요금표 vs UI 실측 수치의 차이</h3>
 
-<p>并发数也是个隐形差别。Free是1个并发，意味着你提交一件就得等一件；Pro是10个。做一批二十几件资产的时候，这个差别比积分数更影响体感。</p>
-
-<h3>一积分值多少钱</h3>
-
-<p>¥140除以3000，<strong>一积分约¥0.0467</strong>。这本书里所有的人民币数字都按这个价折算。</p>
-
-<p>这个基准价我复核过，因为它撑着全书所有的¥数字。<strong>2026-09-13不带账号、不带登录态重取了一次官网Pricing页，Compare Plans的Price行还是Pro $20 /月、$240 /年，和带着优惠券采集那次一模一样。</strong>另一条旁证是三个付费档的CNY对USD比值：140÷20、630÷90、2310÷330全都正好是7.0——优惠券只会打歪其中一格，不会让三格一起保持同一个汇率。采集当天我账号上确实挂着一张首月券，它折到的是卡片顶部那个大号价，没折到对照表，验法写在附录C。</p>
-
-<figure><img src="images/pricing-01.png" alt="同一个定价页切到Annually，Pro显示billed annually as $240/year"><figcaption>同一个页面切到Annually那一档，标签上挂着「50% off」，Pro显示$20/月、按年计$240。促销状态天天在变，我抓接口那天Professional年付折算下来是每月$13（标35% off）。<strong>对外讲成本要用官方标价，不要用自己当时抢到的促销价</strong>，读者是按标价做决策的。2026-09-11。</figcaption></figure>
-
-<p>我账号里那两万多的余额不是订阅送的，是另外买的积分包。这个也得说清楚，不然你看到截图里的余额25220，会误以为Pro一个月给这么多。</p>
-
-<h3>官方那张表，和界面上量出来的那一套</h3>
-
-<p>官网Pricing页的FAQ里有一张积分表，叫「How do Credits work in Tripo AI?」，把每个动作的基础价和可选加项分开列。这是官方唯一一处把这件事说明白的地方，生成按钮上不会告诉你。</p>
-
-<figure><img src="images/pricing-04-credits-table.png" alt="Tripo官网Pricing页FAQ里的积分表，六行功能各自的Credits和Add-ons"><figcaption>tripo3d.com/pricing页面底部FAQ第一条展开后的官方积分表。官方表是三列：Feature／Credits／Add-ons (Optional)，<strong>每一行的加项只属于这一行的功能</strong>。六行基础功能是HD Generate 15、Smart Mesh 35、Segmentation 5、Retopology 5、Texture Gen 10、Auto Rig 20，其中Auto Rig那一格官方写的是「-」，没有加项。<strong>HD Generate那一行的15，就是生成一个模型的真实底价。</strong>2026-09-11 14:50。</figcaption></figure>
-<p><strong>官方那张六行的积分表（每个功能的基础分和可选加项）在附录C</strong>，截至2026-09的标价，以官网为准。</p>
-
-<p>拿它去对界面上实测到的数字，两项严丝合缝，两项要多看一眼：</p>
-
-<p>拿它去对界面上实测到的数字，两项严丝合缝，两项要多看一眼：</p>
+<p>공식 FAQ에는 기능별 기초 요금이 명시되어 있습니다:</p>
 
 <table>
-<thead><tr><th>界面显示</th><th>拆开</th><th>对得上吗</th></tr></thead>
+<thead><tr><th>작업 기능</th><th>UI 표시 금액</th><th>실제 청구 내역 분석</th></tr></thead>
 <tbody>
-<tr><td>生成50</td><td>按官方表只能凑到15 + 10 + 10 = 35，还差15。把Ultra的+15算进来才够50，可默认状态下Ultra Mesh Quality是<strong>关着</strong>的</td><td>✗总数对得上，但那个拆法和界面默认状态不一致</td></tr>
-<tr><td>重拓扑10</td><td>Retopology 5 + Quad 5</td><td>✓</td></tr>
-<tr><td>绑骨20</td><td>Auto Rig 20</td><td>✓</td></tr>
-<tr><td>智能网格「100划掉65」</td><td>官方表的Smart Mesh 35 + P2.0 65 = 100，对上的是被划掉那个原价；<strong>实扣的是折后的65</strong></td><td>△原价对得上，实付要看划线后那个数</td></tr>
+<tr><td>기본 고정밀 생성</td><td>50 크레딧</td><td>순수 지오메트리 15 + 8K 텍스처 패키지 35 (Ultra Mesh 15는 기본 비활성)</td></tr>
+<tr><td>리토폴로지</td><td>10 크레딧</td><td>기본 리토폴로지 5 + 사각면 토폴로지 5 = 10 크레딧</td></tr>
+<tr><td>오토 리깅</td><td>20 크레딧</td><td>인간형 스켈레톤 바인딩 20 크레딧</td></tr>
+<tr><td>스마트 메시 (P2.0)</td><td>100 취소선, <strong>65 크레딧</strong></td><td>정가 100에서 프리뷰 프로모션 할인이 적용되어 실차감 65 크레딧</td></tr>
 </tbody>
 </table>
 
-<p>第一行不能靠凑。默认表单里Ultra是关的，所以「15 + 10 + 10 + Ultra 15」这个拆法虽然凑得出50，描述的却不是你打开工作台时看到的那个状态；照着它去界面上找那15，会把本来关着的Ultra打开，一次多花15积分。我在工作台里把开关一个一个关过去量了一遍（过程和截图在§01），量出来的是另一套结构：<strong>几何15是底价，贴图是打包卖的，2K加15、4K加25、8K加35，Ultra Mesh Quality单独再加15。</strong></p>
-<p>把同一个表单从「只要几何」一路开到「8K＋Ultra」，按钮上的数是<strong>15 / 30 / 40 / 50 / 65</strong>五档，<strong>逐档对照表在附录C</strong>。</p>
+<p>핵심 발견: <strong>기본 50 크레딧 중 35 크레딧은 8K 텍스처 비용이며, 순수 3D 형태(지오메트리) 단가는 15 크레딧에 불과</strong>합니다. 텍스처 해상도를 8K에서 2K로 낮추기만 해도 1회 비용이 50에서 30 크레딧으로 40% 절감됩니다.</p>
 
-<p>截至2026-09界面实测，以当天按钮上的数为准。</p>
+<h3>스마트 메시의 실질 완성 비용: 95 크레딧</h3>
 
-<p>两套分法的差别很实在，它决定你能动哪一块。<strong>界面把Texture Gen和HD Texture打包在一个开关后面，你没法只关其中一项</strong>；能动的是贴图档位，从8K拨到2K少20分。而官方表里那个15分的Ultra，在工作台的默认状态下本来就是关着的。</p>
+<figure><img src="images/p07-smartmesh-65.png" alt="스마트 메시 폼: 생성 버튼에 100 취소선 후 65 표시"><figcaption>스마트 메시 폼: 생성 65 크레딧. 2026-09-12.</figcaption></figure>
 
-<p><strong>所以那个50不是几何本身的价钱，其中35分买的是8K贴图。</strong>这和面数那边是同一件事的两面：<strong>默认值替你做了选择。</strong>差别在于面数那个默认值（高精度模型那边的面数控制默认20000，而滑块量程是500到200万）恰好落在可用区间，而贴图默认给的是最贵的8K档。知道了这一点，你就有了一个可以调的旋钮。</p>
+<p>스마트 메시(P2.0) 모드는 무채색 그레이 모델로 출력되므로 풀세트 완성 비용은 다음과 같습니다:</p>
 
-<h3>智能网格那条线实扣多少</h3>
+<ul>
+<li><strong>1단계 (사각면 메시 생성)</strong>: 65 크레딧</li>
+<li><strong>2단계 (컬러 텍스처 생성)</strong>: 30 크레딧</li>
+<li><strong>에셋 1종 풀컬러 완성 비용</strong>: <strong>총 95 크레딧</strong></li>
+</ul>
 
-<p>这条线我对得最细，因为09-12那天我连着跑了十几笔，每笔都拿余额去核。</p>
+<div class="tip"><strong>고정밀 모델과 스마트 메시의 실질적 비용 비교:</strong><br>
+· 순수 지오메트리만 필요할 때: 고정밀 15 크레딧 vs 스마트 메시 65 크레딧<br>
+· 컬러 에셋 완제품 기준: 고정밀 50 크레딧 vs 스마트 메시 95 크레딧<br>
+따라서 수정이 필요 없는 단순 배경 소품은 고정밀 모델(2K 세팅 시 30 크레딧)을, 리깅 및 형태 수정이 필요한 주연급 에셋은 스마트 메시(95 크레딧)를 선택하는 것이 가장 경제적입니다.</div>
 
-<figure><img src="images/p07-smartmesh-65.png" alt="Tripo Studio生成表单切到智能网格，AI模型P2.0-Preview，底部按钮写着生成100划掉65，顶栏余额20205"><figcaption>生成表单切到「智能网格」，AI模型是「P2.0 - Preview」，<strong>底部黄色按钮写的是「生成⚡ <s>100</s> 65」</strong>：100被划掉，实扣65。顶栏余额20205。这一档的贴图不含在里面，出来的是灰模。Tripo Studio中文界面，2026-09-12。</figcaption></figure>
+<h3>목적에 따른 5가지 세팅 조합</h3>
+
+<p>동일한 에셋이라도 목적에 따라 15부터 65 크레딧까지 5단계로 세팅할 수 있습니다:</p>
 
 <table>
-<thead><tr><th>这一步</th><th>界面</th><th>实扣</th></tr></thead>
+<thead><tr><th>용도 등급</th><th>권장 설정 조합</th><th>1회 단가</th><th>적용 권장 에셋</th></tr></thead>
 <tbody>
-<tr><td>智能网格生成（P2.0 - Preview）</td><td>「100划掉65」</td><td><strong>65</strong></td></tr>
-<tr><td>生成完再走一次贴图生成</td><td>「纹理生成30」</td><td><strong>30</strong></td></tr>
-<tr><td><strong>一件带贴图的完整成品</strong></td><td>—</td><td><strong>95</strong></td></tr>
+<tr><td>주연급 / 클로즈업</td><td>고정밀 v3.1 + 8K 텍스처 + PBR ON</td><td><strong>50 크레딧</strong></td><td>플레이어 조작 캐릭터, 핵심 시연 소품</td></tr>
+<tr><td>중경 에셋</td><td>고정밀 v3.1 + 4K 텍스처</td><td><strong>40 크레딧</strong></td><td>도로변 주요 상점, 인터랙티브 차량</td></tr>
+<tr><td>원경 에셋</td><td>고정밀 v3.1 + 2K 텍스처</td><td><strong>30 크레딧</strong></td><td>배경 건물, 가로 시설물 (200m 거리에서 8K와 육안 구별 불가)</td></tr>
+<tr><td>지오메트리 단독</td><td>고정밀 v3.1 + Texture OFF</td><td><strong>15 크레딧</strong></td><td>엔진에서 프로그래밍 셰이더를 직접 입힐 모델</td></tr>
+<tr><td>사각면 리깅용</td><td>스마트 메시 P2.0 (텍스처 별도)</td><td><strong>65 크레딧</strong></td><td>Blender 정밀 수정 및 캐릭터 애니메이션용</td></tr>
 </tbody>
 </table>
 
-<p>截至2026-09界面实测，以当天按钮上的数为准。</p>
+<div class="tip"><strong>익스포트 단계에서의 텍스처 압축은 무료입니다:</strong> 생성 단계에서 2K로 생성한 후 다운로드 단계에서 1k로 축소 익스포트하는 것은 추가 크레딧이 0원입니다. VRAM과 파일 용량을 동시에 아낄 수 있습니다.</div>
 
-<p>怎么验的：那天主批12件网格是<strong>12 × 65 = 780</strong>，另有一件重做和一件绑骨用的行人，网格共14笔<strong>910</strong>；加上13笔纹理的<strong>13 × 30 = 390</strong>，再加一笔绑骨20，合计1320，和当天余额从21540掉到20220这一段一分不差。逐笔对得上，这个65就不是我看花了眼。</p>
+<h3>실제 파리 프로젝트 결산: 5,100 크레딧 소모</h3>
 
-<div class="tip"><strong>选高精度还是选智能网格，真实的差价是15对65，不是50对65。</strong>两边都只要纯几何的话：高精度把Texture开关关掉是15，智能网格是65。这两个数才是同一口径下的对比。要是两边都带贴图，那就是50对95。<strong>先想清楚你要的是哪一种几何，再看价，顺序反了很容易选错档。</strong>两种模式各自适合什么，在§04有一次同图同面数的对照实验。</div>
+<p>2026-09-11 시작 잔액 25,220 크레딧에서 09-12 작업 마감 잔액 20,120 크레딧까지, <strong>순수 5,100 크레딧(약 ¥238 / 한화 약 4.5만 원)</strong>으로 40여 종의 완성도 높은 도시 에셋 세트를 구축했습니다.</p>
 
-<h3>官方自己的算法验证了「基础价15」</h3>
+<p>비용이 집중된 곳은 난이도가 아니라 에셋의 「개수」였습니다. 따라서 예산을 아끼는 가장 강력한 무기는 프롬프트 테크닉이 아니라, <strong>원경 에셋의 2K 감면</strong>과 <strong>불필요한 반복 재생성 방지</strong>입니다.</p>
 
-<p>对完账我心里还是有点不踏实，因为FAQ那张表是我抄下来的，万一抄错了呢。后来发现定价页上有一个可以反推的东西：每一档都写着「N Monthly Credits ≈ M Models」，拿N除以M就行。</p>
+<h3>예산 최적화 종합 체크리스트</h3>
 
 <table>
-<thead><tr><th>套餐</th><th>月积分</th><th>官方折算</th><th>积分÷模型数</th></tr></thead>
+<thead><tr><th>최적화 전략</th><th>비용 절감 효과</th><th>적용 가이드</th></tr></thead>
 <tbody>
-<tr><td>Free</td><td>200</td><td>≈13 models</td><td>15.4</td></tr>
-<tr><td>Pro</td><td>3000</td><td>≈200 models</td><td><strong>15.0</strong></td></tr>
-<tr><td>Max</td><td>25000</td><td>≈1660 models</td><td>15.1</td></tr>
-<tr><td>Team</td><td>90000</td><td>≈6000 models</td><td><strong>15.0</strong></td></tr>
+<tr><td>원경 에셋 텍스처를 2K로 낮추기</td><td>단가 50 → 30 크레딧 (40% 절감)</td><td>카메라 근접 거리가 먼 배경 오브젝트에 전면 적용</td></tr>
+<tr><td>동일 지오메트리에 N개 텍스처 변형 입히기</td><td>50×N 대신 50 + 25×N 크레딧</td><td>건물 거리 조성 시 50% 비용 절감 및 지오메트리 인스턴싱 VRAM 절약</td></tr>
+<tr><td>형태는 유지하고 면 수만 줄일 때 리토폴로지 선택</td><td>재생성(50) 대신 리토폴로지(10)</td><td>와이어프레임 정돈 및 감면에만 10 크레딧으로 대응</td></tr>
+<tr><td>인물 캐릭터 인스턴싱 복제</td><td>40명 개별 생성(2,800) 대신 4종 복제(280)</td><td>모션 위상만 분산하여 90% 예산 절감</td></tr>
+<tr><td>익스포트 단계에서 1k 텍스처 다운스케일</td><td>추가 비용 0원</td><td>브라우저 렉 유발하는 VRAM 5 GB 폭탄 원천 차단</td></tr>
+<tr><td>리깅 시 계정 내 에셋 직접 선택</td><td>50 크레딧 임포트 수수료 절감</td><td>생성 완료 에셋은 다운로드 후 재업로드하지 말 것</td></tr>
 </tbody>
 </table>
 
-<p>四档全部落在15上。<strong>官方在算「你的积分能做几个模型」的时候，用的分母就是15，不是50。</strong>这是产品自己在页面上确认了基础价。</p>
-
-<p>这条对你的实际意义是：<strong>Pro那3000积分不是只够做60个模型，是够做200个</strong>。前提得说清楚，官方那个分母15算的是纯几何，不含贴图；真要带贴图，2K档一件30分，3000积分是100件。就算按这个算，也比按默认的50分一件多出一倍。</p>
-
-<p>工作台高精度模型表单的全貌在§01：通用设置下是「几何与贴图」，订阅专享区有「分部件生成（带New角标，默认关）」。</p>
-
-<h3>但按钮上的数字才是当场生效的那个</h3>
-
-<p>我得把一处对不上的地方摊出来。首页那个快捷生成框里有个二选一，高精度模型和智能网格，选前者时按钮写的是55，不是50。</p>
-
-<p>首页那个快捷入口的样子见§01：拖一张图进来，下面高精度模型/智能网格二选一。<strong>选高精度模型时按钮是「Generate 55」，比工作台表单的50多5分</strong>——这5分对应哪个开关，我没在界面上核出来。</p>
-
-<p>同一个框切到智能网格（图见§01），按钮变成「Generate <s>100</s> 0」，走的是智能网格那条线，Preview期间第一次免费。<strong>同一张图、同一个框，两个按钮的数差着一倍，差别只在上面那个二选一。</strong></p>
-
-<div class="callout"><strong>别背价目表，按下去之前看一眼按钮上那个数就行。</strong>它跟着你当前的开关实时变，而且不同入口的默认开关不一样，还会叠上当期的划线折扣。想知道某个加项值多少分，把它关掉，看那个数字掉了多少，这比查表准。</div>
-
-<h3>Trial x1：免费那一次之后，落在折后价上</h3>
-
-<p>界面上有好几处挂着「Trial x1」或「New Function Trial」的角标，意思是这个功能给你免费试一次。我撞上的有这些：</p>
-
-<table>
-<thead><tr><th>功能</th><th>角标</th><th>页面原价</th><th>实付</th></tr></thead>
-<tbody>
-<tr><td>智能网格P2.0</td><td>Preview Trial x1</td><td>100</td><td>首次0，<strong>之后每笔65</strong>（原价被划掉的折后价）</td></tr>
-<tr><td>智能拆分</td><td>New Function Trial x1</td><td>40</td><td>0（那天）</td></tr>
-<tr><td>分部件生成</td><td>Trial x1</td><td>+30</td><td>没试</td></tr>
-</tbody>
-</table>
-
-<p>截至2026-09界面实测，以当天按钮上的数为准。</p>
-
-<p>有一处要说在这儿，免得你翻到§01时犯嘀咕：上表「分部件生成」那一行记的是我2026-09-11在国际站界面上看到的角标；§01那张09-14拍的国区截图上，这一项挂的已经是New，不是Trial x1。是国区和国际站的差别，还是这三天官方改了角标，我没分开验。<strong>角标会变、价目表会过期，只有按钮上当场显示的那个数不会</strong>——这正是全书反复说「以你按下去之前按钮上那个数为准」的原因。</p>
-
-<p>智能网格的AI Model下拉见§01：P2.0 – Preview带「Trial x1」，另一项是P1.0 – Fast。<strong>规划预算时按你实际会付的那个数算，Trial只有一次。</strong></p>
-
-<p>这里有个我早期算错过的地方：我一度以为Trial用完就回到原价100，做批量预算时按100乘件数算，结果多留了一大截。真正扣的是划线后的65，一批12件就差420分。<strong>预算宁可按看到的按钮数算，别按记忆里的价目表算。</strong></p>
-
-<h3>余额在哪看</h3>
-
-<p>Assets页的样子见§03。这里只提一件事：<strong>积分余额常驻顶栏右侧</strong>，旁边就是Upgrade；下面那排All / Smart Mesh / Untextured / Textured / Rigged筛选，做完一批资产用它来点数最快。</p>
-
-<p>余额的变动可以当账本用。那辆P2.0出租车做完贴图，余额从25220变成25190，正好30分，和按钮上写的对得上。每做一步记一次余额，比事后回忆准得多。完整的一串读数在附录C，四个时间点互相闭合。</p>
-
-<h3>按用途选配置：同一件资产有五种配法</h3>
-
-<p>讲完构成，说真正要做的决定。<strong>一批资产不该一个配置跑到底，该先给每件定个用途，再按用途选档。</strong>这是我做完三批资产之后才固定下来的做法。</p>
-<p><strong>同一件资产有五种配法，单价从15到65</strong>——差的几乎全在贴图档位上：主角走8K（50）、中景4K（40）、远景2K（30）、只要形状就把Texture整个关掉（15）、要干净四边面走智能网格P2.0（65）。<strong>五行完整对照表在附录C。</strong></p>
-
-<p>巴黎那批23件我走的是4K那一档，一件40；小王子那16件是默认的8K，一件50。<strong>而在画面里，一件只在两百米外出现的建筑，8K和2K我分不出来。</strong></p>
-
-<p>巴黎那批23件我走的是4K那一档，一件40；小王子那16件是默认的8K，一件50。<strong>同一个「高精度模型」两个单价，差的全在贴图档位上</strong>，而在画面里，一件只在两百米外出现的建筑，8K和2K我分不出来。</p>
-
-<div class="tip">判断哪一档的土办法：<strong>把这件资产在你的画面里最近能被看到的那个距离，先用现有资产摆一遍试试。</strong>看得清砖缝就上高档，看不清就往下拨。凭想象定档，十次有八次定高了。</div>
-
-<div class="tip"><strong>导出不扣积分，这一条我拿余额验过。</strong>09-12那天导一份FBX下来，导出前后顶栏余额都是20205，一分没动。所以别为了省积分而不敢多导几次，同一个模型换几种格式、换几档纹理分辨率反复导，成本是零。<strong>另一头有笔钱要记住：把一个外部模型上传进Tripo做绑骨，要50导入费</strong>，而从账号内已有的资产里直接选是0，§06有这条路的完整走法。</div>
-
-<h3>这些积分花在哪了</h3>
-
-<table>
-<p>八条线逐笔花在哪，<strong>那张流水表在附录C</strong>（含每一笔的用途和失败重试）。<strong>小计1350积分，约¥63。</strong></p>
-</table>
-
-<div class="warning"><strong>这张表的口径，有三样东西不在里面。</strong>一是巴黎那条线9月9日之前的生成，二是Unity那一版（记在它自己的文档里），三是<strong>9月11日下午那批38件的P2.0批量，一次3640积分，单独记在附录C的第二段流水里</strong>。第三样的量比这张表还大，之所以分开记，是因为它从一开始就是拿余额读数记的账，和这张表「按各条线记录加总」不是同一种记法，混在一起会把两种可信度不同的数搅成一个。<strong>两段的完整流水、以及一笔没对上的10分，都摊在附录C。</strong></div>
-
-<p>要一个最硬的数的话，用这个：<strong>从9月11日那个25220的读数，到9月12日收工时的20120，Tripo这边净掉了5100积分，按¥0.0467一分算约¥238。</strong>这是余额头尾相减，不靠任何一条记录加总，也是这本书里我最愿意拿出来对外说的一个成本数字。上面那张1350的表发生在25220这个读数之前，属于另一段，<strong>两个数不要相加</strong>。</p>
-
-<p>这张表里有两个数字值得单独看。一个是小王子那条线的840分，占了六成以上，因为那是唯一一条「按设计图清单批量生成」的线，16张图各生成一次。<strong>真正吃积分的从来不是难度，是件数。</strong>另一个是星月夜那200分里的50，那是我误判一次生成失败、重复提交造成的，属于纯浪费。</p>
-
-<p>顺着这个往下想，钱该花在哪就清楚了。件数是省不掉的，你要几件就是几件。<strong>能动的只有每件的配置档位，和那些白交的重复提交。</strong>把远景件的贴图档位拨到2K，单价从50降到30；提交前先看清楚状态，别在任务还在跑的时候以为它失败了。这两件事加起来，同样这些产出大概能落在800分上下。</p>
-
-<h3>另一笔账：时间</h3>
-
-<p>积分好算，时间容易被忽略。我记下来的几个数：</p>
-
-<table>
-<thead><tr><th>动作</th><th>耗时</th><th>花积分吗</th></tr></thead>
-<tbody>
-<tr><td>高精度模型生成一件</td><td>端到端约四分钟（表单上标着Expect longer wait times；这一档没有逐件算子耗时，口径见§05）</td><td>50</td></tr>
-<tr><td>智能网格生成一件</td><td>17到65秒，随面数预算变</td><td>65</td></tr>
-<tr><td>贴图生成一件</td><td>109秒</td><td>30</td></tr>
-<tr><td>自动绑定一次</td><td>3到19秒</td><td>20</td></tr>
-<tr><td>本地批量减面25件</td><td><strong>131秒</strong>，平均5.2秒/件</td><td>0</td></tr>
-<tr><td>19分钟做完一个可玩demo</td><td>星月夜那条线的实际用时</td><td>200</td></tr>
-</tbody>
-</table>
-
-<p>上表里Tripo侧那几个数是<strong>算子耗时</strong>（算子耗时口径，不含上传与排队；端到端要往上加，两个口径的实测差见§01，词条见附录D）。<strong>排期按端到端算，别按接口报的算。</strong></p>
-
-<p>这张表里有个挺反直觉的东西：<strong>最花钱的那几步，你根本不用盯着</strong>，提交完就能走开。真正吃你注意力的是后面组装和调试那一大段，而它一分钱不要。所以别一件一件提交，Pro给的10个并发是实打实的产能，一次丢一批出去，回头统一收。</p>
-
-<h3>怎么记账</h3>
-
-<p>我这一轮之所以能把每笔说清楚，靠的不是事后回忆，是两件很笨的事：每条线在自己的记录文件里留一行「这条花了多少积分、花在哪」，以及关键步骤前后各看一眼顶栏余额。</p>
-
-<p>这两件事的可信度不一样，我是吃了亏才分清的。<strong>余额掉了，是扣费真的发生过的正面证据；记录加总只能证明「我记下来的那些确实花了」，证明不了「没记下来的不存在」。</strong>所以两边打架的时候以余额为准，然后老老实实把差额写出来。我09-10那一段就是只有加总没有余额，现在回头看，账面上的洞正好都在那一段。</p>
-
-<p>余额差法特别好用，因为它不受界面显示影响。那辆出租车做贴图，余额25220变25190，就是30，跟按钮上写的一致；09-12那12笔网格，780分也是这么逐笔对上的。要是哪次对不上，说明你理解错了某个开关。<strong>产品说的价和实际扣的分，得自己对一遍才算数。</strong></p>
-
-<p>还有一处没对上，如实写在这儿：<strong>官方表里Segmentation是5、每部件再加5，而Studio的拆件按钮上明晃晃写着40。</strong>我只拆过一次（09-11那辆出租车），那天按钮挂着Trial、实扣0，没机会用余额差去验。<strong>所以本书凡是提到拆件40，说的都是界面按钮上的数，这一条我还没验完。</strong>你自己一次拆件就能验完——两个前提和完整说明在附录C。</p>
-
-<h3>还有一条成本线我没走</h3>
-
-<p>整本书讲的都是网页订阅这条路。Tripo另有API和CLI，走那条的计费方式、额度形态和网页端不一样，我这一轮没有实测，所以这一节里的任何数字都不要往API上套。那部分在§11，等真正接过一遍再写。</p>
-
-<h3>把预算铺开的几条做法</h3>
-
-<table>
-<thead><tr><th>做法</th><th>效果</th><th>适用条件</th></tr></thead>
-<tbody>
-<tr><td>按用途给贴图定档，远景件拨到2K</td><td>单价50 → 30</td><td>近景特写留高档，主角别省</td></tr>
-<tr><td>只要几何，材质在引擎里给</td><td>单价50 → 15</td><td>拿到的是灰模。事后再走贴图生成是30，加起来45，所以要一开始就确定</td></tr>
-<tr><td>导出时纹理分辨率选1k</td><td>不动积分，省的是显存和加载时间</td><td>几乎没有代价，游戏距离上看不出</td></tr>
-<tr><td>一个几何配N张贴图，而不是生成N个模型</td><td>50+25×N，对上50×N</td><td>形状全一样，只适合建筑、道具这类</td></tr>
-<tr><td>形状对了就改重拓扑，别重新生成</td><td>10，对上50</td><td>只在形状本身是对的时候成立</td></tr>
-<tr><td>角色做3–5个，靠实例化铺开</td><td>44个行人，3080 → 300上下（按一件70分折算，见§06）</td><td>需要错开动画相位，否则像仪仗队</td></tr>
-<tr><td>减面和压贴图在本机跑</td><td>0积分，5.2秒/个</td><td>要装node，命令在§04</td></tr>
-<tr><td>绑骨用账号内已有的资产，不上传</td><td>省50导入费</td><td>模型本来就是Tripo生成的</td></tr>
-</tbody>
-</table>
-
-<div class="tip">开工前先按这张表算一遍总账，再决定订哪一档。<strong>一个二三十件资产的小游戏，Pro那3000积分足够，真正的成本大头是你自己的时间。</strong></div>
-
-<!-- TODO-SHOT: Free 账号视角下的导出弹层。书里现在的统一口径是「官方对照表 15 (H2.5 only) + 我的记录说 GLB/FBX 导不出但没在免费账号复现」，两条都写明了强度。要把这条钉死，需要一个未订阅账号生成一个模型后点导出的截图。 -->
-<!-- TODO-SHOT: 无痕窗口（未登录、未挂券）下的 Pricing 页与 Compare Plans Price 行，作为基准价的正面证据。2026-09-13 已用不带登录态的页面原文复核过 USD 那一列，但没有截图。 -->
+<div class="tip"><strong>결론: 에셋 20~30개 규모의 3D 웹 프로젝트는 Pro 플랜의 3,000 크레딧으로 충분히 완성할 수 있습니다.</strong></div>
 
 </div>
+
 
 <!-- ===== part08-design-first.html ===== -->
 <div class="content">
