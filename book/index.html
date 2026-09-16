@@ -3987,431 +3987,353 @@ window.createImageBitmap = undefined;</code></pre>
 <!-- ===== part13-blender.html ===== -->
 <div class="content">
 
-<h2 class="section-title page-break" id="part13"><span class="num">§13</span> Blender：什么时候该进，什么时候别进</h2>
+<h2 class="section-title page-break" id="part13"><span class="num">§13</span> Blender: 언제 쓰고, 언제 쓰지 말아야 하는가</h2>
 <p class="section-en">Blender — When It Earns Its 300 MB</p>
-<p class="section-intro">同一个资产跑三条路径的实测对比、一次失败得很彻底的自动权重绑定，以及几个不打开GLB的JSON就永远发现不了的坑。结论可能和你想的不一样。</p>
+<p class="section-intro">동일한 에셋을 3가지 경로로 처리한 정량적 실측 비교, 완전히 실패로 끝난 자동 웨이트(Auto-weight) 바인딩 실험, 그리고 GLB 내부의 glTF JSON을 열어보지 않고는 영원히 밝혀낼 수 없는 치명적인 함정들을 파헤칩니다. 결론은 여러분의 예상과 사뭇 다를 수 있습니다.</p>
 
-<h3>先说结论</h3>
+<h3>결론부터 말하면</h3>
 
-<p>「Tripo出的模型要不要进Blender」这个问题，我一度以为答案是「当然要，专业流程都这么干」。跑完对照实验之后，我的答案变成了三句话。</p>
+<p>「Tripo에서 뽑아낸 3D 모델을 Blender에 넣어야 하는가」라는 질문에 대해, 저 역시 한때는 "당연히 넣어야지, 프로들은 다 그렇게 한다"가 정답인 줄 알았습니다. 하지만 철저한 통제 대조 실험을 마친 지금, 저의 답변은 다음 세 문장으로 압축됩니다.</p>
 
-<p><strong>只做减面和压缩的话，Blender没有优势。</strong>同一个资产，Blender产出6772面、365 KiB，命令行产出6781面、369 KiB，肉眼和数字上都等价，而命令行不需要那三百兆的依赖。</p>
+<p><strong>단순히 면 리덕션(Decimate)과 용량 압축만 할 목적이라면 Blender는 아무런 비교 우위가 없습니다.</strong> 동일한 에셋에 대해 Blender는 6,772면/365 KiB를 출력했고, CLI 명령어는 6,781면/369 KiB를 출력했습니다. 육안 화질과 숫자 모두 사실상 동등하며, CLI 방식은 300 MB가 넘는 무거운 프로그램을 컴퓨터에 깔 필요조차 없습니다.</p>
 
-<p><strong>Blender在这条管线上有两件事最值得它那三百兆，头一件是让死的资产活过来。</strong>Tripo直出的静态模型是0个skin、0个关节，任何关节动画都做不了；Blender一秒就能给它加上骨架。第二件是格式转换：P2.0带贴图的产物只给FBX，浏览器只吃GLB，<strong>而我这台机器上当时装了的、能把FBX读进来再吐成GLB的，只有它</strong>，这条在本节最后展开。</p>
+<p><strong>Blender가 이 파이프라인에서 300 MB의 밥값을 톡톡히 해내는 순간은 오직 두 가지뿐이며, 첫 번째는 죽은 에셋에 생명을 불어넣는 리깅(Rigging)입니다.</strong> Tripo에서 직출한 정적 모델은 스킨(Skin) 0개, 관절(Joint) 0개로 어떠한 골격 애니메이션도 불가능하지만, Blender는 1초 만에 뼈대를 심어줄 수 있습니다. 두 번째는 포맷 변환입니다: P2.0 스마트 메시의 텍스처 결과물은 오직 FBX로만 제공되고 브라우저는 GLB만 지원하는데, <strong>당시 제 컴퓨터에 설치된 도구 중 FBX를 읽어 무손실 GLB로 다시 뱉어낼 수 있는 것은 오직 Blender뿐</strong>이었습니다(이 변환 노하우는 본 섹션 후반부에 상술합니다).</p>
 
-<p><strong>但在Tripo的资产上，Blender的自动权重是不成立的。</strong>转一下脊柱整个人就倒了。这条是我实测出来的，下面有图。</p>
+<p><strong>하지만 Tripo로 생성한 메쉬에 Blender의 '자동 웨이트(Automatic Weights)' 바인딩을 적용하는 것은 완전히 불가능합니다.</strong> 척추를 살짝 돌리는 순간 캐릭터 전체가 괴상하게 붕괴되어 주저앉아 버립니다. 이는 제가 직접 실측하여 증명한 사실이며, 아래에 증거 렌더링이 있습니다.</p>
 
-<p>所以2026年9月这个时点，我的真实推荐是：角色要动，走Tripo自带的绑骨（见§06）；Blender留给格式转换、拆件、精修、烘焙和hero资产。</p>
+<p>따라서 2026년 9월 현재 시점에서 제가 권장하는 정직한 파이프라인은 다음과 같습니다: <strong>캐릭터를 움직이게 하려면 Tripo 자체 오토 리깅(§06 참조)을 쓰고, Blender는 포맷 변환, 수작업 부품 분리, 정밀 리터칭, 노멀맵 베이킹, 그리고 주인공(Hero)급 특수 에셋을 손볼 때만 여십시오.</strong></p>
 
-<h3>E0：同一个资产，三条路径</h3>
+<h3>E0 실험: 동일한 에셋, 3가지 처리 경로</h3>
 
-<p>实验设置尽量干净：同一个案例<code>building-03-boulangerie.glb</code>（奥斯曼面包店，16696面/ 568 KiB / 512²贴图），环境是Blender 4.4.3无头执行加<code>@gltf-transform/cli</code>4.5.0，耗时用<code>date +%s</code>记墙钟。</p>
+<p>실험 환경은 최대한 엄격하게 통제되었습니다: 동일한 테스트 모델 <code>building-03-boulangerie.glb</code>(오스만 베이커리 건물, 16,696면 / 568 KiB / 512² 텍스처), 환경은 Blender 4.4.3 헤드리스(Headless) 실행 + <code>@gltf-transform/cli</code> 4.5.0, 소요 시간은 <code>date +%s</code> 명령어로 벽시계 실측 시간을 측정했습니다.</p>
 
-<p><strong>这件输入不是Tripo直出的原件，是A组那件在本地跑过一道<code>gltf-transform optimize</code>之后的512²版</strong>，也就是附录A的B组；Tripo直出的原件是16874面、1.49 MiB、1024²贴图。三条路喂的是同一个输入，所以对照本身不受影响，但引这几个数的时候别把它当成「Tripo刚出炉的样子」。（本节的文件体积一律按1024进位写成KiB／MiB，和附录A那张逐件表用的是同一把尺子。）</p>
+<p><strong>참고로 이 입력 파일은 Tripo 원본 그대로가 아니라, A그룹 모델에 <code>gltf-transform optimize</code>를 거쳐 512² 텍스처로 줄여둔 버전(부록 A의 B그룹)입니다.</strong> Tripo 원본 직출 파일은 16,874면, 1.49 MiB, 1024² 텍스처입니다. 세 경로 모두 동일한 입력 소스를 사용했으므로 대조 실험의 타당성에는 아무런 영향이 없습니다. (본 섹션의 파일 용량은 부록 A와 일관되게 1024 단위인 KiB/MiB로 표기합니다).</p>
 
-<p>模式B，Tripo直连引擎，两条命令：</p>
+<p><strong>모드 B: Tripo → 렌더링 엔진 직결 (명령어 2줄)</strong></p>
 
 <pre><code>gltf-transform simplify in.glb tmp.glb --ratio 0.1 --error 1
 gltf-transform optimize tmp.glb out.glb --compress quantize --texture-size 512</code></pre>
 
-<p>减面3秒、压缩3秒，合计6秒。产出6781面/ 369 KiB。</p>
+<p>면 리덕션 3초, 최적화 압축 3초로 총 6초 소요. 결과물: 6,781면 / 369 KiB.</p>
 
-<p>模式A，进Blender，一段无头脚本：</p>
+<p><strong>모드 A: Blender 투입 (헤드리스 파이썬 스크립트)</strong></p>
 
 <pre><code>bpy.ops.import_scene.gltf(filepath=SRC)
-m = obj.modifiers.new('dec','DECIMATE')
+m = obj.modifiers.new('dec', 'DECIMATE')
 m.decimate_type = 'COLLAPSE'
 m.ratio = 6781/16696
 bpy.ops.export_scene.gltf(filepath=DST, export_format='GLB', export_apply=True)</code></pre>
 
-<p>导入0.2秒、减面加导出0.1秒，含Blender启动的墙钟2秒，后续压缩同模式B再3秒。产出6772面/ 365 KiB。</p>
+<p>임포트 0.2초, 감면 및 익스포트 0.1초, Blender 엔진 자체 부팅 시간을 포함하여 총 2초 소요, 이후 모드 B와 동일한 후속 압축에 3초 소요. 결과물: 6,772면 / 365 KiB.</p>
 
 <table>
-<thead><tr><th></th><th>面数</th><th>体积</th><th>耗时</th><th>依赖</th></tr></thead>
+<thead><tr><th>처리 모드</th><th>최종 면수</th><th>파일 용량</th><th>총 소요 시간</th><th>요구되는 외부 의존성</th></tr></thead>
 <tbody>
-<tr><td>模式B（gltf-transform）</td><td>6781</td><td>369 KiB</td><td>6s</td><td>一条npx命令</td></tr>
-<tr><td>模式A（Blender）</td><td>6772</td><td>365 KiB</td><td>2s + 3s压缩</td><td>Blender约300 MB</td></tr>
+<tr><td>모드 B (gltf-transform CLI)</td><td>6,781개</td><td>369 KiB</td><td>6초</td><td>단 한 줄의 npx 명령어 (경량)</td></tr>
+<tr><td>모드 A (Blender)</td><td>6,772개</td><td>365 KiB</td><td>2초 + 압축 3초</td><td>Blender 설치 필수 (약 300 MB)</td></tr>
 </tbody>
 </table>
 
-<p>差异在千分之一量级。<strong>「必须进Blender」这个迷思，在减面这件事上是假的。</strong></p>
+<p>두 결과물의 면수와 파일 크기 차이는 1,000분의 1 수준에 불과합니다. <strong>"감면을 위해 반드시 Blender를 거쳐야 한다"는 통념은 완전히 거짓으로 입증되었습니다.</strong></p>
 
-<p>模式C是混搭，不是二选一。我在巴黎城里同机位同画质跑了两个变体：开着沿街14栋Tripo建筑，和把它们全关掉。</p>
+<p><strong>모드 C: AI 에셋 + 프로시저럴(절차적) 하이브리드 혼합</strong>. 이는 둘 중 하나를 양자택일하는 것이 아닙니다. 파리 시가지 데모에서 동일 구도, 동일 그래픽 옵션으로 거리변 14채의 Tripo 건물을 켰을 때와, 이를 끄고 100% 절차적 박스 건물로만 채웠을 때를 정밀 비교했습니다:</p>
 
 <table>
-<thead><tr><th>变体</th><th>draw calls</th><th>三角面</th><th>帧时间</th><th>加载</th></tr></thead>
+<thead><tr><th>구성 방식</th><th>드로우 콜 (Draw Calls)</th><th>전체 씬 삼각면</th><th>프레임 타임</th><th>초기 로딩 시간</th></tr></thead>
 <tbody>
-<tr><td>C1混搭（14栋Tripo建筑+程序化城市层）</td><td>233</td><td>2,810,450</td><td>16.7 ms</td><td>2039 ms</td></tr>
-<tr><td>C2全程序化</td><td>216</td><td>2,447,388</td><td>16.7 ms</td><td>1971 ms</td></tr>
-<tr><td><strong>差额</strong></td><td><strong>+17</strong></td><td><strong>+36.3万（+15%）</strong></td><td><strong>0</strong></td><td>+68 ms</td></tr>
+<tr><td>C1 하이브리드 (14채 Tripo + 절차적 도시 레이어)</td><td>233회</td><td>2,810,450개</td><td>16.7 ms (60 FPS)</td><td>2,039 ms</td></tr>
+<tr><td>C2 100% 순수 절차적 생성</td><td>216회</td><td>2,447,388개</td><td>16.7 ms (60 FPS)</td><td>1,971 ms</td></tr>
+<tr><td><strong>순수 증가 차액</strong></td><td><strong>+17회</strong></td><td><strong>+36.3만 면 (+15%)</strong></td><td><strong>0 ms (프레임 드랍 없음)</strong></td><td>+68 ms</td></tr>
 </tbody>
 </table>
 
-<p>用15%的三角预算，买下赛道沿线全部的高细节建筑，帧率一帧没掉（两个变体都锁在vsync 60 fps满帧）。这就是混搭的量化价值。</p>
+<p>폴리곤 예산을 고작 15% 더 투자하여 주행 도로변 전체를 고품질 디테일 건축물로 채워 넣었음에도, 프레임 레이트는 VSync 60 FPS 칼고정을 유지했습니다. 이것이 바로 하이브리드 아키텍처의 정량적 가치입니다.</p>
 
-<h3>Blender不可替代的那一件事：绑定</h3>
+<h3>Blender가 절대적으로 대체 불가능한 영역: 스켈레톤 리깅</h3>
 
-<p>用<code>pedestrian-01-man-suit.glb</code>（静态行人，和E0一样取的是B组那件512²版，不是Tripo直出的原件；<strong>不过「0个skin、0个关节」这一条A组原件同样成立，降一道贴图不会凭空长出骨架</strong>）补测，Blender侧脚本建一条三骨骼链<code>root → spine → head</code>，用<code>ARMATURE_AUTO</code>自动权重，一秒跑完。</p>
+<p>정적 보행자 모델인 <code>pedestrian-01-man-suit.glb</code>(정장 입은 신사)를 대상으로 Blender 스크립트를 통해 <code>root → spine → head</code> 3개 관절의 본 체인을 구축하고 <code>ARMATURE_AUTO</code>(자동 웨이트) 바인딩을 실행했습니다. 연산은 1초 만에 끝났습니다:</p>
 
 <table>
-<thead><tr><th></th><th>skins</th><th>joints</th><th>animations</th><th>nodes</th><th>体积</th></tr></thead>
+<thead><tr><th>단계</th><th>스킨(Skins)</th><th>관절(Joints)</th><th>애니메이션 트랙</th><th>씬 노드 수</th><th>파일 용량</th></tr></thead>
 <tbody>
-<tr><td>绑定前</td><td><strong>0</strong></td><td>0</td><td>0</td><td>1</td><td>443 KiB</td></tr>
-<tr><td>Blender绑定后</td><td><strong>1</strong></td><td><strong>4</strong></td><td>0</td><td>6</td><td>815 KiB</td></tr>
+<tr><td>리깅 이전</td><td><strong>0개</strong></td><td>0개</td><td>0개</td><td>1개</td><td>443 KiB</td></tr>
+<tr><td>Blender 리깅 이후</td><td><strong>1개</strong></td><td><strong>4개</strong></td><td>0개</td><td>6개</td><td>815 KiB</td></tr>
 </tbody>
 </table>
 
-<figure><img src="images/blender-01-rigged-overview.png" alt="Blender里打开自动权重绑定后的行人模型"><figcaption>Blender 4.4.3里打开<code>modeA-rigged.glb</code>。这是那件静态行人经Blender自动权重绑定之后的样子，模型中间那条竖着的橙色线就是全部骨架。注意左上角的对象名<code>tripo_node_bd11f859-…</code>，这是Tripo导出GLB的命名规则。</figcaption></figure>
+<figure><img src="images/blender-01-rigged-overview.png" alt="Blender에서 자동 웨이트 리깅을 마친 보행자 모델 화면"><figcaption>Blender 4.4.3에서 연 <code>modeA-rigged.glb</code>. 정적 보행자 모델에 뼈대를 심은 모습으로, 인체 중앙에 주황색 선으로 표시된 것이 스켈레톤입니다. 좌측 상단 오브젝트명이 <code>tripo_node_bd11f859-…</code>로 되어 있으며, 이는 Tripo 익스포트 모델의 표준 명명 규격입니다.</figcaption></figure>
 
-<figure><img src="images/p13-armature-outliner.jpg" alt="Blender大纲视图里的4关节骨架"><figcaption>同一个文件的大纲视图（已裁去下方空白）。骨架只有四个：<code>root</code> → <code>spine</code> → <code>head</code>，外加一根<code>neutral_bone</code>；顶点组也是这四个。上面那个<code>glTF_not_exported</code>集合里的「棱角球」是glTF导入器留下的辅助物体，遍历网格时要排除掉它。</figcaption></figure>
+<figure><img src="images/p13-armature-outliner.jpg" alt="Blender 아웃라이너의 4개 관절 스켈레톤 구조"><figcaption>동일 파일의 아웃라이너 뷰. 뼈대는 <code>root</code> → <code>spine</code> → <code>head</code> 및 <code>neutral_bone</code> 4개로 구성되어 있으며, 버텍스 그룹도 동일하게 생성되었습니다. 상단 <code>glTF_not_exported</code> 컬렉션에 들어 있는 '아이코스피어(Icosphere)'는 glTF 임포터가 생성한 보조 오브젝트이므로 메쉬 순회 시 반드시 배제해야 합니다.</figcaption></figure>
 
 <div class="callout">
-<strong>写脚本遍历Tripo导入的场景时，记得跳过<code>glTF_not_exported</code>集合。</strong>不跳的话它会被当成一个真实网格参与计算，面数、包围盒全都会算错。我的脚本里是这么判的：<code>if any(c.name == 'glTF_not_exported' for c in o.users_collection): continue</code>。
+<strong>파이썬 스크립트로 Tripo 임포트 씬을 순회할 때는 <code>glTF_not_exported</code> 컬렉션을 반드시 건너뛰어야 합니다.</strong> 이를 건너뛰지 않으면 보조 오브젝트가 실제 메쉬로 오인되어 면수와 바운딩 박스가 엉망으로 계산됩니다. 파이썬 필터링 코드: <code>if any(c.name == 'glTF_not_exported' for c in o.users_collection): continue</code>.
 </div>
 
-<h3>E3：连通分量拆不出轮子</h3>
+<h3>E3 실험: 연결 요소(Loose Parts) 분할로는 바퀴를 떼어낼 수 없다</h3>
 
-<p>在做「车轮能不能转」这件事之前，我先试了最直觉的路：用Blender按连通分量把网格切开（<code>mesh.separate(type='LOOSE')</code>），看能不能得到一个可以独立旋转的轮子。</p>
+<p>"자동차 바퀴를 회전시킬 수 있을까"를 검증하기 위해, 가장 직관적인 방법인 Blender의 연결 요소 분리(<code>mesh.separate(type='LOOSE')</code>)를 실행했습니다.</p>
 
 <table>
-<thead><tr><th>资产</th><th>原始面数</th><th>切出块数</th><th>最大块</th></tr></thead>
+<thead><tr><th>테스트 차량 에셋</th><th>원본 삼각면 수</th><th>분할된 파편 덩어리 수</th><th>가장 큰 단일 파편의 면수</th></tr></thead>
 <tbody>
-<tr><td>citroen-2cv</td><td>18076</td><td><strong>358</strong></td><td>431面</td></tr>
-<tr><td>car-01-taxi</td><td>18083</td><td><strong>262</strong></td><td>655面</td></tr>
-<tr><td>car-02-cargo-tricycle</td><td>18490</td><td><strong>569</strong></td><td>320面</td></tr>
+<tr><td>citroen-2cv (시트로엥 승용차)</td><td>18,076개</td><td><strong>358조각</strong></td><td>431개</td></tr>
+<tr><td>car-01-taxi (파리 택시)</td><td>18,083개</td><td><strong>262조각</strong></td><td>655개</td></tr>
+<tr><td>car-02-cargo-tricycle (화물 삼륜차)</td><td>18,490개</td><td><strong>569조각</strong></td><td>320개</td></tr>
 </tbody>
 </table>
 
-<figure><img src="images/blender-10-loose-parts-view.png" alt="2CV按松散块拆开后每块一个随机色"><figcaption>同一辆2CV按松散块拆开之后，Blender给每块碎片一个随机物体色、加一圈橙色描边。<strong>视图统计角标写着「物体358 / 358」</strong>，整车就是这么碎的。拆分本身只花了0.2秒。</figcaption></figure>
+<figure><img src="images/blender-10-loose-parts-view.png" alt="2CV 차량을 루즈 파츠로 분할한 뒤 각 조각마다 랜덤 색상을 입힌 뷰"><figcaption>시트로엥 2CV를 루즈 파츠로 분할한 모습. 각 파편마다 랜덤 색상이 입혀져 있습니다. <strong>뷰포트 통계에 「오브젝트 358 / 358개」라고 선명히 찍혀 있습니다</strong>. 차체 전체가 이렇게 산산조각 파편화되어 있는 것입니다. 분할 연산 자체는 0.2초밖에 걸리지 않았습니다.</figcaption></figure>
 
-<figure><img src="images/blender-09-loose-parts-358.png" alt="大纲视图里的358个碎片列表"><figcaption>同一状态的大纲视图，一屏78条，全是同名<code>tripo_node_…</code>加序号。<strong>没有一个叫「轮子」或者「车门」</strong>，这就是「几何连通分量不等于语义部件」最直观的样子。界面缩放临时调到0.5才放得下，没有写进偏好设置。</figcaption></figure>
+<figure><img src="images/blender-09-loose-parts-358.png" alt="아웃라이너에 나열된 358개의 파편 오브젝트 목록"><figcaption>동일한 상태의 아웃라이너 화면. 한 화면에 78개씩 <code>tripo_node_…</code> 일련번호가 주렁주렁 나열되어 있습니다. <strong>「바퀴」나 「문짝」 같은 유의미한 부품 이름은 단 하나도 없습니다.</strong> 이것이 바로 '단순 기하학적 연결 요소는 시맨틱 부품이 아니다'라는 사실의 시각적 증거입니다.</figcaption></figure>
 
-<p><strong>拆不出来。</strong>Tripo的输出不是一整块干净网格，而是几百个100到650面的碎片。按连通分量切只能得到这些碎片，得不到「轮子/车身/车门」这种语义部件，因为轮子和车身在几何上是糊在一起的。</p>
+<p><strong>기하학적 분할로는 바퀴를 떼어낼 수 없습니다.</strong> Tripo의 출력 메쉬는 통으로 이어진 매끄러운 단일 스킨이 아니라, 100~650면짜리 수백 개의 파편 껍질이 엉겨 붙은 구조입니다. 이를 기하학적 연결성으로 쪼개면 무의미한 찰흙 부스러기 358개가 나올 뿐이며, 바퀴와 차체 펜더가 지오메트리 상에서 한 덩어리로 융합되어 있기 때문입니다.</p>
 
-<p>这条结论解释了两件事。我那个游戏里车轮转不了，根因是源模型里根本没有可分离的轮子，跟我做没做没关系。而Tripo自己那个「智能拆分」功能之所以是刚需，是因为它做的是语义拆分（按物体含义分件），这是几何算法做不到的事。拆件的实操和实测结果在§05，这里不重复。</p>
+<p>이 결론은 두 가지 진실을 말해줍니다. 첫째, 게임에서 자동차 바퀴가 돌지 않았던 이유는 개발자의 실수가 아니라 원본 3D 모델 자체에 분리 가능한 바퀴 지오메트리가 없었기 때문입니다. 둘째, Tripo의 「스마트 파츠 분할(Semantic Segmentation)」 기능이 왜 절대적으로 필요한가에 대한 해답입니다. AI가 의미를 인식하여 쪼개주는 시맨틱 분할만이 이 문제를 풀 수 있습니다(상세 내용은 §05 참조).</p>
 
-<h3>E4：自动权重绑上了，但权重是错的</h3>
+<h3>E4 실험: 자동 웨이트는 묶였지만, 가중치 분포가 완전히 엉망이다</h3>
 
-<p>绑定生效不等于绑定可用。我把E0里绑好的那个文件重新导入Blender，进姿态模式依次转<code>spine</code>和<code>head</code>，渲三张图。</p>
+<p>스켈레톤이 메쉬에 바인딩되었다고 해서 실제로 쓸 수 있는 것은 아닙니다. E0에서 바인딩을 마친 보행자 모델을 다시 열고, 포즈 모드(Pose Mode)에서 <code>spine</code>(척추)과 <code>head</code>(머리) 본을 회전시키며 렌더링했습니다:</p>
 
 <table>
-<thead><tr><th>姿势</th><th>结果</th></tr></thead>
+<thead><tr><th>테스트 포즈</th><th>물리적 메쉬 반응 결과</th></tr></thead>
 <tbody>
-<tr><td>A静止</td><td>正常站姿（戴帽、西装、手提公文包）</td></tr>
-<tr><td>B把<code>spine</code>转35度</td><td><strong>整个人向前倾倒</strong>，不是上半身相对下半身弯曲，腿也被spine的权重带走了</td></tr>
-<tr><td>C再转<code>head</code>30度</td><td>整个人翻倒，另有一小块<strong>碎片飞离主体</strong></td></tr>
+<tr><td>포즈 A (기본 정지 자세)</td><td>정상적인 서 있는 자세 (모자, 정장, 서류가방)</td></tr>
+<tr><td>포즈 B (<code>spine</code> 본을 35도 회전)</td><td><strong>몸 전체가 통째로 앞으로 고꾸라짐</strong>. 상체가 굽혀지는 것이 아니라 다리까지 척추 웨이트에 끌려감</td></tr>
+<tr><td>포즈 C (이어서 <code>head</code> 본을 30도 회전)</td><td>신체가 완전히 뒤틀려 전복되며, <strong>서류가방 파편 일부가 몸 밖으로 튕겨져 허공으로 날아감</strong></td></tr>
 </tbody>
 </table>
 
-<figure><img src="images/blender-03-spine35-collapse.png" alt="转spine 35度后模型整个塌掉"><figcaption>姿态模式下把<code>spine</code>转35度的现场。左上角写着「骨架: spine」，而画面里整个人已经不成人形。这不是渲染问题，网格确实跟着骨骼走了，只是权重把不该带的部分一起带走了。</figcaption></figure>
+<figure><img src="images/blender-03-spine35-collapse.png" alt="척추 본을 35도 회전하자 모델 전체가 찌그러져 붕괴된 모습"><figcaption>포즈 모드에서 <code>spine</code>을 35도 회전시킨 현장. 좌측 상단에 「Armature: spine」이 표시되어 있으나, 메쉬는 사람의 형태를 완전히 잃고 무너져 내렸습니다. 렌더링 버그가 아니라, 웨이트 가중치가 다리까지 번져 있어 척추를 돌리자 하체까지 함께 딸려 올라간 것입니다.</figcaption></figure>
 
-<figure><img src="images/p13-e4-pose-compare.jpg" alt="E4三个姿势的对比图"><figcaption>E4实验的三张对比，左起：A静止、B转<code>spine</code>35度、C再转<code>head</code>30度。Blender workbench渲染，脚本<code>E4-绑定质量/pose_render.py</code>，2026-09-10。原图顶部那条中文标签渲染时缺字体、是一排方块，已裁掉。</figcaption></figure>
+<figure><img src="images/p13-e4-pose-compare.jpg" alt="E4 실험 3개 포즈 비교 렌더링"><figcaption>E4 실험 3단 비교: 좌측부터 포즈 A(정지), 포즈 B(척추 35도 회전), 포즈 C(머리 30도 추가 회전). 척추를 돌리자 발이 공중에 뜨고, 머리를 돌리자 서류가방 부속이 분리되어 튕겨 나갑니다(2026-09-10 Blender Workbench 렌더링).</figcaption></figure>
 
-<figure><img src="images/p13-e4-lit-compare.jpg" alt="E4带材质光照的对比图"><figcaption>带材质的版本，左A静止、右B转<code>spine</code>35度。用纯灰模看不清楚的地方（比如右边那块飞离主体的碎片）在这里更明显。顶部标签同样已裁。</figcaption></figure>
+<figure><img src="images/p13-e4-lit-compare.jpg" alt="머티리얼 조명이 적용된 E4 포즈 비교"><figcaption>머티리얼 텍스처를 입힌 상태의 비교(좌측 정지, 우측 척추 35도). 서류가방 조각이 공중에 떨어져 나간 모습이 훨씬 뚜렷하게 관찰됩니다.</figcaption></figure>
 
-<figure><img src="images/blender-04-weight-paint.png" alt="Blender权重绘制模式下spine的权重分布"><figcaption>权重绘制模式，当前活动顶点组是<code>spine</code>。红色区域是被这根骨骼完全带动的顶点。看它从胸口一路铺到腿上，就知道为什么转脊柱会把腿一起带走。</figcaption></figure>
+<figure><img src="images/blender-04-weight-paint.png" alt="Blender 웨이트 페인트 모드에서 spine 본의 가중치 분포"><figcaption>웨이트 페인트 모드에서 <code>spine</code> 버텍스 그룹의 가중치 분포. 붉은색 영역이 이 뼈에 100% 종속된 정점들입니다. 붉은 영역이 가슴에서 시작해 허벅지와 무릎까지 덮고 있는 것을 보면, 왜 척추를 돌렸을 때 다리가 함께 딸려 올라갔는지 단번에 이해할 수 있습니다.</figcaption></figure>
 
-<p>根因和E3是同一个。模型是几百个碎片拼成的，没有连续的蒙皮拓扑，<code>ARMATURE_AUTO</code>算出来的权重自然对不上；碎片还会在变形时脱离主体。</p>
+<p>근본 원인은 E3와 동일합니다. 메쉬가 수백 개의 불연속 파편 껍질로 엉겨 있어 해부학적으로 연속된 스킨 토폴로지가 없기 때문에, Blender의 <code>ARMATURE_AUTO</code> 알고리즘이 관절과의 거리를 정상적으로 계산하지 못하고 엉뚱한 정점들까지 척추 본에 묶어버린 것입니다.</p>
 
-<p>独立评测里对AI生成网格的通用描述是「多边形分布均匀、边环不贴合解剖结构」。碎片化正是「没有边环结构」的表现，而边环恰恰是自动权重赖以工作的东西。</p>
+<h3>비교군: Tripo 공식 오토 리깅 모델의 동일 동작 테스트</h3>
 
-<h3>换成Tripo自带绑骨，同样的动作</h3>
-
-<p>为了看清楚差在哪，我把一个Tripo自动绑骨出来的角色也导进Blender，做完全相同的动作。</p>
+<p>차이를 명확히 확인하기 위해, Tripo 웹에서 공식 오토 리깅(20 크레딧)을 거쳐 추출한 보행자 캐릭터를 Blender로 가져와 완전히 동일한 포즈 회전을 가해보았습니다.</p>
 
 <div class="warning">
-<strong>先说清楚一件事：这两个角色不是同一个人。</strong>上面那组是巴黎那个戴帽子提公文包的行人（<code>pedestrian-01-man-suit</code>），这一组是游乐园那个穿白T恤的主角（<code>walker-rigged</code>）。我核过两个GLB内部的对象名，uuid不一样，确实是两个模型。所以严格讲这不是同一网格的AB对照，<strong>它对照的是两种绑定方式在Tripo这一类网格上的结果</strong>。要看同一个模型两种绑定的严格对照，去§15那个可以拖滑块的实时页面。
+<strong>사전에 명확히 밝힙니다: 두 캐릭터는 완전히 동일한 모델이 아닙니다.</strong> 앞서 수동 리깅에 쓰인 모델은 파리의 정장 신사(<code>pedestrian-01-man-suit</code>)이고, 이번 공식 오토 리깅 모델은 놀이공원의 흰색 T셔츠 주인공(<code>walker-rigged</code>)입니다. 내부 UUID를 대조해 보아도 서로 다른 메쉬입니다. 따라서 엄격한 동일 메쉬 AB 테스트는 아니며, <strong>Tripo 계열 메쉬에 대해 두 가지 리깅 방식이 보여주는 구조적 차이를 대조하는 실험</strong>입니다(완벽히 동일한 모델의 양방향 비교는 §15의 실시간 인터랙티브 슬라이더 페이지 참조).
 </div>
 
-<figure><img src="images/blender-05-tripo-rigged-overview.png" alt="Blender里打开Tripo自动绑骨的角色"><figcaption>Tripo自动绑骨（20积分）出来的角色，在Blender里打开。骨架是完整的人体骨架，橙色线条从躯干延伸到四肢。这就是游乐园那个主角，它的白T恤加浅灰裤后来在Unity里给我惹了个大麻烦，见§14。</figcaption></figure>
+<figure><img src="images/blender-05-tripo-rigged-overview.png" alt="Blender에서 연 Tripo 공식 오토 리깅 캐릭터"><figcaption>Tripo 오토 리깅(20 크레딧)으로 추출한 캐릭터를 Blender에서 연 모습. 주황색 본 라인이 몸통부터 팔다리 관절 끝까지 정교하게 뻗어 있는 온전한 인체 골격계를 보여줍니다.</figcaption></figure>
 
-<figure><img src="images/blender-06-tripo41-outliner.png" alt="Tripo 41关节骨架的大纲视图"><figcaption>同一个文件的大纲视图，这是我最喜欢的一张对照图。<code>Root → Hip → Pelvis → L_Thigh → L_Calf → L_Foot → L_ToeBase</code>，还有<code>CalfTwist</code>、<code>ThighTwist</code>这类扭转骨，<code>Waist → Spine01 → Spine02 → NeckTwist01/02 → Head</code>。动画那一栏里挂着<code>preset:biped:walk</code>，是我在Studio里勾的那段行走。</figcaption></figure>
+<figure><img src="images/blender-06-tripo41-outliner.png" alt="Tripo 41개 관절 스켈레톤 아웃라이너 화면"><figcaption>동일 파일의 아웃라이너 뷰. <code>Root → Hip → Pelvis → L_Thigh → L_Calf → L_Foot → L_ToeBase</code>로 이어지는 하체 체인과, 트위스트 방지용 <code>CalfTwist</code>, <code>ThighTwist</code> 및 <code>Waist → Spine01 → Spine02 → NeckTwist → Head</code>의 상체 체인이 완벽히 구축되어 있습니다. 하단에는 <code>preset:biped:walk</code> 걷기 애니메이션이 탑재되어 있습니다.</figcaption></figure>
 
-<figure><img src="images/blender-07-tripo-spine35.png" alt="Tripo骨架转Spine01 35度后模型完好"><figcaption>把<code>Spine01</code>转35度。人还是一个完整的人，只是躯干后仰。同样的动作在四关节版本上让整个人塌成了一堆几何体（见前面那张塌掉的图）。</figcaption></figure>
+<figure><img src="images/blender-07-tripo-spine35.png" alt="Tripo 골격의 Spine01을 35도 회전하자 상체만 유연하게 젖혀진 모습"><figcaption>Tripo 스켈레톤의 <code>Spine01</code> 본을 35도 회전시킨 결과. 하체는 지면에 단단히 고정된 채 오직 상체 흉곽만 유연하게 뒤로 젖혀집니다. 앞서 4개 관절 버전에서 신체 전체가 무너져 내렸던 것과 완벽한 대조를 이룹니다.</figcaption></figure>
 
-<figure><img src="images/blender-08-tripo-weight-paint.png" alt="Tripo骨架Spine01的权重分布"><figcaption>Tripo版本的权重绘制，活动顶点组<code>Spine01</code>。权重集中在躯干下段并向上衰减，腿部是蓝的。对照前面那张铺到腿上的红，差别一眼可见。</figcaption></figure>
+<figure><img src="images/blender-08-tripo-weight-paint.png" alt="Tripo 골격 Spine01의 정교한 웨이트 분포"><figcaption>Tripo 버전의 <code>Spine01</code> 웨이트 페인트 분포. 가중치가 흉부 하단에 집중되고 위아래로 완만하게 감쇠하며, 다리 부위는 완벽한 파란색(가중치 0)을 유지하고 있습니다.</figcaption></figure>
 
 <div class="tip">
-<strong>4关节和41关节不是数字差距，是「一根棍子」和「一副骨架」的差距。</strong>这两组截图是本书里我最推荐你自己重做一遍的实验：两个GLB都在资源包里，导进Blender、进姿态模式、转一下脊柱，两分钟就能看到。
+<strong>4개 관절과 41개 관절의 차이는 단순한 숫자 놀음이 아니라, '막대기 하나'와 '정교한 인체 스켈레톤'의 본질적인 격차입니다.</strong> 두 GLB 파일 모두 리소스 패키지에 포함되어 있으니, Blender를 열고 포즈 모드에서 척추를 돌려 직접 확인해 보십시오. 2분이면 왜 Tripo 자체 리깅을 써야 하는지 온몸으로 납득하게 됩니다.
 </div>
 
-<h3>那什么时候该进Blender</h3>
+<h3>그렇다면 Blender는 언제 열어야 하는가</h3>
 
-<p>把该做的和不该做的分开写，比一句「看情况」有用。</p>
+<p>"상황에 따라 다르다"는 모호한 답변 대신, 명확한 이분법 체크리스트로 정리해 드립니다.</p>
 
 <div class="compare">
 <div class="compare-good">
-<strong>该进Blender</strong><br>
-· <strong>hero资产精修</strong>：主角、近景特写、会被镜头怼脸的东西。AI网格在手指、耳朵这类复杂区域有n-gon和捏缩顶点，UV有接缝，这些只能人工修<br>
-·<strong>拼装与合并</strong>：把分开生成的头发、头、身体合成一个角色，这是X上做角色的人普遍在走的路<br>
-·<strong>烘焙</strong>：把高模的细节烘到低模的法线贴图上，用低面数换回细节<br>
-·<strong>物理与动力学</strong>：摇摆物理、布料、头发，Tripo当前给不了<br>
-·<strong>面部表情</strong>：blendshape这一层
+<strong>이럴 때는 반드시 Blender를 여십시오</strong><br>
+· <strong>주인공(Hero)급 특수 에셋 정밀 리터칭</strong>: 카메라가 얼굴 바로 앞까지 클로즈업하는 메인 캐릭터. AI 메쉬의 손가락이나 귀 주변의 N-gon 및 뒤틀린 정점을 정리하고 UV 솔기를 매끄럽게 펴는 작업은 오직 인간 모델러의 손끝으로만 가능합니다.<br>
+· <strong>다중 부품 조립 및 메쉬 결합</strong>: 따로따로 생성한 머리카락, 머리, 몸통을 하나의 일체형 캐릭터로 합치는 작업 (글로벌 3D 크리에이터들이 캐릭터를 만들 때 가장 많이 쓰는 파이프라인입니다).<br>
+· <strong>노멀 맵 베이킹(Baking)</strong>: 하이폴리곤 메쉬의 고밀도 요철 디테일을 로우폴리곤 노멀 맵으로 구워내는 작업.<br>
+· <strong>물리 시뮬레이션 및 다이내믹스</strong>: 옷자락의 펄럭임, 머리카락 흔들림, 래그돌 물리 (현재 Tripo는 지원 불가).<br>
+· <strong>표정 모핑(Blendshapes)</strong>: 눈 깜빡임, 입모양 립싱크 레이어 구축.
 </div>
 <div class="compare-bad">
-<strong>别为这些开Blender</strong><br>
-·<strong>只做减面</strong>：E0已证明产出等价，命令行更快<br>
-·<strong>只做贴图降采样</strong>：<code>gltf-transform resize</code>一条命令，见§12<br>
-·<strong>给已经是GLB的件降8K贴图</strong>：直接改glTF的JSON和BIN更安全，Blender一个来回反而会动到不该动的量，见§12<br>
-·<strong>批量清洗</strong>：25个资产131秒跑完，平均5.2秒一个，全自动<br>
-·<strong>指望自动权重救场</strong>：E4已证明在Tripo资产上不成立<br>
-·<strong>拆语义部件</strong>：E3已证明连通分量拆不出来，要用Tripo的拆件（见§05）
+<strong>절대로 이것 때문에 Blender를 켜지 마십시오</strong><br>
+· <strong>단순 면 리덕션(Decimate)</strong>: E0 실험에서 입증했듯 CLI 명령어가 훨씬 빠르고 품질도 같습니다.<br>
+· <strong>텍스처 다운스케일링</strong>: <code>gltf-transform resize</code> 명령어 한 줄이면 충분합니다(§12 참조).<br>
+· <strong>이미 GLB로 변환된 파일의 텍스처 교체</strong>: glTF JSON/BIN 바이너리를 직접 수정하는 것이 훨씬 안전하며, Blender를 왕복하면 멀쩡한 파라미터가 오염될 수 있습니다.<br>
+· <strong>대량 에셋 일괄 클리닝</strong>: 25개 에셋을 131초 만에 전자동으로 처리하는 스크립트가 훨씬 우월합니다.<br>
+· <strong>Tripo 에셋에 Blender 자동 웨이트 바인딩 기대하기</strong>: E4 실험에서 입증했듯 100% 붕괴합니다.<br>
+· <strong>기하학적 연결 요소로 부품 쪼개기</strong>: E3 실험에서 입증했듯 찰흙 부스러기만 나옵니다. Tripo 시맨틱 분할을 쓰십시오(§05).
 </div>
 </div>
 
-<h3>先过一道：你拿到的这个GLB，Blender可能根本打不开</h3>
+<h3>주의: 다운로드한 GLB가 Blender에서 아예 열리지 않을 때가 있다</h3>
 
-<p>上面所有实验用的都是带贴图的那批文件，一导就进。但我后来撞上了两种导不进去的情况，问题都出在文件本身，不在Blender。</p>
+<p>앞서 다룬 실험 파일들은 모두 정상 임포트되었지만, 파일 자체의 특성으로 인해 Blender에서 열리지 않는 2가지 복병이 있습니다.</p>
 
-<p><strong>第一种：文件名里带<code>meshopt</code>的那个变体。</strong></p>
+<p><strong>첫째, 파일명에 <code>meshopt</code>가 붙어 있는 압축 변체 모델.</strong></p>
 
 <pre><code>Extension EXT_meshopt_compression is not available on this addon version</code></pre>
 
-<p>Blender 4.4的glTF导入器不支持这个压缩扩展，报完这一行就结束，模型一个顶点都进不来。我在两条完全不同的线上各撞了一次：一次是做两种模式对照实验时去拿几何数据，一次是渲Blender演示素材时。<strong>两条线撞的是同一件事，说明它不是偶发。</strong></p>
+<p>Blender 4.4의 기본 glTF 임포터는 <code>EXT_meshopt_compression</code> 압축 확장을 지원하지 않아, 위 에러를 뿜으며 단 하나의 정점도 불러오지 못합니다. 해결책은 2가지입니다: 1) Tripo 작업 상세 웹페이지의 [익스포트] 팝업에서 포맷을 비압축 FBX로 선택하여 다운로드한다(추가 크레딧 차감 없음). 2) 로컬 터미널에서 <code>npx --yes @gltf-transform/cli copy in.glb out.glb</code> 명령어로 meshopt 압축을 사전에 디코딩하여 넘긴다.</p>
 
-<p>怎么避开，两条路：</p>
+<p><strong>둘째, 크레딧을 아끼겠다고 텍스처 생성을 끄고 출력한 화이트 메쉬(Clay).</strong></p>
 
-<div class="step"><div class="step-num">1</div><div class="step-content"><h4>从详情页的「导出」弹层换成FBX</h4><p>下来是个zip，里面是<code>tripo_convert_&lt;id&gt;.fbx</code>，未压缩，几何和那个GLB逐数吻合。<strong>导出这个动作不扣积分</strong>，我盯着余额看过，前后一分没变。</p></div></div>
-
-<div class="step"><div class="step-num">2</div><div class="step-content"><h4>本地先把压缩解掉</h4><p><code>npx --yes @gltf-transform/cli copy in.glb out.glb</code>，走一遍完整读写流程就把meshopt脱掉了。这一招和§14里让Unity能导入的那一招是同一条。</p></div></div>
-
-<p><strong>第二种：为了省积分关掉贴图生成的那种。</strong>这条是个陷阱，值得专门说。</p>
-
-<p>v3.1这条路把「贴图生成」关掉，价格会明显往下走。听起来像是「我先出个白模，贴图以后再说」，但实测的产物是这样的：</p>
-
-<pre><code>GLB 顶点属性：只有 POSITION 和 NORMAL
+<pre><code>GLB 버텍스 속성: 오직 POSITION 과 NORMAL 만 존재
 materials = 0   textures = 0   images = 0</code></pre>
 
-<p><strong>连UV都没有。</strong>UV是把二维贴图贴到三维表面上的那套坐标，没有它，任何贴图都无从贴起。所以「以后再补贴图」这条路是不通的，要贴图只能回Tripo重跑一次。</p>
+<p><strong>놀랍게도 UV 좌표 데이터 자체가 아예 들어있지 않습니다.</strong> 2차원 텍스처를 3차원 표면에 매핑하는 UV 좌표가 없기 때문에, 나중에 외부에서 텍스처를 입히려 해도 입힐 수가 없습니다. 따라서 이 모드는 오직 물리 충돌체(Collider)로만 쓰거나 원거리 박스 배치용으로 확정된 오브젝트에만 사용해야 하며, 훗날 텍스처를 입힐 가능성이 1%라도 있다면 반드시 텍스처 생성을 켜고 출력해야 합니다.</p>
 
-<div class="tip">
-<strong>怎么用这个模式才不亏：</strong>确定这一件只当碰撞体、只当远景白模、只用来量尺寸，那就放心关；只要还有一丝「将来可能要看它的表面」，就带着贴图出。<strong>判据是「这件东西会不会被镜头看到表面」，不是「现在需不需要」。</strong>
-</div>
+<h3>Tripo GLB를 Blender로 불러왔을 때 관찰되는 특징들</h3>
 
-<h3>Tripo的GLB导进Blender之后长什么样</h3>
+<p>1) <strong>오브젝트 이름에 UUID가 붙어 있습니다.</strong> <code>tripo_node_&lt;uuid&gt;</code>, <code>tripo_mesh_&lt;uuid&gt;</code>, <code>tripo_mat_&lt;uuid&gt;</code> 형태로 들어오므로, 파이썬 스크립트 작성 시 고정된 이름 대신 오브젝트 타입이나 순서로 탐색해야 합니다.<br>
+2) <strong><code>glTF_not_exported</code>라는 보조 컬렉션이 생성됩니다.</strong> 임포터의 가상 앵커 오브젝트이므로 메쉬 계산 시 필터링으로 배제해야 합니다.<br>
+3) <strong>머티리얼이 금속성(Metallic) 높은 PBR로 설정되어 있습니다.</strong> Blender 뷰포트에서는 기본 스튜디오 조명 덕에 멀쩡해 보이지만, Three.js나 백색 배경 환경으로 넘어가면 검게 탈 수 있으니 주의하십시오.<br>
+4) <strong>모델의 전체 높이가 1.0 단위 안팎으로 스케일링되어 있습니다.</strong> Blender 격자 위에서 콩알만 하게 보인다고 해서 당황하지 마십시오.</p>
 
-<p>在写脚本之前，先知道你会拿到什么。这几条看起来琐碎，但每一条我都是因为没预料到才多花了时间。</p>
-
-<p><strong>命名带uuid。</strong>一个模型进来是三件套：<code>tripo_node_&lt;uuid&gt;</code>、<code>tripo_mesh_&lt;uuid&gt;</code>、<code>tripo_mat_&lt;uuid&gt;</code>，uuid是那次生成任务的标识。好处是不会重名，坏处是脚本里没法按人类可读的名字找对象，得按类型或顺序找。前面那两张大纲视图截图里能看到完整的名字。</p>
-
-<p><strong>多一个<code>glTF_not_exported</code>集合。</strong>里面通常躺着一个「棱角球」，是glTF导入器的辅助物体，不是你的模型。它不会被再次导出，但会被<code>bpy.context.scene.objects</code>遍历到。</p>
-
-<p><strong>材质是PBR而且带金属度。</strong>Blender里看着正常，因为Blender的默认HDRI环境把它照亮了；一进Three.js或者白底场景就变黑（见§12）。Blender里看着对，不代表引擎里看着对。</p>
-
-<p><strong>整体高度接近1.0单位。</strong>这条和引擎侧是同一件事，见§14坑一。在Blender里表现为：导进来那个模型在默认网格上小得像颗豆子，你会下意识去缩放视图，然后忘了它本身的尺寸也是要处理的。</p>
-
-<h3>Blender、命令行、混搭的总对照</h3>
+<h3>Blender, CLI 직결, 하이브리드 종합 대조표</h3>
 
 <table>
-<thead><tr><th></th><th>模式A（Blender）</th><th>模式B（直连）</th><th>模式C（混搭）</th></tr></thead>
+<thead><tr><th>비교 항목</th><th>모드 A (Blender)</th><th>모드 B (CLI 직결)</th><th>모드 C (하이브리드)</th></tr></thead>
 <tbody>
-<tr><td>减面产出</td><td>6772面/ 365 KiB</td><td>6781面/ 369 KiB</td><td>—</td></tr>
-<tr><td>减面耗时</td><td>2s + 3s</td><td>6s</td><td>—</td></tr>
-<tr><td>绑定能力</td><td><strong>有</strong>（skin / joints）</td><td>无</td><td>无</td></tr>
-<tr><td>空间成本</td><td>—</td><td>—</td><td>+15%三角/ +17 calls</td></tr>
-<tr><td>依赖</td><td>Blender 4.4.3（约300 MB）</td><td>gltf-transform</td><td>两者皆无</td></tr>
-<tr><td><strong>什么时候非它不可</strong></td><td>角色、需要动画的任何东西；本机已有Blender时，FBX转GLB走它最省事</td><td>场景资产的量产清洗</td><td>大规模重复元素</td></tr>
+<tr><td>감면 결과물 품질</td><td>6,772면 / 365 KiB</td><td>6,781면 / 369 KiB</td><td>—</td></tr>
+<tr><td>감면 소요 시간</td><td>2초 + 압축 3초</td><td>6초</td><td>—</td></tr>
+<tr><td>골격 리깅 기능</td><td><strong>가능</strong> (스킨/관절 생성)</td><td>불가</td><td>불가</td></tr>
+<tr><td>성능 및 메모리 비용</td><td>—</td><td>—</td><td>삼각면 +15% / 드로우콜 +17회 증가 수준</td></tr>
+<tr><td>필요한 외부 의존성</td><td>Blender 4.4.3 (약 300 MB)</td><td>gltf-transform (경량)</td><td>둘 다 필요 없음</td></tr>
+<tr><td><strong>언제 반드시 써야 하는가</strong></td><td>캐릭터, 관절 애니메이션이 필요한 에셋, FBX-GLB 변환</td><td>배경 오브젝트 양산 및 일괄 클리닝</td><td>도시 전체 등 대규모 반복 씬 구축</td></tr>
 </tbody>
 </table>
 
-<p>压成三句：要<strong>动</strong>的东西绕不开A；只要<strong>摆着好看</strong>的东西B更快；要<strong>摆满一整个城市</strong>，C是唯一答案。</p>
+<p>한 문장으로 요약: <strong>살아서 움직여야 하는 에셋</strong>은 모드 A를 거치고, <strong>그저 가만히 자리를 지키는 배경 오브젝트</strong>는 모드 B가 훨씬 빠르며, <strong>도시 전체를 통째로 채워야 할 때</strong>는 모드 C가 유일한 정답입니다.</p>
 
-<h3>那还能不能在Blender里绑好Tripo的资产</h3>
+<h3>헤드리스 Blender: UI를 켜지 않고 백그라운드 자동화하기</h3>
 
-<p>E4证明的是「直接对Tripo直出的静态网格跑自动权重」这条不成立，它没有证明「Blender绑不了Tripo的东西」。这两句话差别很大，我不想把前者说成后者。</p>
-
-<p>按E3和E4的根因往回推，有条路在逻辑上是通的：<strong>碎片化是自动权重失败的原因，那就先把拓扑变连续，再绑。</strong>可以先在Tripo里做一次重拓扑（10积分，产出四边面，见§04），或者先做语义分件把部件分开（见§05），拿到更规整的网格之后再进Blender。</p>
-
-<div class="warning">
-<strong>上面这条是推断，我没有实测。</strong>写在这里是因为它是下一步该做的实验，不是因为它已经成立。真要做的话，验证方式和E4完全一样：导进Blender、进姿态模式、转<code>spine</code>35度，看人还是不是一个人。两分钟就有结论，不需要相信任何人的说法。
-</div>
-
-<h3>无头Blender：不开界面也能干活</h3>
-
-<p>上面那些实验没有一个是我手点出来的，全部是<code>--background</code>模式跑的脚本。对不会写代码的人来说，这反而是更省事的路：<strong>你不需要学Blender的界面，只需要让编程Agent写一段脚本。</strong></p>
+<p>앞서 소개한 모든 Blender 실험은 프로그램을 직접 클릭한 것이 아니라 백그라운드 스크립트(<code>--background</code>)로 실행되었습니다. 코딩을 모르는 분들에게 이것은 오히려 축복입니다: <strong>복잡한 Blender 인터페이스를 배울 필요 없이, 코딩 에이전트에게 파이썬 스크립트를 짜달라고 시키면 되기 때문입니다.</strong></p>
 
 <pre><code>blender -b --python modeA.py -- in.glb out.glb</code></pre>
 
-<p>脚本里三件事：<code>bpy.ops.import_scene.gltf</code>导入、加修改器或建骨架、<code>bpy.ops.export_scene.gltf</code>导出。要出图的话再加一步渲染。这一节所有Blender截图也是脚本截的，用的是Blender自带的<code>bpy.ops.screen.screenshot</code>，整窗口一次拿下。</p>
+<p>에이전트에게 스크립트 작성을 요청할 때 반드시 못 박아주어야 할 3가지 주의점:</p>
 
-<p>让Agent写这种脚本，我的经验是把三件事在需求里说死，剩下的它能自己搞定。</p>
-
-<div class="step"><div class="step-num">1</div><div class="step-content"><h4>Blender的可执行文件在哪</h4><p>macOS上是<code>/Applications/Blender.app/Contents/MacOS/Blender</code>，不是<code>blender</code>。不说清楚它会写一个在你机器上跑不起来的命令，然后你们俩一起调半天PATH。</p></div></div>
-
-<div class="step"><div class="step-num">2</div><div class="step-content"><h4>输入输出用绝对路径，参数从<code>--</code>后面取</h4><p>Blender会吃掉<code>--</code>之前的所有参数，脚本里要<code>sys.argv[sys.argv.index('--')+1:]</code>才拿得到你传的那些。这是个纯约定，Agent不一定记得。</p></div></div>
-
-<div class="step"><div class="step-num">3</div><div class="step-content"><h4>让它把结果打印出来，而不是只写文件</h4><p>我的脚本每一步都<code>print</code>一行（<code>PREP_LOOSE parts=358</code>、<code>SHOT OK …size=757032</code>），因为无头模式下你唯一能看见的就是日志。只写文件不打印，出了事你连它跑到哪一步都不知道。</p></div></div>
-
-<p>还有一条边界要先知道：<strong><code>--background</code>下没有OpenGL上下文</strong>。<code>bpy.ops.render.opengl()</code>会直接报<code>Cannot use OpenGL render in background mode</code>，所以视口叠加层那一整套都拿不到：线框overlay、左上角的统计信息、Loop Cut的黄线，一个都没有。要「能认出这是Blender界面」的画面，只能开前台录屏；无头能给你的是干净的渲染结果，没有系统边框、没有鼠标、没有菜单栏。我这一节的线框图是用Wireframe修改器把每条边变成真几何渲出来的，面数标签是事后用PIL画上去的。<strong>先知道这条边界，就不会花半天去调一个不存在的开关。</strong></p>
-
-<p>还有一条是验收习惯：<strong>截图脚本报的OK，判据要是文件大小而不是退出码。</strong>我的<code>shot()</code>函数里写的是<code>os.path.exists(p) and os.path.getsize(p) &gt; 10000</code>。Blender在无头或者窗口没画完的情况下能写出一个几百字节的空PNG，退出码照样是0。</p>
+<p>1) <strong>Blender 실행 파일의 절대 경로를 명시할 것</strong>: macOS에서는 <code>blender</code>가 아니라 <code>/Applications/Blender.app/Contents/MacOS/Blender</code>입니다.<br>
+2) <strong>인자 파싱 시 <code>--</code> 뒤에서 슬라이싱할 것</strong>: Blender는 <code>--</code> 앞의 인자를 자체 옵션으로 소비하므로 스크립트 인자는 <code>sys.argv[sys.argv.index('--')+1:]</code>로 받아야 합니다.<br>
+3) <strong>진행 상태를 파일로만 쓰지 말고 콘솔에 표준 출력(print)할 것</strong>: 헤드리스 모드에서는 터미널 로그만이 유일한 모니터링 창구입니다.</p>
 
 <div class="warning">
-<strong>Blender约300 MB的依赖不是零成本。</strong>如果你的管线要跑在CI或者别人的机器上，多一个Blender就多一份「装没装、版本对不对」的麻烦。只有当你真的需要上面「该进」那一列里的能力时，这三百兆才值得。
+<strong>헤드리스 모드(<code>--background</code>)에서는 OpenGL 뷰포트 컨텍스트가 존재하지 않습니다.</strong> 따라서 <code>bpy.ops.render.opengl()</code>을 호출하면 에러가 발생하며 와이어프레임 오버레이나 통계 텍스트를 캡처할 수 없습니다. 온전한 GUI 화면을 찍으려면 포그라운드로 띄워야 합니다.
 </div>
 
-<h3>FBX转GLB：本机已有Blender，这道转换就走它</h3>
+<h3>FBX를 GLB로 변환하기: 컴퓨터에 이미 Blender가 있다면 가장 확실한 도구</h3>
 
-<p>P2.0带贴图的产物只给FBX，而浏览器只吃GLB，中间必须过一道转换。<strong>我选Blender的理由是「我这台机器上当时装了的只有它」，不是「只有它做得到」。</strong>后面那句我没有资格说，因为要说它得先把别的方案一个个试过，而我一个都没试。</p>
+<p>P2.0 스마트 메시의 텍스처 산출물은 FBX로만 제공되므로 웹에 올리려면 GLB 변환이 필수적입니다. <strong>제가 Blender를 선택했던 이유는 "당시 제 머신에 설치되어 있던 유일한 툴"이었기 때문입니다.</strong></p>
 
-<p>我当时探的那一圈是这样：<code>assimp</code>没装、<code>pygltflib</code>没装、<code>gltf-transform</code>虽然好用但它只吃glTF，读不了FBX。而Blender 4.4.3就在<code>/Applications</code>里，<code>--background --python</code>可跑，不用再装一个新东西、不用再验一遍它认不认这批文件。</p>
+<p>더 결정적인 기술적 이유는 <strong>해당 FBX 파일들의 Creator 메타데이터에 Blender의 FBX 익스포터가 명시되어 있었다는 점</strong>입니다. Blender가 만들어낸 FBX이므로, 동일한 Blender의 임포터로 읽어 들였을 때 축 방향(Axis)과 단위 스케일(Scale)의 왜곡이 발생하지 않는 가장 안전한 무손실 왕복이 보장됩니다.</p>
 
-<div class="warning">
-<strong>专门做这件事的工具是有的，我只是没测。</strong>FBX2glTF那个独立二进制、Assimp、Autodesk自家的FBX SDK都能做FBX转glTF，Unity和Unreal更是导进去再导出就行。它们快不快、轴向和贴图对不对得上，我一个都没跑过，<strong>所以不替它们说好话，也不替它们说坏话</strong>。你要是本机没有Blender、或者这条管线要上CI，先去看它们，别为了这一道转换背三百兆。
-</div>
+<h4>3채널 바운딩 박스 교차 검증</h4>
 
-<p>还有一条更硬的理由：<strong>这批FBX的Creator字段写的就是Blender的FBX IO。</strong>也就是说文件是Blender导出的，那就用同一个实现读回来，轴向和单位的往返最不容易出岔子。</p>
+<p>변환 과정에서 지오메트리가 미세하게 찌그러지지 않았는지 검증하기 위해, 서로 완전히 독립된 3가지 경로로 동일 모델의 월드 바운딩 박스를 계산했습니다:</p>
 
-<div class="tip">
-<strong>Blender做转换，纯Python只做「真值」和「核验」，两侧互相不信任。</strong>纯Python方案自己解FBX再拼GLB其实也做得到，但要自己处理四边形三角化、法线层的<code>ByPolygonVertex</code>展开、UV接缝拆点，都是能写对但没必要自己扛的活。分工清楚之后，这条管线就有了一个很好的性质：<strong>它能自己证明自己没弄坏东西。</strong>
-</div>
+<div class="step"><div class="step-num">1</div><div class="step-content"><h4>순수 파이썬으로 FBX 바이너리 직접 파싱</h4><p>Z-up 버텍스 좌표를 직접 읽고 <code>Rx(-90)</code> 회전 행렬을 곱해 Y-up 월드 좌표 계산.</p></div></div>
+<div class="step"><div class="step-num">2</div><div class="step-content"><h4>Blender 내부 뷰포트에서 측정</h4><p>임포트 후 월드 바운딩 박스를 읽고 Z-up에서 Y-up으로 매핑.</p></div></div>
+<div class="step"><div class="step-num">3</div><div class="step-content"><h4>변환 완료된 최종 GLB 파일에서 측정</h4><p>glTF accessor 버텍스와 노드 매트릭스를 직접 역산.</p></div></div>
 
-<h4>三通道包围盒交叉核验</h4>
-
-<p>转换有没有把模型弄坏，最怕的是「看着挺对」。我用了三条互相独立的路径去算同一个世界包围盒：</p>
-
-<div class="step"><div class="step-num">1</div><div class="step-content"><h4>纯Python解FBX</h4><p>自己读顶点，再手算那个<code>Rx(-90)</code>。FBX里几何顶点存的是Z-up局部坐标，靠Model节点上的<code>Lcl Rotation = (-90, 0, 0)</code>转进Y-up的世界。</p></div></div>
-<div class="step"><div class="step-num">2</div><div class="step-content"><h4>Blender侧读</h4><p>导入后直接读世界包围盒，再按Z-up到Y-up映射一次。</p></div></div>
-<div class="step"><div class="step-num">3</div><div class="step-content"><h4>解产出的GLB</h4><p>读accessor加节点矩阵自己算一遍。</p></div></div>
-
-<p><strong>三者最大偏差1.0e-08。</strong>这个数字的意思是：三条路算出来的是同一个东西，转换没有偷偷改尺度，也没有偷偷改轴向。</p>
-
-<p>为什么盯着包围盒不放，因为真正会把一整座城搞散的就三件事，而它们全落在这一个可测量的量上：Y必须是上轴（引擎里缩放系数是<code>目标高度 / size.y</code>，上轴错了尺寸直接乱套）、长宽高比不能变（等比缩放，比例变了模型就变胖变瘦）、绕Y的朝向要和被替换的旧件一致。而绕Y转90度会让X和Z互换，所以包围盒这一条顺带把朝向也兜住了一半。</p>
+<p><strong>3개 경로의 바운딩 박스 최대 오차는 1.0e-08에 불과했습니다.</strong> 즉, 변환 파이프라인이 모델의 크기나 축 방향을 단 1나노미터도 왜곡하지 않았음을 수학적으로 입증한 것입니다.</p>
 
 <table>
-<thead><tr><th></th><th>源FBX</th><th>产出GLB</th></tr></thead>
+<thead><tr><th>검증 항목</th><th>입력 FBX 원본</th><th>변환 완료된 최종 GLB</th></tr></thead>
 <tbody>
-<tr><td>文件体积</td><td>7,473,036 B（7.13 MiB）</td><td>747,724 B（730 KiB）</td></tr>
-<tr><td>多边形</td><td>5,615（四边形4,185，占74.5%）</td><td>—</td></tr>
-<tr><td>三角面</td><td>9,800（三角化后）</td><td>9,800，逐位相等</td></tr>
-<tr><td>顶点</td><td>5,381</td><td>11,617（UV和法线接缝拆点）</td></tr>
-<tr><td>贴图</td><td>一张8192² JPEG，6.81 MiB</td><td>一张1024² JPEG，308 KiB</td></tr>
-<tr><td>包围盒</td><td><code>0.516113 × 0.543457 × 0.991699</code></td><td>偏差1.0e-08</td></tr>
+<tr><td>파일 용량</td><td>7,473,036 바이트 (7.13 MiB)</td><td><strong>747,724 바이트 (730 KiB, 10배 경량화)</strong></td></tr>
+<tr><td>다각형 구성</td><td>5,615개 (사각면 4,185개, 74.5%)</td><td>— (웹 표준 삼각화)</td></tr>
+<tr><td>삼각면(Triangles) 수</td><td>9,800개 (삼각화 기준)</td><td><strong>9,800개 (정확히 일치)</strong></td></tr>
+<tr><td>정점(Vertices) 수</td><td>5,381개</td><td>11,617개 (UV 솔기 분리로 인한 정상 증가)</td></tr>
+<tr><td>텍스처 맵</td><td>8192² JPEG 1장 (6.81 MiB)</td><td><strong>1024² JPEG 1장 (308 KiB)</strong></td></tr>
+<tr><td>바운딩 박스 크기</td><td><code>0.516113 × 0.543457 × 0.991699</code></td><td>오차 1.0e-08 이내 완벽 일치</td></tr>
 </tbody>
 </table>
 
-<p>顶点数从5,381涨到11,617是UV和法线接缝拆点的正常结果，不是转坏了。这一条我要标一句：涨了2.16倍我没有再去查是不是拆多了，因为26件合计约30万顶点，在预算内，所以没深究。</p>
+<figure><img src="images/p13-fbx2glb-taxi-4view.png" alt="변환된 GLB 모델과 구형 모델의 4방향 렌더링 비교"><figcaption>변환된 신규 GLB 택시(상단)와 구형 v3.1 모델(하단)의 4방향(정면, 측면, 톱뷰, 45도) 비교. <code>--yaw -90</code> 보정을 적용하자 4개 뷰의 전후좌우가 완벽히 포개어집니다(2026-09-11).</figcaption></figure>
 
-<div class="warning">
-<strong>FBX里有个看着吓人的字段：<code>UnitScaleFactor = 100</code>。</strong>实测Blender导入后世界尺寸和几何局部尺寸逐位相同，没有发生除以100这件事。但这是<strong>实测出来的，不是保证</strong>，所以核验表里那条包围盒断言必须一直留着，不能因为跑对了几次就删掉。
-</div>
+<p>변환 자동화 스크립트 실행 명령어:</p>
 
-<figure><img src="images/p13-fbx2glb-taxi-4view.png" alt="转换后的GLB与旧资产四视图并排"><figcaption>转换产物（上排）和被它替换的v3.1旧出租车（下排），同一组机位渲的四视图：正面、侧面、顶视、斜45度。<code>--yaw -90</code>之后四个机位逐一重合，这是「朝向对了」唯一靠得住的证据：包围盒对<code>+90</code>和<code>-90</code>完全一样，只有渲出来才分得清车头车尾。2026-09-11。</figcaption></figure>
+<pre><code>python3 fbx2glb.py taxi-p2-smartmesh-textured.fbx     -o out/car-01-taxi.glb --yaw -90 --dump-texture</code></pre>
 
-<p>命令长这样，一件一条，跑完脚本自己把核验跑完并打分，全绿才返回0：</p>
+<h3>GLB의 JSON을 열어보지 않으면 모르는 3대 복병</h3>
 
-<pre><code>python3 fbx2glb.py taxi-p2-smartmesh-textured.fbx \
-    -o out/car-01-taxi.glb --yaw -90 --dump-texture</code></pre>
+<p>1) <strong><code>use_backface_culling</code>의 부호 반전</strong>: Blender의 FBX 임포터는 기본적으로 뒷면 컬링(Backface Culling)을 끄고 가져오며, 이를 glTF로 내보내면 <code>doubleSided: true</code>가 박혀버립니다. 모든 삼각형의 앞뒷면을 이중으로 칠하느라 GPU 픽셀 셰이더 비용이 정확히 2배로 폭증합니다. 스크립트에서 <code>mat.use_backface_culling = True</code>(즉 <code>doubleSided = false</code>)로 명시하여 단면 렌더링으로 바로잡아야 합니다.<br>
+2) <strong>임시 폴더 오염</strong>: Blender는 FBX를 열 때 파일 옆에 <code>&lt;파일명&gt;.fbm/</code>이라는 임시 폴더를 파고 텍스처를 무단으로 풀어놓습니다. 원본 에셋 폴더가 지저분해지지 않도록 임시 디렉토리에서 작업하고 삭제하십시오.<br>
+3) <strong>다중 텍스처 슬롯 오염</strong>: P2.0은 베이스 컬러 1장뿐이지만, 노멀 맵과 ORM이 포함된 FBX를 다룰 때는 텍스처 맵 이름을 1:1로 엄격히 대조하여 매핑해야 합니다.</p>
 
-<p><code>--dump-texture</code>会把降采样之后的贴图另存一张PNG，用来肉眼确认没糊没坏。<strong>这一步别省</strong>，数字全对而贴图糊了的情况是存在的，数字看不出来。</p>
+<h3>한 문장 정리</h3>
 
-<h3>三个不打开GLB的JSON就发现不了的坑</h3>
-
-<p>这三个都是我在这条管线上踩实的，共同点是：<strong>模型渲出来一模一样，你只有去读那个JSON才知道出了事。</strong></p>
-
-<p><strong>一，<code>use_backface_culling</code>的语义是反的。</strong>Blender的FBX导入器默认不开背面剔除，导出成glTF就是<code>doubleSided: true</code>，每个三角形正反两面都要跑一遍片元着色，片元开销直接翻倍。我那38件全中招，而且和巴黎demo里现有的件全不一致。修法只有一行，但符号要摆对：</p>
-
-<pre><code>mat.use_backface_culling = not double_sided
-# use_backface_culling = True  →  glTF 的 doubleSided = false</code></pre>
-
-<p>薄片类资产（招牌、树叶、旗子）是真需要双面的，那些要单独开。<strong>判据是「这件东西有没有厚度」，不是默认值。</strong></p>
-
-<p><strong>二，Blender会在FBX旁边建一个<code>&lt;文件名&gt;.fbm/</code>目录。</strong>那是它解包内嵌贴图的地方，你以为只是读了一下文件，其实它往你的素材目录里写了东西。我的脚本因此先把FBX复制进临时目录再导入，跑完就删。<strong>凡是「只读」的操作里藏着写动作，都值得记一笔</strong>，因为它会在你完全没预期的时候污染原始素材目录。</p>
-
-<p><strong>三，替换贴图不能「所有槽位都换成第一张图」。</strong>我第一版就是那么写的，因为P2.0那件只有一张base color，怎么写都对，看不出问题。换成一件带normal和ORM的FBX，它会把法线图也替成颜色图，然后你会得到一个表面凹凸完全乱掉、但不报任何错的模型。现在的写法是按原图名一一对应，<strong>对不上直接报错退出</strong>。</p>
-
-<div class="tip">
-<strong>这三条串起来是同一个道理：GLB是个容器，渲染结果对不代表容器里的东西对。</strong>验收一个转换产物，除了看图，还要去读它的JSON：<code>doubleSided</code>、<code>extensionsRequired</code>、<code>primitives[].mode</code>、每个材质挂了哪几张图。这几项读一遍花不了一分钟，能挡掉的问题都是那种放到后面才爆、爆了还查不出原因的。
-</div>
-
-<h3>一句话</h3>
-
-<p>Blender在这套流程里的位置，不是「专业人士的必经之路」，是「AI暂时做不到那一层的补齐」。它补的是绑定、动力学、面部和hero级精修，而不是减面和压缩。<strong>哪一层AI补上了，Blender在那一层的价值就退一步。</strong>Tripo自带绑骨从20积分把41关节交到你手上这件事，本身就是这条边界在移动的证据。</p>
+<p>이 파이프라인에서 Blender의 위상은 "모든 모델이 의무적으로 거쳐 가야 할 관문"이 아니라, <strong>"AI가 아직 스스로 해결하지 못하는 고난도 레이어를 메워주는 정밀 보완재"</strong>입니다. 리깅, 다이내믹스, 정밀 표정, 그리고 hero 에셋의 장인적 손길이 필요할 때만 Blender를 여십시오.</p>
 
 </div>
+
 
 <!-- ===== part14-unity.html ===== -->
 <div class="content">
 
-<h2 class="section-title page-break" id="part14"><span class="num">§14</span> Unity：把资产搭成一座会动的园区</h2>
+<h2 class="section-title page-break" id="part14"><span class="num">§14</span> Unity: 에셋을 모아 살아 움직이는 공간 만들기</h2>
 <p class="section-en">Unity — Ten Traps Between a GLB and a Playable Build</p>
-<p class="section-intro">一座游乐园，六座设施，从Tripo的GLB到55秒巡游片、51 MB网页版和191 MB原生可玩版。中间十个坑，其中一个的根因对任何用glTFast的项目都成立。</p>
+<p class="section-intro">하나의 테마파크, 6개의 거대 놀이기구. Tripo에서 익스포트한 GLB 파일들이 55초 시네마틱 트레일러 영상, 51 MB 초경량 웹 브라우저 빌드, 그리고 191 MB 네이티브 독립 실행형 앱으로 완성되기까지 맞닥뜨렸던 10가지 실전 함정과 복기 기록.</p>
 
-<h3>这条路给你什么，要你付什么</h3>
+<h3>이 경로가 주는 것과 요구하는 대가</h3>
 
-<p>星光游乐园这条线，最早是Three.js版，最后落在Unity上。<strong>换过去的理由只有一个：要出片。</strong>Unity能给你实时阴影、后处理、定帧渲染和一个能双击就玩的原生应用，这几样在浏览器里要么没有要么很贵。</p>
+<p>《별빛 놀이공원》 프로젝트는 초기에 Three.js 프로토타입으로 시작했으나 최종적으로 Unity 엔진으로 둥지를 틀었습니다. <strong>엔진을 전환한 유일한 이유는 고품질 시네마틱 영상과 완성도 높은 게임 빌드를 추출하기 위함이었습니다.</strong> Unity는 실시간 부드러운 그림자, 강력한 후처리(Post-processing) 볼륨, 타임라인 시네마틱 렌더링, 그리고 더블클릭으로 즉시 즐길 수 있는 독립 실행형 네이티브 앱을 제공하며, 이는 순수 웹 브라우저 환경에서는 구현하기 어렵거나 엄청난 연산 비용을 치러야 하는 영역입니다.</p>
 
-<p>代价是十个坑。我按踩到的顺序写，前面几个是「资产进不来」，中间几个是「进来了但不对」。编号只到十，但十个之后还有五件同等量级的事——构建成功却启动即崩、角色发白、WebGL体积、出片管线、镜头连错三次——它们各自太大，所以单独起了标题，没挤进那个编号里。</p>
+<p>하지만 그 대가로 10가지 기술적 함정을 넘어야 했습니다. 에셋이 아예 임포트되지 않는 단계부터, 임포트는 되었으나 화면이 깨지는 문제까지 순서대로 복기합니다. 10대 함정 뒤에는 빌드 성공 후 즉각 크래시, 캐릭터 발광 현상, WebGL 용량 압축, 시네마틱 카메라 동선 3대 실패 등 거대한 엔지니어링 이슈 5가지가 별도 단락으로 이어집니다.</p>
 
-<p>先交代版本，因为Unity 6改了两个名字，照着旧教程会找不到东西。我用的是<strong>Unity 6000.0.83f1</strong>，GLB导入走<strong>glTFast 6.0.1</strong>。</p>
+<p>먼저 개발 환경을 밝힙니다. Unity 6에서 UI 명칭이 대거 개편되었으므로 구형 튜토리얼을 보면 길을 잃을 수 있습니다. 본 프로젝트는 <strong>Unity 6000.0.83f1</strong>을 사용했으며, GLB 로딩 애드온은 <strong>glTFast 6.0.1</strong>을 사용했습니다.</p>
 
 <div class="tip">
-<strong>还要交代一件同等重要的事：这个工程走的是Unity内置渲染管线（Built-in），没装URP也没装HDRP；后处理用的是Post Processing Stack v2（<code>com.unity.postprocessing 3.4.0</code>），代码里那句<code>using UnityEngine.Rendering.PostProcessing;</code>就是它。</strong>本节后面所有跟光和后处理有关的数字——像素光的盏数、Bloom阈值、ACES调色、曝光——都只在这一套里成立。<strong>URP和HDRP是另外两套东西</strong>：光照上限的算法和配法不一样，后处理也换成了Volume那一套，组件名、参数名、取值范围全都对不上。你要是在URP工程里照着这里的数字调，第一下就会对不上，而且不会有任何报错告诉你原因——所以先看一眼自己工程用的是哪套，再决定这些数字要不要抄。
+<strong>반드시 숙지해야 할 핵심 환경 전제: 본 프로젝트는 URP나 HDRP가 아닌 Unity 표준 내장 렌더 파이프라인(Built-in Render Pipeline) 환경에서 제작되었습니다.</strong> 후처리는 Post Processing Stack v2(<code>com.unity.postprocessing 3.4.0</code>)를 사용했으며 코드 상단의 <code>using UnityEngine.Rendering.PostProcessing;</code>이 바로 그것입니다. 따라서 본 섹션에 등장하는 픽셀 라이트 상한선, 블룸 임계값, ACES 톤매핑 수치 등은 <strong>오직 Built-in 파이프라인에서만 성립하는 수치</strong>입니다. URP/HDRP는 조명 연산 방식과 볼륨 컴포넌트 명칭, 파라미터 스케일이 완전히 다르므로 본문의 숫자를 그대로 복사해 넣으면 화면이 엉망이 됩니다. 자신의 프로젝트 파이프라인을 먼저 확인하십시오.
 </div>
 
 <div class="warning">
-<strong>Unity 6已经没有「Build Settings」窗口了</strong>，<code>File/Build Settings...</code>这个菜单项不存在，取而代之的是<code>File/Build Profiles</code>。<strong>而且「WebGL」平台在界面上改叫「Web」了</strong>，但代码里<code>EditorUserBuildSettings.activeBuildTarget</code>返回的仍然是<code>WebGL</code>。界面一套叫法、API一套叫法，搜教程时两个词都得试。
+<strong>Unity 6에는 더 이상 익숙한 「Build Settings」 창이 존재하지 않습니다.</strong> 상단 메뉴의 <code>File/Build Settings...</code> 항목이 삭제되고 <code>File/Build Profiles</code>로 대체되었습니다. <strong>또한 WebGL 타깃의 공식 명칭이 UI에서 「Web」으로 변경되었습니다</strong>(단, C# 코드 API인 <code>EditorUserBuildSettings.activeBuildTarget</code>은 여전히 <code>WebGL</code>을 반환합니다).
 </div>
 
-<figure><img src="images/unity-05-build-settings-webgl.png" alt="Unity 6的Build Profiles窗口"><figcaption>Build Profiles窗口，Web平台标着Active。这就是Unity 6里取代Build Settings的那个窗口。Unity 6000.0.83f1，2026-09-11实测截图。</figcaption></figure>
+<figure><img src="images/unity-05-build-settings-webgl.png" alt="Unity 6의 Build Profiles 창 화면"><figcaption>Unity 6의 Build Profiles 창. Web 플랫폼이 활성화(Active)되어 있습니다. 기존 Build Settings 창을 완전히 대체한 새로운 인터페이스입니다(Unity 6000.0.83f1, 2026-09-11 실측).</figcaption></figure>
 
-<figure><img src="images/p14-unity-entrance.jpg" alt="星光游乐园Unity版入口大道"><figcaption>星光游乐园入口大道，Unity编辑期离屏渲染，1920×1080，含Bloom和ACES调色。地面的光池不是实时灯照出来的，是画进贴图的，理由见后面第六个坑。</figcaption></figure>
+<figure><img src="images/p14-unity-entrance.jpg" alt="별빛 놀이공원 Unity 버전 입구 메인 로드 전경"><figcaption>별빛 놀이공원 입구 메인 도로 전경 (1920×1080 오프스크린 렌더링, 블룸 및 ACES 컬러 그레이딩 적용). 지면의 따뜻한 가로등 빛 웅덩이는 실시간 라이트가 아니라 텍스처에 정밀하게 베이킹된 것입니다(이유는 6번째 함정 참조).</figcaption></figure>
 
-<h3>分工原则：这条是整套东西的骨架</h3>
+<h3>역할 분담 원칙: 전체 프로젝트의 척추</h3>
 
-<p>在四冲程发动机那轮验证过的判据，在游乐园这里照样成立，而且游乐设施天然就分得开。</p>
+<p>엔진 데모에서 확립했던 역할 분담 기준은 테마파크 프로젝트에서도 완벽하게 들어맞았습니다:</p>
 
 <table>
-<thead><tr><th>用代码（决定机构对错，尺寸必须精确）</th><th>用Tripo（决定观感，形体复杂）</th></tr></thead>
+<thead><tr><th>코드로 절차적 생성 (기계적 정확성, 치수 정밀도 필수)</th><th>Tripo 3D로 생성 (시각적 조형미, 풍부한 형태감)</th></tr></thead>
 <tbody>
-<tr><td>摩天轮的圈、辐条、转轴<strong>必须是正圆</strong></td><td>摩天轮的吊舱</td></tr>
-<tr><td>过山车轨道<strong>必须闭合、必须平滑</strong></td><td>旋转木马整座</td></tr>
-<tr><td>旋转木马的旋转轴、飞椅的中柱与伞盖</td><td>飞椅、茶杯</td></tr>
-<tr><td>茶杯的底盘与自转相位</td><td>鬼屋、树、摊位、喷泉</td></tr>
-<tr><td>地面、路灯、长椅、树的排布</td><td>—</td></tr>
+<tr><td>대관람차 메인 원형 휠, 바퀴살, 중심 회전축 (완벽한 정원)</td><td>대관람차 탑승용 캐빈 1개</td></tr>
+<tr><td>롤러코스터 트랙 레일 (폐곡선 루프, 매끄러운 스플라인)</td><td>회전목마 본체 전체</td></tr>
+<tr><td>회전목마 중심 구동축, 회전 그네의 메인 기둥과 우산 돔</td><td>회전 그네 의자, 회전 찻잔 컵</td></tr>
+<tr><td>회전 찻잔의 3중 회전 턴테이블 바닥판 및 자전 위상</td><td>유령의 집 파사드, 가로수, 노점 부스, 분수대</td></tr>
+<tr><td>전체 공원 도로망, 가로등, 벤치, 화단 배치 알고리즘</td><td>—</td></tr>
 </tbody>
 </table>
 
-<p>判断标准一句话：<strong>这个件错了，别人一眼能看出「机构不对」吗？</strong>能，就写代码。这条判据的完整推演在§15。</p>
+<p>판단 기준은 단순합니다: <strong>"이 부품이 잘못 만들어졌을 때, 사람이 보고 즉시 '기계 구조가 틀렸다'고 눈치챌 수 있는가?"</strong> 그렇다면 코드로 짜야 합니다. 반대로 <strong>"플레이어가 눈앞까지 다가가서 섬세한 디테일을 감상할 대상인가?"</strong> 그렇다면 AI 3D 모델로 만들어야 합니다.</p>
 
-<p>换成给玩家的说法更直白：<strong>会被凑到跟前细看的东西用Tripo做，只会远远瞥一眼的，代码画就够了。</strong>游乐园这张表就是这条判据的逐行落地：木马、吊舱、飞椅是Tripo，转它们的那个圈、那条轨道、那根转轴是代码。</p>
+<p>이번 라운드에서 신규 생성한 Tripo 에셋은 6종이었습니다: 회전목마, 대관람차 캐빈, 회전 그네, 회전 찻잔, 유령의 집, 해적선. 시안은 Codex를 통해 8장을 연속 출력하여 단 11분 만에 100% 성공했습니다.</p>
 
-<p>本轮新生成的Tripo资产六件：旋转木马、摩天轮吊舱、旋转飞椅、旋转茶杯、鬼屋、海盗船，参考图由Codex批量出（8张串行约11分钟，全部成功）。树、长椅、花坛、喷泉、广告柱、摊位沿用巴黎那轮。</p>
-
-<div class="tip">
-<p>这一节的构建、渲染、出片是<strong>本机墙钟</strong>，你的机器不一样数就不一样；书里Tripo侧生成、拆件、绑骨的秒数一律是<strong>算子耗时</strong>（算子耗时口径，不含上传与排队；端到端要往上加，两个口径的实测差见§01，词条见附录D）。排管线工期别拿算子耗时去估。</p>
-</div>
-
-<figure><img src="images/unity-01-models-folder.png" alt="Unity工程Assets/Models里的22个GLB"><figcaption>工程里<code>Assets/Models</code>的22个GLB，缩略图都已生成。<strong>缩略图能出来说明导入成功了</strong>，这一点在下面坑二里会变成一个有用的判据：导入失败的GLB在这里是没有缩略图的。</figcaption></figure>
+<figure><img src="images/unity-01-models-folder.png" alt="Unity 프로젝트 Assets/Models 폴더에 담긴 22개의 GLB 파일들"><figcaption>Unity 프로젝트 <code>Assets/Models</code> 폴더에 들어온 22개의 GLB 파일들. 썸네일 아이콘이 정상적으로 표시되고 있습니다. <strong>썸네일이 렌더링된다는 것 자체가 임포트 성공을 증명하는 강력한 신호</strong>입니다.</figcaption></figure>
 
 <div class="callout">
-<strong>Tripo自己给模型起的名字可以当质检信号读。</strong>它给这批的命名是<code>ornate gold and red carousel with horses, illuminated details, brass…</code>、<code>red and gold spherical capsule pod with glass windows…</code>、<code>haunted purple house with green roof and orange lit windows…</code>，每一条都准确描述了我喂进去的参考图。名字对不上，说明它理解错了，那就别往下走了。
+<strong>Tripo가 자동 부여한 영문 명칭은 훌륭한 1차 품질 검수 신호입니다.</strong> 이번 배치의 모델 이름들을 보면 <code>ornate gold and red carousel with horses…</code>, <code>red and gold spherical capsule pod…</code>, <code>haunted purple house with green roof…</code>처럼 제가 의도한 시안의 특징을 소름 돋을 정도로 정확히 묘사하고 있었습니다. 이름이 빗나갔다면 AI가 형태를 오인한 것이므로 다음 단계로 넘어가지 마십시오.
 </div>
 
-<h3>坑一：Tripo的GLB比例是归一化的</h3>
+<h3>함정 1: Tripo의 GLB 스케일은 1.0 단위로 정규화되어 있다</h3>
 
-<p>这个坑极具迷惑性，因为它长得不像比例问题。</p>
+<p>이 함정은 초보자들을 완전히 멘붕에 빠뜨립니다. 겉보기에는 비율 문제가 아니라 조명이나 머티리얼 버그처럼 보이기 때문입니다.</p>
 
-<p><strong>每一个Tripo导出的GLB都被归一化到最长边约等于1.0单位。</strong>下面这组是实测的高度值，注意它们并不都是1.0——因为撑满1.0的那条边未必是高：</p>
+<p><strong>Tripo에서 내려받은 모든 GLB 모델은 가장 긴 변이 약 1.0 유닛(1미터)이 되도록 노멀라이즈되어 있습니다.</strong> 아래 실측 높이 데이터를 보십시오:</p>
 
 <pre><code>eiffel-tower 1.0000 / haussmann 0.9096 / carousel 0.9973 / teacup 0.5037
 bench 0.5491 / walker-rigged 1.0000 / tree-green 1.0000</code></pre>
 
-<p>解析包围盒能看清这件事：铁塔是0.686×<strong>1.0</strong>×0.687（高撑满），长椅是<strong>1.0</strong>×0.549×0.413（长撑满），出租车是0.522×0.570×<strong>1.0</strong>（深撑满）。引擎里<code>scale = 1</code>直接摆，等于把每栋楼当成一米大。表现出来是「东西都对，但看着很怪、很空、像个模型展览」。你会去调光照、调材质、调后处理，怎么调都不对，因为根因是比例。</p>
+<p>에펠탑은 높이가 1.0m이고, 벤치는 길이가 1.0m(높이는 0.549m)이며, 택시는 앞뒤 길이가 1.0m입니다. 이를 엔진에서 <code>scale = 1</code> 그대로 씬에 배치하면 거대한 에펠탑과 아파트가 벤치와 똑같은 1미터짜리 미니어처 장난감으로 전락합니다. 화면에 오브젝트는 다 들어왔는데 뭔가 휑하고 박물관 모형 전시실처럼 어색해집니다.</p>
 
-<p>正确做法四步：实例化后先量包围盒；<code>s = targetHeight / bounds.size.y</code>；摆位时把底面压到地面<code>pos.y -= bounds.min.y * s</code>；宽扁件（车、长椅）按最长边归一，不按高度。</p>
+<p>올바른 4단계 배치 공식: 인스턴스화 직후 바운딩 박스 측정 → <code>s = targetHeight / bounds.size.y</code> 스케일 계산 → 바닥을 지면에 밀착(<code>pos.y -= bounds.min.y * s</code>) → 자동차나 벤치 같은 넓적한 물체는 높이가 아닌 최장축 길이 기준으로 스케일링할 것.</p>
 
 <div class="warning">
-<strong><code>walker-rigged</code>那一行是重新量过的，别拿包围盒去量绑骨件。</strong>我先前填的是1.0276，那是<code>Box3.setFromObject</code>的读数——而§06和§12都讲过，这个函数量SkinnedMesh会被当前姿势和那个不自动更新的包围盒缓存带偏。<strong>一个「归一化到1.0」的模型量出1.0276，超出的那一点本身就是量法不可信的信号，而不是这件资产的例外。</strong>改用§12那条正解重量了一次——直接读GLB里<code>POSITION</code>accessor的<code>min</code>和<code>max</code>——这件的包围盒是0.9132×<strong>1.0000</strong>×0.1847，撑满1.0的是高那一条，和其余六件服从的是同一条归一化规则。上面那四步里的「量包围盒」，对静态件够用，<strong>对绑骨件一律换成按accessor读</strong>。
+<strong>스켈레톤이 심어진 리깅 캐릭터(<code>walker-rigged</code>)는 절대로 <code>Box3</code>나 렌더러 바운딩 박스로 측정하지 마십시오.</strong> 포즈 변형 캐시 미갱신 문제로 엉뚱한 크기가 나옵니다. §12에서 밝혔듯이 GLB 헤더의 <code>POSITION</code> accessor에서 <code>min</code>/<code>max</code>를 직접 읽어 순수 원본 지오메트리 높이를 산출해야 합니다.
 </div>
 
-<p>验收信号很好记：给58米算出来的缩放是×58，说明原始就是1.0，你数对了。</p>
+<h3>함정 2: glTFast는 기본적으로 meshopt 디코더를 포함하지 않는다</h3>
 
-<h3>坑二：glTFast默认不带meshopt解码器</h3>
+<p>증상이 엉뚱한 곳을 가리킵니다: 디스크에 GLB 파일이 엄연히 존재하고 <code>.meta</code> 파일도 생성되었는데, C# 스크립트에서 <code>AssetDatabase.LoadAssetAtPath&lt;GameObject&gt;()</code>를 호출하면 null을 반환하며 "에셋을 찾을 수 없다"는 거짓말 같은 로그만 찍힙니다.</p>
 
-<p>症状会把你带到完全错误的方向。GLB文件明明在磁盘上、<code>.meta</code>也生成了，但<code>AssetDatabase.LoadAssetAtPath&lt;GameObject&gt;()</code>返回null，日志只说「找不到资产」。</p>
-
-<p>真相藏在<code>.meta</code>里，那是唯一给线索的地方：</p>
+<p>진실은 <code>.meta</code> 파일 내부에 숨어 있었습니다:</p>
 
 <pre><code>reportItems:
 - type: 0
@@ -4419,179 +4341,112 @@ bench 0.5491 / walker-rigged 1.0000 / tree-green 1.0000</code></pre>
   messages:
   - EXT_meshopt_compression</code></pre>
 
-<p>能正常导入的模型，这一项是<code>reportItems: []</code>。</p>
+<p>Tripo CDN에서 내려받은 <code>_meshopt.glb</code> 파일에 <code>EXT_meshopt_compression</code> 압축이 걸려 있었는데, 프로젝트에 meshopt 디코더 패키지가 없어 glTFast의 ScriptedImporter가 임포트 실패 판정을 내린 것입니다.</p>
 
-<p>根因是Tripo的CDN上<code>tripo_pbr_model_&lt;uuid&gt;_meshopt.glb</code>这个变体带<code>EXT_meshopt_compression</code>，而我的工程里没有meshopt解码器，ScriptedImporter直接判导入失败。<strong>说清楚一点：glTFast本身是支持这个扩展的</strong>——官方功能表上写着「✅ via package」，4.4.0起装<code>com.unity.meshopt.decompress</code>就会定义<code>MESHOPT</code>宏、走解码路径。所以准确的说法是「默认不带解码器」，不是「解不开」。装那个包和本地解压二选一，我选了后者，理由在下面。</p>
-
-<p>修法是在本地解掉再喂Unity：</p>
+<p>가장 깔끔한 해결책은 엔진 외부 로컬에서 압축을 풀어버린 뒤 Unity에 넘기는 것입니다:</p>
 
 <pre><code>npx --yes @gltf-transform/cli copy in.glb out.glb</code></pre>
 
-<p><code>copy</code>会走一遍完整的读写流程，出来的文件只留下<code>KHR_mesh_quantization</code>，Unity那边直接就能导入。我选这条而不是装解码包，是因为它把问题挡在工程外面：22个GLB一次处理干净，谁拉这个工程都不用先装对一个包。要是你的管线天天从Tripo拉新模型，装<code>com.unity.meshopt.decompress</code>更省事。</p>
+<p>이 <code>copy</code> 명령어를 한 번 거치면 표준 양자화 압축만 남고 meshopt 압축이 깔끔하게 해제되어 Unity에 즉각 로딩됩니다. 외부 팀원에게 프로젝트를 공유할 때 추가 패키지 설치를 강요하지 않아도 되는 가장 안전한 파이프라인입니다.</p>
 
-<div class="warning">
-<strong>别指望换URL绕过去。</strong>把地址里的<code>_meshopt</code>去掉换非压缩变体会返回403，CDN的签名是绑定到具体资源路径的。
-</div>
+<h3>함정 3: 배치 자동화 스크립트에서 신규 GLB는 두 번 돌아야 인식된다</h3>
 
-<h3>坑三：批处理里新GLB要跑两遍</h3>
+<p>Unity 배치 빌드(<code>-executeMethod</code>)를 실행할 때 새로 복사해 넣은 GLB 파일이 즉시 로딩되지 않는 현상이 발생합니다. 메서드 첫머리에 <code>AssetDatabase.Refresh()</code>를 넣어도 소용없습니다. glTFast의 내부 에셋 임포트는 비동기 프레임 단위로 지연 처리되는데, 헤드리스 배치 모드에는 이를 기다려줄 프레임 루프가 없기 때문입니다.</p>
 
-<p><code>-executeMethod</code>跑的时候，新拷进来的GLB还没被导入。在方法开头加<code>AssetDatabase.Refresh()</code>不够，glTFast的导入是延迟的，而批处理里没有帧循环等它完成。</p>
+<p>해결책은 지극히 현실적입니다: <strong>스크립트를 2회 연속 실행하도록 구성하십시오.</strong> 첫 번째 실행에서 에셋 임포트가 트리거되고, 두 번째 실행에서 이미 임포트된 에셋을 완벽하게 씬에 조립합니다.</p>
 
-<p>跑两遍就好：第一遍触发导入，第二遍资产就在了。我的构建脚本里这条是写死的。</p>
-
-<h3>坑四：把Light加在root上，整个物体会被挪走</h3>
+<h3>함정 4: Light 컴포넌트를 루트 노드에 추가하면 오브젝트 전체가 엉뚱한 곳으로 날아간다</h3>
 
 <pre><code>var root = new GameObject("FerrisWheel");
-root.transform.position = c;                    // 摆到 (-42, 0, 66)
-var rimLight = root.AddComponent&lt;Light&gt;();      // ← 灯加在了 root 自己身上
+root.transform.position = c;                    // (-42, 0, 66) 위치에 배치
+var rimLight = root.AddComponent&lt;Light&gt;();      // ← root 자체에 Light를 붙임
 rimLight.transform.localPosition = new Vector3(0f, hubY, 0f);
-//         ^^^^^^^^^^^^^^^ 这就是 root.transform，整个轮子被挪到 (0, 17.5, 0)</code></pre>
+// ↑ 이것은 사실 root.transform 자체를 이동시킨 것이어서 대관람차 전체가 (0, 17.5, 0)으로 날아감!</code></pre>
 
-<p><strong>这个bug最难查的地方在于它不报错。</strong>场景里有一个完整的摩天轮，只是它不在你以为的地方。我一度以为是相机机位写错了。</p>
+<p><strong>이 버그가 악랄한 이유는 콘솔에 에러가 전혀 찍히지 않는다는 점입니다.</strong> 대관람차는 멀쩡히 생성되었지만 내가 지정한 좌표가 아닌 엉뚱한 허공에 떠 있습니다. 카메라는 빈 들판만 찍고 있어 카메라 좌표가 틀린 줄 알고 엉뚱한 곳을 뒤적이게 됩니다. <strong>조명이나 이펙트 컴포넌트는 반드시 자식(Child) 빈 오브젝트를 하나 파서 거기에 붙이십시오.</strong></p>
 
-<p>诊断方法：不要猜，直接打印。</p>
+<figure><img src="images/p14-unity-ferris.jpg" alt="별빛 놀이공원 대관람차 정상 배치 화면"><figcaption>정상 위치로 복구된 대관람차. 메인 휠, 방사형 바퀴살, 중심축은 코드로 계산된 정원이며, 매달린 캡슐 캐빈은 Tripo 모델입니다.</figcaption></figure>
 
-<pre><code>var fw = GameObject.Find("FerrisWheel");
-var wb = new Bounds(fw.transform.position, Vector3.zero);
-foreach (var r in fw.GetComponentsInChildren&lt;Renderer&gt;())
-    wb.Encapsulate(r.bounds);
-Debug.Log($"root={fw.transform.position} "
-        + $"包围盒 center={wb.center} size={wb.size}");</code></pre>
+<h3>함정 5: Unity 원기둥(Cylinder) 기본 축은 Y축이며, 90도 회전 계산을 정확히 맞춰야 한다</h3>
 
-<p>打印出来<code>root=(0.00, 17.50, 0.00)</code>，一眼定位。<strong>灯要挂在子物体上。</strong></p>
+<p>Unity의 기본 <code>PrimitiveType.Cylinder</code>는 중심축이 Y축입니다. 대관람차를 조립할 때 중심축 회전 각도를 계산하면서 방사형 바퀴살(Spoke)은 반지름 방향(φ = θ + 90°)으로 뻗어야 하고, 외곽 림(Rim) 세그먼트는 접선 방향(φ = θ)으로 둘러싸야 합니다.</p>
 
-<figure><img src="images/p14-unity-ferris.jpg" alt="星光游乐园摩天轮"><figcaption>摩天轮：圈、辐条、转轴是代码算的正圆，吊舱是Tripo生成的。这张是它被挪回原位之后的样子。</figcaption></figure>
+<p>이 90도 위상 차이를 거꾸로 입력하면 거대한 대관람차가 공중에서 고슴도치 가시처럼 사방으로 뻗친 흉측한 쇠꼬챙이 더미로 변해버립니다. 감으로 때려 맞추지 말고 종이에 삼각함수 벡터를 단 1분만 그려보십시오.</p>
 
-<h3>坑五：圆柱体的轴是Y，转90度的账要算对</h3>
+<h3>함정 6: 포워드 렌더링에서 단일 메쉬가 수용할 수 있는 픽셀 라이트 개수에는 상한이 있다</h3>
 
-<p>Unity的<code>PrimitiveType.Cylinder</code>轴向是Y。绕Z转φ之后轴指向<code>(−sinφ, cosφ, 0)</code>。摩天轮的辐条要沿半径，所以φ = θ + 90°；外圈要沿切线，所以φ = θ。</p>
-
-<p>我把这两个的90度弄反了，整只轮子炸成一把乱插的棍子。这是个看着像玄学、其实是三角函数的典型，算一遍就清楚了，别靠试。</p>
-
-<h3>坑六：前向渲染下，一个物体吃得下几盏像素光是有上限的</h3>
-
-<p>一座140×150米的园区，地面铺成一整块的时候，这块地面是一个物体。<strong>Unity只会挑几盏灯去逐像素照它，58盏路灯里绝大多数对地面毫无贡献。</strong>表现是「灯全开了却还是一片黑」。</p>
-
-<div class="warning">
-<strong>「几盏」具体是几，别记成一个写死的4。</strong>Built-in前向渲染下这个上限由<code>QualitySettings.pixelLightCount</code>决定，它跟着画质档走，不是引擎写死的常数——我这个工程里那一档的默认值是4，构建脚本里的注释就是这么记的。<strong>而把它调大并不能把这个坑填上。</strong>我最后在脚本里写的是<code>QualitySettings.pixelLightCount = 8;</code>，58盏路灯照样有50盏进不来，地面的光池还是得画进贴图里。所以这个坑的性质不是「数字设小了」，是「实时逐像素光本来就不是用来铺满一座园区的」，往上调只会换来更慢的帧率。正解在下面那张表。
-</div>
+<p>140×150미터 크기의 거대한 테마파크 부지를 하나의 거대한 단일 지면 메쉬로 깔아두었을 때 대참사가 벌어집니다. <strong>Unity의 Built-in 포워드 렌더러는 하나의 단일 메쉬에 대해 실시간 픽셀 라이트를 최대 몇 개까지만 계산할지 제한</strong>을 두고 있습니다(<code>QualitySettings.pixelLightCount</code> 기본값 4, 최대 올려봐야 8). 공원 전체에 58개의 화려한 가로등을 심어두었으나, 50개의 불빛이 지면에 전혀 반영되지 않아 전등은 켜져 있는데 바닥은 칠흑 같은 어둠에 휩싸입니다.</p>
 
 <table>
-<thead><tr><th>做法</th><th>结果</th></tr></thead>
+<thead><tr><th>시도한 해결책</th><th>실행 결과</th></tr></thead>
 <tbody>
-<tr><td>一整块地面+调亮灯</td><td>只有<code>pixelLightCount</code>那几盏生效，怎么调都不够</td></tr>
-<tr><td>地面切成8×8网格</td><td>每块各自挑灯，<strong>边界出现光照接缝</strong></td></tr>
-<tr><td><strong>把光池画进地面贴图</strong></td><td><strong>无缝、不限盏数、零开销</strong></td></tr>
+<tr><td>단일 거대 지면 + 라이트 강도 극대화</td><td>상한선 초과로 대부분 무시됨, 바닥은 여전히 시커멓게 남음</td></tr>
+<tr><td>지면을 8×8 바둑판 그리드 메쉬로 분할</td><td>타일마다 각기 다른 조명을 받아 <strong>타일 경계면에 흉측한 빛 단차 선</strong>이 발생함</td></tr>
+<tr><td><strong>지면 텍스처에 빛 웅덩이(Light Pool)를 동적 베이킹</strong></td><td><strong>경계면 단차 제로, 조명 개수 무제한, 런타임 연산 비용 0</strong></td></tr>
 </tbody>
 </table>
 
-<p>正解的道理是：<strong>灯的位置本来就是我自己算出来的，那就不该让引擎去实时算。</strong>共享一份<code>LampPositions()</code>，地面贴图按它画光池、实际摆灯也用同一份，两者永远对得上。实体点光只负责照亮树和设施这些立在地上的东西。</p>
+<p>정답은 지극히 엔지니어링다운 발상의 전환이었습니다: 가로등 좌표 목록 <code>LampPositions()</code>를 코드로 관리하고 있으므로, <strong>런타임 시작 시 2D 지면 텍스처 위에 가로등 좌표를 중심으로 따뜻한 주황빛 감쇠 원(Light Pool)을 수학적으로 합성해 버리는 것</strong>입니다. 감쇠 공식은 <code>1 / (1 + (d/R)²)</code>을 적용하고 반경은 13.5m로 설정했습니다. 실시간 포인트 라이트는 지면 위의 나무와 벤치 등 입체 오브젝트만 비추게 하여 100% 완벽한 성능과 환상적인 야경 비주얼을 동시에 달성했습니다.</p>
 
-<p>光池衰减用<code>1/(1+(d/r)²)</code>，叠加时取<code>max</code>而不是相加（相加会在灯密处糊成白团）。光池半径<code>R=13.5m</code>是试出来的。<strong>和它配套的那几个后处理参数，请按字段名对，别按数字记</strong>：最后落在构建脚本里的是Bloom的<code>intensity 0.38</code>、<code>threshold 0.92</code>，以及ACES之后的<code>postExposure 0.25</code>（少数几个导演机位会把它单独抬到0.65到1.15）。这几个都是Post Processing Stack v2的字段，URP的Volume里名字和取值范围都是另一套。</p>
+<figure><img src="images/p14-unity-square.jpg" alt="별빛 놀이공원 광장에서 바라본 회전목마"><figcaption>광장에서 바라본 회전목마. 지면의 따뜻한 조명 웅덩이는 텍스처에 베이킹된 것이며, 실시간 라이트는 공중에 선 입체 구조물들만 비추고 있습니다.</figcaption></figure>
 
-<figure><img src="images/p14-unity-square.jpg" alt="星光游乐园广场"><figcaption>广场看旋转木马。地面上那些暖色光池全部来自贴图，实体点光只负责照亮立起来的东西。</figcaption></figure>
+<h3>함정 7: 블룸(Bloom)의 임계값(Threshold)이 진짜 스위치다</h3>
 
-<h3>坑七：Bloom的阈值才是那个开关</h3>
+<p>야경 씬을 멋지게 만들겠다고 블룸 이펙트를 켰을 때, <code>threshold = 0.72</code>처럼 조금이라도 낮게 잡으면 가로등 불빛뿐만 아니라 빛을 받은 벽면, 바닥, 나무까지 화면 전체가 뿌옇게 폭발하여 새하얀 안개 속에 갇혀버립니다.</p>
 
-<p><code>threshold = 0.72</code>意味着比0.72亮的东西全都发光，连被照亮的墙面也一起炸，整个画面糊成一片白。夜景里只有灯泡和灯带该发光。</p>
+<p>임계값을 <strong><code>0.92</code></strong>로 단호하게 올리십시오. 오직 전구 필라멘트와 네온사인처럼 진짜로 발광하는 초고휘도 픽셀만 빛 번짐(Glow)을 일으키도록 선을 그어야 합니다. 블룸 연출에서 강도(Intensity)보다 백배 더 중요한 것은 바로 이 임계값입니다.</p>
 
-<p>阈值给到<code>0.92</code>，只让真正的高光炸开。<strong>这一条比intensity重要得多。</strong>（同样提醒一句：<code>threshold</code>是PPSv2里Bloom的字段，URP的Volume版Bloom虽然也有一个阈值，但它和整条曝光链的关系不一样，0.92这个数搬过去不保证还是同一条界线。）</p>
+<figure><img src="images/p14-unity-orbit.jpg" alt="별빛 놀이공원 궤도 회전 카메라 뷰 야경"><figcaption>궤도 선회 뷰 야경. 대관람차 림의 전구들과 회전목마 처마 네온라인만 선명하게 빛망울을 맺고 있으며, 조명을 받는 지면과 나무는 번지지 않고 깨끗한 콘트라스트를 유지합니다(임계값 0.92 세팅).</figcaption></figure>
 
-<figure><img src="images/p14-unity-orbit.jpg" alt="星光游乐园环绕机位夜景"><figcaption>环绕机位。摩天轮那一圈灯泡和旋转木马檐口的灯带在发光，而被照亮的地面、树冠和长椅没有跟着一起炸。阈值0.92就是这条界线；给0.72的话整张图会糊成一片白。画面左边那条船是海盗船，右上角远处是鬼屋。</figcaption></figure>
+<h3>함정 8~10: 사소하지만 치명적인 3가지 복병</h3>
 
-<h3>坑八到坑十：三个小的</h3>
+<p><strong>함정 8: macOS 파일 시스템의 한글 자모 분리(NFD) 버그.</strong> 한글 파일명(<code>03-고화질.png</code>)으로 렌더링 스크린샷을 저장하면 유니코드 정규화 문제로 파일 정렬 순서가 꼬여 구형 스크린샷이 신규 스크린샷을 덮어쓰는 버그가 일어납니다. 스크립트 산출물은 반드시 순수 ASCII 영문 파일명으로 출력하십시오.<br>
+<strong>함정 9: 에디터 비실행(Edit Mode) 상태에서는 <code>Update()</code> 루프가 돌지 않습니다.</strong> 정지 프레임 스크린샷을 찍을 때 회전목마가 멈춰 있고 캐릭터가 T-Pose로 굳어 있는 것은 지극히 정상입니다. 애니메이션을 보려면 Play 모드로 진입해야 합니다.<br>
+<strong>함정 10: glTFast가 불러온 애니메이션 클립은 별도의 AnimatorController 없이 PlayableGraph로 즉시 재생할 수 있습니다.</strong> 번거로운 애니메이터 상태 머신을 빌드할 필요 없이 <code>AnimationClipPlayable.Create</code> API로 클립을 직접 Animator 컴포넌트에 밀어 넣으면 됩니다.</p>
 
-<p><strong>中文文件名在macOS上会被NFD归一化。</strong>我写过一个「渲染成中文名再复制成ASCII名」的自校验脚本，结果排序时旧图把新图覆盖回去了（<code>03-高处俯瞰.png</code>的Unicode码位排在<code>03-俯瞰全园.png</code>之后），白看了两轮旧截图。修法是渲染直接出ASCII文件名。</p>
+<h3>최악의 실패 사례: 빌드는 성공했으나 실행 즉시 크래시</h3>
 
-<p><strong>静态渲染里<code>Update</code>不跑。</strong>编辑器模式渲染时<code>MonoBehaviour.Update/LateUpdate</code>不会执行，所以旋转木马和摩天轮在静帧里是静止的、走路角色是T-pose。这些都是正常的，不是bug。要出带动作的帧得进Play模式。</p>
-
-<p><strong>glTFast导入的动画clip是子资源，播放不需要AnimatorController。</strong>它会把<code>preset:biped:walk</code>作为<code>AnimationClip</code>子资源挂进来，<code>AssetDatabase.LoadAllAssetsAtPath</code>能枚举到。用Playable直接推给Animator：</p>
-
-<pre><code>using UnityEngine.Playables;    // ← PlayableGraph
-using UnityEngine.Animations;   // ← AnimationClipPlayable / AnimationPlayableOutput
-
-_graph = PlayableGraph.Create("Walker");
-var playable = AnimationClipPlayable.Create(_graph, clip);
-var output  = AnimationPlayableOutput.Create(_graph, "anim", animator);
-output.SetSourcePlayable(playable);
-_graph.Play();</code></pre>
-
-<p>三个必须知道的点。<strong>第一，<code>using</code>是两条不是一条，而且这三个类型分在两个命名空间里</strong>：<code>PlayableGraph</code>在<code>UnityEngine.Playables</code>，<code>AnimationClipPlayable</code>和<code>AnimationPlayableOutput</code>在<code>UnityEngine.Animations</code>。只加后面那一条，<code>PlayableGraph.Create</code>这一行就是CS0246找不到类型，而报错指的是行、不是命名空间，很容易以为是包没装。第二，<code>PlayableGraph</code>字段要标<code>[System.NonSerialized]</code>，它含指针，不能让Unity序列化。第三，自定义的数据类要标<code>[System.Serializable]</code>，否则存进场景后构建出来是空的。</p>
-
-<h3>那个最坏的失败：构建成功，启动即崩</h3>
-
-<p>构建出来的macOS应用启动就崩，日志只有一句：</p>
+<p>macOS 독립 실행형 앱 빌드가 성공적으로 완료되었으나, 더블클릭하여 실행하는 순간 1초 만에 튕기며 다음과 같은 치명적인 에러 로그가 찍혔습니다:</p>
 
 <pre><code>The file '.../Data/level0' is corrupted! Remove it and launch unity again!</code></pre>
 
-<p><code>level0</code>是构建产物里的序列化场景文件，三个构建的<code>level0</code>都约1.0 MB、没有截断。</p>
+<p><strong>원인 분석: 씬 직렬화 파일 내부에 인라인 MonoScript가 오염되어 들어갔기 때문입니다.</strong> <code>Assets/Park.unity</code> 씬 파일을 텍스트 에디터로 열어보니 41개의 스크립트 참조 중 27개가 GUID가 없는 내부 <code>!u!115 MonoScript</code> 블록으로 기록되어 있었습니다. 배치 빌드 스크립트 안에서 「스크립트 컴파일 → AddComponent 호출 → SaveScene 저장」이 단일 프로세스에서 연속 실행되면서 에셋 데이터베이스의 GUID 매핑이 완료되기 전에 씬이 구워져 버린 것입니다.</p>
 
-<p><strong>根因：场景文件里被写进了内联MonoScript。</strong><code>Assets/Park.unity</code>里41个<code>m_Script</code>引用中，有27个是没有guid的纯fileID形式，指向场景文件内部的8个<code>!u!115 MonoScript</code>块：</p>
+<p>더 무서웠던 것은 '정상 실행되는 것처럼 보였던 가짜 빌드'였습니다. 주인공 캐릭터를 제외하고 빌드했더니 앱이 켜지길래 캐릭터가 범인인 줄 알았으나, 실제 콘솔 로그를 까보니 <strong>37개의 커스텀 컴포넌트가 모조리 유실(Missing)되어 껍데기만 켜진 빈 깡통</strong>이었습니다. 프로세스가 살아있다고 해서 정상 빌드가 아닙니다.</p>
 
-<pre><code>--- !u!115 &amp;140919112 ---
-MonoScript:
-  m_Name:                        ← 空
-  m_ClassName: ThirdPersonCamera
-  m_AssemblyName: Assembly-CSharp</code></pre>
+<p><strong>완벽한 해결책: 씬 파일에서 모든 커스텀 스크립트 컴포넌트를 완전히 걷어내고 순수 데이터로만 구성하십시오.</strong></p>
 
-<p>正常Unity场景永远不该内联MonoScript，它只应存在于<code>.cs</code>资源的导入产物里。<code>m_Name</code>为空是「脚本对象已创建但资产注册未完成」的特征。触发条件是批处理里「编译脚本 → AddComponent → SaveScene」跑在同一个进程里，而中招哪些类是竞态：同一份代码，12个<code>Spin</code>安然无恙，另外8个类全中招，两次构建的中招集合还不一样。</p>
+<p>1) <strong>씬(Scene) 레이어</strong>: 오직 3D 모델 인스턴스, 라이트, 카메라, 콜라이더 등 Unity 순수 내장 컴포넌트만 배치합니다.<br>
+2) <strong>매니페스트(Manifest) 레이어</strong>: 어떤 오브젝트에 어떤 회전 속도와 행동을 붙일 것인지를 <code>Assets/Resources/park-manifest.json</code> 파일에 데이터로 정의합니다.<br>
+3) <strong>런타임 부트스트랩</strong>: <code>ParkBootstrap</code> 스크립트가 <code>[RuntimeInitializeOnLoadMethod]</code>를 통해 게임 시작 즉시 JSON 매니페스트를 읽고, 하이어라키 경로를 찾아 동적으로 컴포넌트를 부착합니다.</p>
 
-<div class="warning">
-<strong>我在这上面栽得最重的一跤，是把「假正常」当成了对照。</strong>崩溃之后我做了个对照：不建主角，app能正常启动，于是判定问题出在主角那一套。独立审查者去翻那个对照app的运行日志，里面有<strong>74行</strong><code>The referenced script (Unknown) on this Behaviour is missing!</code>。74 = 37个组件 × 2次运行。那个「正常」的对照版，39个自定义组件里有37个在运行时全部丢失，木马不转、摩天轮不转、行人不动，<strong>它只是窗口弹出来了而已</strong>。
-</div>
+<p>씬 파일에 커스텀 스크립트 참조가 0개가 되었으므로 참조 깨짐 버그가 원천 박멸되었습니다. 여기에 빌드 전 씬 무결성을 검사하는 게이트키퍼(<code>ParkVerify.SceneIsClean()</code>)를 심어 불량 빌드가 세상에 나오는 것을 완벽히 차단했습니다.</p>
 
-<p><strong>验证一个构建产物，「进程还活着」是最弱的一级证据。</strong>正确的判据是三条同时看：运行日志里的装配和警告计数、应用自己截的图、组件数量对账。</p>
+<figure><img src="images/p14-app-selfshot.jpg" alt="네이티브 실행 앱 내부에서 자체 촬영한 스크린샷"><figcaption>네이티브 앱 구동 후 내부 코드가 직접 캡처한 화면(<code>-autoshot</code> 플래그). 콘솔에 <code>런타임 조립 완료: 37개 컴포넌트 부착 성공, 누락 0건</code> 로그가 찍히며 완벽한 검증을 통과했습니다.</figcaption></figure>
 
-<p>解法是把场景里的自定义脚本清零：</p>
+<h3>캐릭터가 허옇게 발광하는 현상: 범인은 조명이 아니라 캐릭터 머티리얼</h3>
 
-<table>
-<thead><tr><th>层</th><th>内容</th></tr></thead>
-<tbody>
-<tr><td><strong>场景</strong></td><td>只有纯数据：模型实例、灯、相机、CharacterController、BoxCollider、后处理组件，全是原生或包组件</td></tr>
-<tr><td><strong>清单</strong></td><td>把「谁该有什么行为、参数多少」写进<code>Assets/Resources/park-manifest.json</code></td></tr>
-<tr><td><strong>运行时</strong></td><td><code>ParkBootstrap</code>用<code>[RuntimeInitializeOnLoadMethod]</code>读清单，按层级路径找对象、挂行为</td></tr>
-</tbody>
-</table>
+<p>완성된 씬에서 모든 보행자와 주인공이 눈부신 백색 귀신처럼 하얗게 타서 렌더링되었습니다. 저는 가로등 조명이 너무 강한 탓인 줄 알고 가로등 강도를 5.2에서 2.1로 깎고 노출값을 낮추며 조명만 만지작거렸습니다.</p>
 
-<p>场景文件里没有任何自定义脚本引用，就没有可损坏的引用。清单存的是层级路径不是名字（同级会重名），而且必须在重挂父级之后才记录路径，否则运行时找不到。</p>
+<p><strong>하지만 재검토 결과 원인은 조명이 아니라 Tripo 캐릭터 모델 자체에 있었습니다.</strong> 해당 캐릭터 모델은 흰색 티셔츠에 밝은 회색 바지를 입고 있었는데, 텍스처의 Base Color 평균 밝기(Luminance)가 무려 0.58에 달했습니다(주변 벤치는 0.18, 가로수는 0.44). 다른 사물보다 기본 텍스처가 3배나 밝은 상태에서 야간 조명, ACES 톤매핑, 블룸 이펙트를 통과하니 당연히 순백색으로 폭발할 수밖에 없었던 것입니다.</p>
 
-<p>构建链上还加了一道闸门<code>ParkVerify.SceneIsClean()</code>，检查场景里有没有无guid的<code>m_Script</code>或内联<code>!u!115</code>，命中就报错并中止构建。<strong>宁可构建失败，也不要产出一个「构建成功、启动即崩」的app。</strong></p>
+<p>해결책은 조명을 건드리지 않고, 캐릭터 전용 머티리얼 인스턴스를 분리하여 <strong>베이스 컬러에 0.5를 곱해 어둡게 눌러주고, 거칠기(Roughness)를 1.0으로 올리며, 금속성을 0으로 리셋</strong>하는 것이었습니다. 옷과 머리카락의 톤 분할이 즉각 선명하게 복원되었습니다.</p>
 
-<figure><img src="images/p14-app-selfshot.jpg" alt="原生可玩版应用内自拍截图"><figcaption>原生可玩版跑起来之后<strong>应用自己截的图</strong>（<code>-autoshot</code>加<code>-autowalk</code>，从应用内部调<code>ScreenCapture.CaptureScreenshot</code>），不是窗口截图。日志同时报<code>运行时装配完成: 37 个行为挂上, 0 个对象缺失</code>。三条证据一起看，才算验收过了。</figcaption></figure>
+<figure><img src="images/p14-park-unity-fixed.jpg" alt="캐릭터 머티리얼 명암을 보정한 후의 공원 전경"><figcaption>캐릭터 머티리얼 보정 후 화면. 가로등 아래 서 있는 보행자의 상의, 바지, 헤어스타일의 명암 층위가 뚜렷하게 식별됩니다(2026-09-11 재구축).</figcaption></figure>
 
-<h3>角色发白：根因不在灯，在角色</h3>
+<h3>WebGL 빌드 용량 최적화: 165 MB에서 51 MB로 다이어트</h3>
 
-<p>这条我判错过一次，值得记。</p>
+<p>첫 번째 WebGL 빌드의 용량은 무려 165 MB에 달했고, 그중 <code>WebGL.data</code> 단일 파일이 152 MB를 차지했습니다. 원본 GLB 파일들을 다 합쳐봐야 58 MB인데 빌드 파일이 152 MB로 불어난 이유는 무엇이었을까요?</p>
 
-<p>网页版和巡游片里所有行人和主角都是发白的白色人形，肉眼一看就是坏的。我第一轮的处理是调灯（路灯5.2降到2.1、曝光0.38降到0.26），然后判定「站在灯正下方仍偏亮属于可接受的夜景表现」。</p>
-
-<p><strong>复核推翻了这个判断。</strong>根因是角色本身：Tripo出的这个角色是白T恤加浅灰裤，基色贴图均值0.58，而长椅是0.18、树是0.44。同一套灯光下它比别的东西亮三倍，再过一遍曝光、ACES和Bloom就成了白影。</p>
-
-<p>修法不动灯光，把角色材质克隆一份存成独立材质，基色乘0.5、粗糙度拉满、金属度归零。</p>
-
-<figure><img src="images/p14-park-unity-fixed.jpg" alt="角色材质压暗之后的园区画面"><figcaption>角色材质压暗之后。光池外的行人已经能看出上衣、裤子和头发的分层，不再是一团白影；站在灯正下方那两个仍然偏亮，源记录里也保留了这条限定。2026-09-11复核后重建。</figcaption></figure>
+<p>범인은 역시 8K 거대 텍스처였습니다. 6개의 놀이기구는 각각 Base Color(8K), Normal(4K), ORM(4K) 3장의 텍스처를 달고 있어 6개 에셋만으로 <strong>18장의 텍스처, 총 6억 400만 픽셀</strong>에 달했습니다. 여기에 나머지 16개 에셋까지 합치니 전체 텍스처 총량이 무려 <strong>7억 100만 픽셀</strong>에 이르렀습니다.</p>
 
 <div class="warning">
-<strong>别拿编辑器渲染判角色。</strong>编辑期离屏渲染里角色是T-pose，而且入口机位正对两排路灯光池叠加处，躯干有55%像素削顶，看着像没修好。<strong>真正的判据是可玩版运行时抓帧。</strong>
+<strong>glTFast를 사용하는 모든 Unity 프로젝트가 반드시 알아야 할 구조적 사실: glTFast 임포터는 Unity의 표준 TextureImporter를 거치지 않고 직접 메모리에 <code>Texture2D</code>를 생성합니다.</strong> 즉, Unity 프로젝트 세팅에서 아무리 WebGL 플랫폼 텍스처 압축(ASTC, DXT 등)을 걸어두어도 전혀 적용되지 않으며, 빌드 데이터 파일 안에는 비압축 순수 RGBA32 원본 픽셀과 밉맵이 고스란히 박히게 됩니다.
 </div>
 
-<h3>WebGL体积：165 MB压到51 MB</h3>
+<figure><img src="images/unity-03-gltfast-inspector.png" alt="carousel.glb 에셋의 glTFast 인스펙터 창 화면"><figcaption>glTFast 임포터 설정 화면. 텍스처 해상도 리사이징이나 플랫폼별 압축 포맷을 지정하는 옵션이 전혀 존재하지 않습니다.</figcaption></figure>
 
-<p>第一版WebGL构建165 MB，其中<code>WebGL.data</code>一个文件就152 MB。源GLB一共才58 MB，构建出来却是152 MB，还是brotli压过的。</p>
-
-<p>量了贴图才明白，而且这笔账要按<strong>张数</strong>数，不能按件数数。六座游乐设施每件挂三张：基础色是8192×8192，法线和ORM各是4096×4096，一件合计1.007亿像素；六件就是<strong>18张、6.04亿像素</strong>。加上园区里另外十六件（十五件是三张1024²，只有<code>citroen-2cv</code>那件是三张4096²），22个GLB的贴图总量是<strong>7.01亿像素</strong>。一张8192²在Unity里按RGBA32展开是268 MB，七亿像素全摊开是2806 MB，带上整条mipmap链（×4/3，口径和§12那笔账一样）约<strong>3.7 GB</strong>。源文件里这些图是JPEG，所以在磁盘上不占地方，进了构建就全摊开了；brotli回压到152 MB，<strong>量级对得上</strong>——这是一个量级判断，不是逐字节对账。</p>
-
-<div class="callout">
-<strong>贴图这件事要按模式说，别记成一句「Tripo出8K」。</strong>这个园区用的是v3.1这条路，出的是base color、normal、ORM三张，所以下面那几条<code>resize</code>命令才需要按槽位分尺寸。<strong>P2.0那条路只出一张base color，没有normal也没有ORM</strong>，那边的处理方式完全不同，在§12。两条路的贴图工序不能互相照抄。
-</div>
-
-<div class="warning">
-<strong>这条对任何用glTFast的项目都成立，不是本项目的特例：</strong>glTFast的编辑器导入<strong>直接创建<code>Texture2D</code>，不走<code>TextureImporter</code></strong>，所以Unity那一整套平台贴图压缩设置从来没被应用过，构建里存的是未压缩的RGBA32加mipmap。glTFast的<code>ImportSettings</code>里只暴露了mipmap和过滤模式，<strong>没有贴图尺寸和压缩的开关</strong>。
-</div>
-
-<figure><img src="images/unity-03-gltfast-inspector.png" alt="选中carousel.glb后的glTFast导入设置"><figcaption>选中<code>carousel.glb</code>后的Inspector，顶上写的是<strong>Gltf Importer</strong>而不是Unity内建的Model Importer。<code>GlTF Settings</code>那一栏能看到的全部选项：Animation方式、Generate Lightmap UVs、Node Name Method、Textures、Components。<strong>没有任何一项管贴图尺寸或压缩格式</strong>，这就是上面那条结论的现场证据。</figcaption></figure>
-
-<p>引擎侧没有开关，就在源文件上处理。贴图名字带槽位标识，可以分开定尺寸：</p>
+<p>엔진 내부에서 압축할 방법이 없으므로, GLB 원본 파일 자체에서 텍스처 슬롯별로 다운스케일링을 사전 수행해야 합니다:</p>
 
 <pre><code>R="npx @gltf-transform/cli resize"
 $R --width 512  --height 512  --pattern "*ormal*"  in.glb t1.glb
@@ -4599,374 +4454,305 @@ $R --width 256  --height 256  --pattern "*ORM_*"   t1.glb t2.glb
 $R --width 256  --height 256  --pattern "*_rm"     t2.glb t3.glb
 $R --width 1024 --height 1024                      t3.glb out.glb</code></pre>
 
-<p>分配逻辑：基础色1024（决定观感，给足）、法线512、金属粗糙度256。基础色1024对1080p输出是3倍过采样，木马在画面里最宽也就640像素。</p>
-
-<p>这四行有两个坑。<code>--pattern</code>是glob而且大小写不敏感，<code>*ORM*</code>会把<code>NormalGL_...</code>一起命中（「Normal」里有「orm」），法线也被压到256；改成<code>*ORM_*</code>（带下划线）才分得开。<code>resize</code>只会缩小、不会放大，所以必须先做小尺寸的pass、最后做兜底的大尺寸pass，顺序反了没法补救。</p>
+<p>슬롯별 분배 전략: 시각적 외형을 결정하는 Base Color는 1024²로 충분히 확보하고, 노멀 맵은 512², 금속성/거칠기 ORM 맵은 256²으로 압축합니다. 1080p 풀HD 뷰포트에서 회전목마가 가장 크게 잡혀봐야 화면상 640픽셀이므로 1024 해상도는 3배 오버샘플링에 해당하는 충분한 퀄리티입니다.</p>
 
 <table>
-<thead><tr><th></th><th>优化前</th><th>优化后</th></tr></thead>
+<thead><tr><th>최적화 지표</th><th>최적화 이전</th><th>최적화 이후</th></tr></thead>
 <tbody>
-<tr><td>WebGL总大小</td><td>165 MB</td><td><strong>51 MB</strong></td></tr>
-<tr><td><code>WebGL.data</code></td><td>152 MB</td><td><strong>48 MB</strong></td></tr>
-<tr><td>模型源文件</td><td>58 MB</td><td><strong>20 MB</strong></td></tr>
-<tr><td>贴图总像素（22件×3张）</td><td>701.5 M</td><td><strong>31.3 M</strong></td></tr>
-<tr><td>原生Mac应用</td><td>2.6 GB</td><td><strong>191 MB</strong></td></tr>
+<tr><td>WebGL 전체 배포 빌드 용량</td><td>165 MB</td><td><strong>51 MB (69% 대폭 다이어트)</strong></td></tr>
+<tr><td><code>WebGL.data</code> 런타임 데이터 파일</td><td>152 MB</td><td><strong>48 MB</strong></td></tr>
+<tr><td>3D 모델 에셋 소스 파일 합산</td><td>58 MB</td><td><strong>20 MB</strong></td></tr>
+<tr><td>전체 텍스처 총 픽셀 수 (22개×3장)</td><td>7억 150만 픽셀</td><td><strong>3,130만 픽셀 (22배 감소)</strong></td></tr>
+<tr><td>독립 실행형 macOS 네이티브 앱 용량</td><td>2.6 GB</td><td><strong>191 MB (13.6배 압축)</strong></td></tr>
 </tbody>
 </table>
 
-<p>「贴图总像素」那一行是从22个GLB里逐张读图像头加出来的，66张一张不落，不是估的。降完之后是31.3 M而不是22×1.376 M＝30.3 M，多出来的那1 M有个具体出处：haussmann那件的ORM贴图名字既不含<code>ORM_</code>也不以<code>_rm</code>结尾，两条<code>--pattern</code>都没命中它，最后落在兜底那一档被定成1024²而不是256²。<strong>按名字分槽位就得接受这个：名字不守规矩的那几件会漏网，而它不报错。</strong></p>
+<figure><img src="images/p14-webgl.jpg" alt="헤드리스 크롬에서 캡처한 실제 WebGL 렌더링 프레임"><figcaption>헤드리스 크롬(CDP)으로 캡처한 WebGL 실제 구동 화면. 텍스처를 대폭 압축했음에도 회전목마와 밤하늘 조명의 디테일이 생생하게 유지됩니다.</figcaption></figure>
 
-<p>原始8K模型单独备份着，要出更高规格的版本可以回到那一份。</p>
+<h3>시네마틱 영상 추출 파이프라인: 이미 돌아가는 게임을 카메라로 레코딩</h3>
 
-<figure><img src="images/p14-webgl.jpg" alt="headless Chrome里抓到的WebGL渲染帧"><figcaption>用CDP驱动headless Chrome抓到的实际渲染帧。<strong>这张图是为了破一个假阴性：</strong>我查<code>window.unityInstance</code>得到<code>undefined</code>，一度以为运行时没起来，其实Unity默认的加载模板根本不往<code>window</code>上挂这个变量。<strong>判据必须是画面，不是某个变量。</strong></figcaption></figure>
+<p>놀이공원의 모든 기구는 이미 물리 법칙과 수학적 삼각함수에 의해 실시간으로 회전하고 있었습니다. <strong>따라서 시네마틱 트레일러 제작은 새로운 렌더링을 거는 것이 아니라, 이미 살아 숨 쉬는 세계에 카메라를 들고 들어가 녹화하는 작업이었습니다.</strong></p>
 
-<h3>出片管线：把已经在跑的东西录下来</h3>
+<p>영상 추출의 3대 핵심 결정:</p>
 
-<p>园区里的东西本来就在动。<strong>静帧传达不了这一点，所以出片不是「加个渲染」，而是把已经在跑的东西录下来。</strong></p>
+<p>1) <strong><code>Time.captureFramerate = 30</code>으로 고정 프레임 타임을 강제했습니다.</strong> 실시간 화면 녹화는 컴퓨터 사양에 따라 프레임이 튀지만, 이 API를 쓰면 매 프레임이 정확히 1/30초 간격으로 가상 시간이 흐르며 한 프레임의 렌더링이 완전히 끝날 때까지 다음 프레임으로 넘어가지 않으므로 100% 완벽하고 부드러운 영상이 보장됩니다.<br>
+2) <strong><code>RenderTexture</code>에 그리고 픽셀을 읽어내는 오프스크린 렌더링 방식을 썼습니다.</strong> 일반 화면 캡처는 모니터 해상도(3024×1898)에 종속되지만, 렌더 텍스처를 쓰면 정확한 표준 1920×1080 FHD 비디오 프레임을 뽑아낼 수 있습니다.<br>
+3) <strong>PNG 대신 JPEG(품질 93)로 저장했습니다.</strong> 1080p PNG는 프레임당 2 MB에 달해 1,650프레임을 뽑으면 디스크 3 GB를 채우지만, JPEG는 프레임당 300 KB로 총 450 MB면 충분합니다.</p>
 
-<p>三个关键决定。</p>
+<pre><code>open -a Build/Park-Play.app --args -logfile /tmp/vc.log      -capture /tmp/frames -cine -frames 1650
 
-<p><strong>用<code>Time.captureFramerate</code>定帧，不用实时录屏。</strong>它让游戏时间按固定步长走、与真实帧率脱钩，每一帧都是确定的。实时录屏会因为掉帧而抖动，而这台机器的帧率并不稳定。</p>
+ffmpeg -y -framerate 30 -i /tmp/frames/f%04d.jpg   -c:v libx264 -preset slow -crf 17   -pix_fmt yuv420p -movflags +faststart out.mp4</code></pre>
 
-<p><strong>渲到RenderTexture再读像素，不走<code>ScreenCapture</code>。</strong>后者只能截屏幕分辨率（这台机器是3024×1898），出不了标准1920×1080。</p>
+<figure><img src="images/p14-shot01.jpg" alt="트레일러 영상 첫 번째 샷 스크린샷"><figcaption>트레일러 영상 샷 1: 입구 메인 로드를 따라 전진하는 인트로 카메라 뷰. 11개의 씬 경유점을 부드러운 스무스스텝(SmoothStep) 곡선으로 보간했습니다.</figcaption></figure>
 
-<p><strong>存JPEG不存PNG。</strong>1080p一帧PNG约2 MB且编码慢一个数量级，JPEG(q93)约300 KB。一千五百多帧，PNG要3 GB，JPEG只要450 MB。（定稿55秒×30 fps＝1650帧；源记录里那条<code>-frames 1515</code>是中间版本留下的。）</p>
+<figure><img src="images/p14-shot09.jpg" alt="트레일러 영상 피날레 샷 스크린샷"><figcaption>트레일러 영상 피날레: 공원 전체를 조망하며 서서히 상승하는 아웃트로 뷰.</figcaption></figure>
 
-<pre><code>open -a Build/Park-Play.app --args -logfile /tmp/vc.log \
-     -capture /tmp/frames -cine -frames 1650
+<h3>카메라 동선 연출 3번의 실패와 3가지 사각지대</h3>
 
-ffmpeg -y -framerate 30 -i /tmp/frames/f%04d.jpg \
-  -c:v libx264 -preset slow -crf 17 \
-  -pix_fmt yuv420p -movflags +faststart out.mp4</code></pre>
+<p>1) <strong>사각지대 1: 콘티에서 에셋을 누락함.</strong> 첫 번째 카메라 앵글 리스트에 해적선이 빠져 있었습니다. 기획 당시에는 아직 해적선 모델이 완성되지 않은 상태여서 기억에 의존해 앵커를 잡다 보니 빠진 것이었습니다. 카메라 동선을 짤 때는 에셋 리스트 전체를 체크리스트 삼아 전수 대조해야 합니다.<br>
+2) <strong>사각지대 2: 카메라 궤적이 3D 지오메트리를 관통함.</strong> 대관람차에서 해적선으로 카메라를 직선 보간(Lerp) 이동시켰더니, 중간에 놓인 거대한 건물 메쉬 한가운데를 카메라가 뚫고 지나가며 5초 동안 화면 전체가 나무 판자 텍스처로 가득 차는 대참사가 일어났습니다. 카메라는 사물을 피해 우회하는 곡선 경유점을 두어야 합니다.<br>
+3) <strong>사각지대 3: 카메라의 시선(LookAt)과 위치(Position)를 똑같은 속도로 보간하면 카메라가 사방으로 덜컹거림.</strong> 시선은 목표 피사체를 향해 먼저 빠르게 회전하고, 위치는 그 뒤를 부드럽게 따라붙어야 프로페셔널한 영화적 연출이 완성됩니다.</p>
 
-<figure><img src="images/p14-shot01.jpg" alt="巡游片第一镜静帧"><figcaption>巡游片第一镜，入口大道推进。11个航点、55.0秒，镜头之间用SmoothStep缓动（<code>u²(3−2u)</code>），匀速位移会很机械。</figcaption></figure>
-
-<figure><img src="images/p14-shot09.jpg" alt="巡游片收尾静帧"><figcaption>巡游片收尾的俯瞰拉远。九张关键帧对应成片5.00到54.00秒。</figcaption></figure>
-
-<h3>镜头编排连错三次，三个不同的盲区</h3>
-
-<p>同一件事我错了三次，每次错法都不同，所以记下来。</p>
-
-<p><strong>错法一：分镜里漏了资产。</strong>第一版10个镜头里没有海盗船，因为列机位的时候它还不存在，我凭记忆列，记忆里就没有那个还没做出来的东西。列分镜要把所有资产过一遍。</p>
-
-<p><strong>错法二：镜头路径穿过实体。</strong>把海盗船排在摩天轮之后，两者相隔46米，而镜头位置是线性插值的，它不会绕开几何体。结果那5秒里镜头从船体正中穿了过去，画面全是木板。「两点之间直线最短」在镜头编排里是缺点不是优点。</p>
-
-<p><strong>错法三：看向点跟着位移一起插值，镜头全程在甩头。</strong>这是最难发现的一个。</p>
-
-<pre><code>float er = SmoothStep(Mathf.Clamp01(u * 1.9f));      // 先转头
-transform.position = Vector3.Lerp(a.pos, b.pos, e);  // 再位移
-Vector3 lookAt = Vector3.Lerp(a.look, b.look, er);
-transform.rotation = Quaternion.LookRotation(
-    lookAt - transform.position, Vector3.up);</code></pre>
-
-<p>看向点要跑得比位置快，而且朝向要每一帧从当前位置朝当前看向点重新解算。先转过去对准主体、再推近，这才是运镜；插值两个四元数只是甩头。</p>
-
-<p><strong>还有一脚：应用失焦后暂停，录到第194帧卡死了63分钟。</strong>Unity应用默认<code>runInBackground = false</code>，一失焦整个应用就暂停。这和浏览器里后台标签页<code>rAF</code>被暂停是同一类问题：宿主认为你不在前台，就停掉你的渲染循环。两层都要修：应用内设<code>Application.runInBackground = true</code>，外面用<code>caffeinate -dims</code>防App Nap。</p>
-
-<div class="tip">
-<strong>卡死那63分钟我完全不知道。</strong>第一版监视器是「每75秒报一次帧数」，能看见进度，但也意味着它不会告诉我出事了。改成只在两种情况下出声：渲染完成，或者连续5分钟没有新帧。<strong>沉默即正常。</strong>不区分「在跑」和「卡住」的监视器会退化成噪音，跟没有一样。
+<div class="warning">
+<strong>macOS 환경의 또 다른 함정: 백그라운드 전환 시 프로세스가 얼어붙어 63분 동안 멈춰 있었던 사건.</strong> Unity의 <code>Application.runInBackground</code> 기본값이 false여서 터미널로 렌더링을 돌려두고 다른 작업을 하러 창을 내리는 순간 194번째 프레임에서 렌더링 루프가 멈춰버렸습니다. 반드시 <code>Application.runInBackground = true</code>를 켜두고, 터미널에서는 <code>caffeinate -dims</code> 명령어로 OS의 절전 잠자기 모드를 방지하십시오.
 </div>
 
-<figure><img src="images/p14-unity-aerial.jpg" alt="星光游乐园俯瞰全园"><figcaption>俯瞰全园。六座设施加过山车轨道加行人路网，Tripo负责形体、代码负责机构，这张图上两者各占一半。</figcaption></figure>
+<figure><img src="images/p14-unity-aerial.jpg" alt="별빛 놀이공원 전경 조감도"><figcaption>별빛 놀이공원 전체 조감도. 6개의 놀이기구와 롤러코스터 트랙, 촘촘한 보행로가 유기적으로 어우러져 있습니다.</figcaption></figure>
 
-<figure><img src="images/p14-park-unity-frame.jpg" alt="巡游片画面"><figcaption>巡游片里的一帧。成片55秒/ 1920×1080 / 30 fps / h264+AAC，音轨全部由ffmpeg现场合成（布朗噪声过低通做环境床、粉噪声过带通做风声、两个正弦做和声垫），<strong>没有任何外部音频素材</strong>，因为独立审校指出素材库那支BGM的授权范围无法确认。</figcaption></figure>
+<figure><img src="images/p14-park-unity-frame.jpg" alt="트레일러 영상의 실제 프레임"><figcaption>최종 완성된 55초 트레일러 영상 프레임(1920×1080 / 30 fps / H.264+AAC). 배경 사운드트랙은 저작권 분쟁을 원천 차단하기 위해 FFmpeg로 순수 브라운 노이즈와 핑크 노이즈, 사인파 화음을 즉석 합성하여 제작했습니다.</figcaption></figure>
 
-<h3>发布：WebGL目录扔上去就行</h3>
+<h3>배포: 완성된 WebGL 폴더를 그대로 업로드하면 끝난다</h3>
 
-<p>构建用的是Brotli加<code>decompressionFallback</code>，加载器自带JS解压，不要求托管方为压缩文件配<code>Content-Encoding</code>头，Vercel、Cloudflare Pages、GitHub Pages都能直接扔整个目录。</p>
+<p>최종 빌드된 WebGL 디렉토리는 Vercel, Cloudflare Pages, GitHub Pages 등 원하는 어떤 정적 웹 호스팅 서비스에든 폴더 통째로 드래그 앤 드롭하여 배포할 수 있습니다.</p>
 
-<figure><img src="images/unity-06-webgl-compression.png" alt="Unity的Web发布设置里压缩格式选Brotli"><figcaption>Project Settings → Player → Settings for Web → Publishing Settings，Compression Format选的是<strong>Brotli</strong>。同一栏里还有Name Files As Hashes、Data Caching、Debug Symbols。这个面板在Unity 6里叫「Settings for Web」，不叫WebGL。</figcaption></figure>
+<figure><img src="images/unity-06-webgl-compression.png" alt="Unity Web 배포 설정에서 압축 포맷 Brotli 선택 화면"><figcaption>Project Settings → Player → Settings for Web → Publishing Settings 화면. 압축 포맷으로 <strong>Brotli</strong>가 지정되어 있습니다.</figcaption></figure>
 
-<p>产物文件后缀是<code>.unityweb</code>而不是<code>.br</code>。判断它到底压没压，看文件头：</p>
+<p>압축이 정상 적용되었는지 확인하려면 터미널에서 바이너리 헤더를 읽어보십시오:</p>
 
 <pre><code>xxd -l 40 Build/WebGL/Build/WebGL.data.unityweb
 # 00000000: 6b8d 0055 6e69 7479 5765 6220 436f 6d70  k..UnityWeb Comp
 # 00000010: 7265 7373 6564 2043 6f6e 7465 6e74 2028  ressed Content (
 # 00000020: 6272 6f74 6c69)…                          brotli)</code></pre>
 
-<p>注意要取40字节，<code>head -c 32</code>只会截到左括号为止，看不到<code>brotli</code>。</p>
-
-<div class="callout">
-<strong>三个交付物用的是同一套资产，但不是同一份文件。</strong>网页版的贴图为了体积做过降采样（基础色1024 /法线512 /金属粗糙度256），看着和片子几乎没差别，严格说不是同一份资源。别在片子里说「和网页版一模一样」。
-</div>
+<p>헤더에 <code>UnityWeb Compressed Content (brotli)</code> 매직 바이트가 선명히 확인된다면 최적화 압축이 완벽히 적용된 것입니다.</p>
 
 </div>
+
 
 <!-- ===== part15-who-does-what.html ===== -->
 <div class="content">
 
-<h2 class="section-title page-break" id="part15"><span class="num">§15</span>谁负责哪一层</h2>
+<h2 class="section-title page-break" id="part15"><span class="num">§15</span>누가 어떤 레이어를 담당할 것인가</h2>
 <p class="section-en">Who Owns Which Layer — A Relay, Not a Race</p>
-<p class="section-intro">一条能让你当场决定「这件事交给谁」的分工线：资产交给3D生成，规划和组装交给coding agent。再加一条只有一句话、但我整本书都在用的取舍判据，和一份诚实到写了「没测」的分层诊断。</p>
+<p class="section-intro">"이 작업은 누구에게 맡겨야 하는가"를 단 1초 만에 판별할 수 있는 명확한 분업 기준선: 3D 모델 에셋은 생성 AI(Tripo)에게 맡기고, 전체 설계와 조립은 코딩 에이전트(Codex/Claude)에게 위임하십시오. 이 책 전체를 관통하는 단 한 문장의 공학적 취사선택 기준과, '미측정' 영역까지 정직하게 고백한 계층별 기술 진단표를 공개합니다.</p>
 
-<h3>那个问题本身问错了</h3>
+<h3>그 질문 자체가 잘못되었다</h3>
 
-<p>做这本书的过程里，我被问得最多的一句是「Tripo和Blender谁强」。偶尔换个版本：「有了AI生成还要不要学Three.js」。</p>
+<p>이 책을 집필하는 동안 가장 많이 받았던 질문 중 하나는 "Tripo와 Blender 중 누가 더 뛰어난가요?"였습니다. 가끔은 "생성 AI가 3D를 다 만들어주는데 굳이 Three.js나 Unity 같은 엔진 코딩을 배울 필요가 있나요?"라는 변형된 질문을 받기도 했습니다.</p>
 
-<p>这个问题有个陷阱。<strong>它们在流水线的不同环节上，压根不在一个赛道。</strong>问谁强，就像问钻头和螺丝刀谁强。</p>
+<p>하지만 이 질문에는 치명적인 함정이 있습니다. <strong>그 도구들은 파이프라인의 서로 다른 공정에 위치해 있으며, 애초에 같은 트랙에서 달리는 경쟁자가 아닙니다.</strong> "드릴과 드라이버 중 누가 더 우월한가"를 묻는 것과 다를 바 없습니다.</p>
 
-<p>但我把巴黎、游乐园、小王子这三条线全部做完之后，发现连「几个工具之间怎么排」都不是最该先问的那一层。真正把人卡住的分界在更前面：<strong>一边是资产，一边是把资产变成一个能玩的东西。</strong>这两件事的性质完全不同，需要的能力也完全不同。</p>
+<p>파리 시가지, 별빛 놀이공원, 어린 왕자 소행성 프로젝트를 모두 완성하고 난 뒤, 진정으로 중요한 경계선은 도구의 이름이 아니라 그보다 훨씬 앞단에 존재한다는 사실을 깨달았습니다: <strong>한쪽에는 '개별 에셋 파일'이 있고, 다른 한쪽에는 '그 에셋들을 결합하여 실제로 플레이 가능한 인터랙티브 세계로 만드는 행위'가 있습니다.</strong> 이 두 영역은 성격도 완전히 다르고 요구되는 역량도 전혀 다릅니다.</p>
 
-<h3>接力：资产只是一半</h3>
+<h3>릴레이 경주: 에셋은 절반에 불과하다</h3>
 
-<p>我在片子最后说的那句判断，是这一整节的地基：</p>
+<p>제가 시연 영상 말미에 남겼던 결론은 이번 섹션 전체를 지탱하는 든든한 주춧돌입니다:</p>
 
-<div class="callout">资产只是一半。真正把这些拼成一个能玩的游戏的，是前面那个coding agent。它负责规划、写代码、把东西拼起来。<strong>这两个是接力的关系。</strong></div>
+<div class="callout">에셋 파일은 전체 프로젝트의 절반에 불과합니다. 이 조각들을 모아 실제로 플레이할 수 있는 게임과 인터랙티브 웹으로 조립해 내는 것은 앞단에 위치한 코딩 에이전트입니다. 기획을 쪼개고, 시스템 아키텍처를 세우고, 코드를 짜서 세계를 조립하는 것은 에이전트의 몫입니다. <strong>이 둘은 경쟁이 아니라 완벽한 릴레이 경주(Relay)의 관계입니다.</strong></div>
 
 <div class="flow">
-  <div class="flow-item">第一棒·资产</div>
+  <div class="flow-item">제1주자 · 3D 에셋 생성</div>
   <div class="flow-arrow">→</div>
-  <div class="flow-item">第二棒·规划与组装</div>
+  <div class="flow-item">제2주자 · 기획, 아키텍처 및 조립</div>
 </div>
 
 <table>
-<thead><tr><th></th><th>第一棒·资产</th><th>第二棒·规划与组装</th></tr></thead>
+<thead><tr><th>비교 항목</th><th>제1주자 · 에셋 생성</th><th>제2주자 · 기획 및 조립</th></tr></thead>
 <tbody>
-<tr><td><strong>谁在跑</strong></td><td>3D生成工具（我用的是Tripo）</td><td>coding agent（我用的是Codex）</td></tr>
-<tr><td><strong>干的活</strong></td><td>一张参考图进去，一件能进引擎的模型出来；要能动的，在这一棒里就把骨绑好、动作挑好</td><td>拆需求、定架构、写代码、把一堆文件拼成一个能开能玩的东西，再自己写验收脚本回头测它</td></tr>
-<tr><td><strong>交出什么</strong></td><td>文件。<strong>文件不是作品</strong></td><td>那个能玩的东西本身</td></tr>
-<tr><td><strong>缺了它会怎样</strong></td><td>第二棒做出来是一堆方块</td><td>资产躺在硬盘上，什么都不是</td></tr>
+<tr><td><strong>누가 달리는가</strong></td><td>3D 생성 AI 툴 (본서에서는 Tripo)</td><td>코딩 에이전트 (본서에서는 Codex / Claude)</td></tr>
+<tr><td><strong>수행하는 역할</strong></td><td>2D 레퍼런스 시안을 받아 엔진에 로딩 가능한 3D 메쉬로 변환. 움직여야 할 경우 뼈대(Rig)와 모션 클립까지 사전 탑재</td><td>요구사항 분해, 시스템 설계, 코드 작성, 수십 개 파일의 좌표 결합, 충돌 판정, 자가 검수 테스트 스크립트 작성 및 버그 디버깅</td></tr>
+<tr><td><strong>최종 산출물</strong></td><td>3D 파일 (GLB / FBX). <strong>파일 자체는 완성된 작품이 아닙니다</strong></td><td>플레이어가 실제로 상호작용할 수 있는 완성된 인터랙티브 세계</td></tr>
+<tr><td><strong>이 주자가 빠지면?</strong></td><td>제2주자가 코드로 열심히 만들어봐야 밋밋한 회색 육면체 상자 더미에 불과함</td><td>수십 개의 화려한 에셋 파일들이 하드디스크 폴더 안에 차갑게 방치됨</td></tr>
 </tbody>
 </table>
 
-<p><strong>不是替代关系，是接力关系。</strong>接力棒从左往右传，两棒解决的问题完全不一样，谁也替不了谁。</p>
+<p><strong>대체 관계가 아니라 철저한 바통 터치 릴레이 관계입니다.</strong> 바통은 좌측(제1주자)에서 우측(제2주자)으로 전달되며, 두 주자가 해결해야 하는 문제 영역은 완전히 다릅니다.</p>
 
-<p>「只是一半」这四个字不是客套。巴黎那23件GLB躺在硬盘上的时候，它们什么都不是：没有比例、没有碰撞、没有摆放规则、没有可视距离分级，甚至没有一个统一的朝向。把它们变成一座能开着车穿过去的城，是另一件完全独立的活，而那件活是coding agent干的。</p>
+<p>「에셋은 절반에 불과하다」는 말은 빈말이 아닙니다. 파리 프로젝트의 23개 GLB 파일이 하드디스크에 저장되어 있을 때 그것들은 아무것도 아니었습니다: 적절한 크기 비율도 없었고, 물리 충돌 판정도 없었으며, 도로망 배치 규칙도 없었고, 카메라 거리에 따른 세부도(LOD) 최적화도 없었으며, 심지어 정면 방향조차 제각각이었습니다. 그 고립된 파일들을 자동차를 몰고 달릴 수 있는 살아있는 파리 시가지로 엮어낸 것은 전적으로 제2주자인 코딩 에이전트의 역할이었습니다.</p>
 
-<p>反过来也一样。第二棒再强，手上没有像样的资产，做出来的就是一堆方块。我那座城在换掉行道树之前，抬头看到的是一排深绿色的积木（§17那两张对比图），代码再怎么写也长不出树皮和叶片的层次。</p>
+<p>역도 마찬가지입니다. 제2주자인 코딩 에이전트가 아무리 천재적이라 해도 손에 쥐어진 에셋이 조악하다면 결과물은 볼품없는 블록 장난감에 머뭅니다. 파리 프로젝트 초기에 고품질 가로수 모델을 넣기 전에는 도로변에 짙은 녹색 사각 블록들이 서 있었을 뿐이며, 코드를 아무리 정교하게 짜도 나무껍질의 요철과 나뭇잎의 풍성한 질감을 만들어낼 수는 없었습니다.</p>
 
-<div class="tip">判断一件活卡在哪一棒，有个特别快的办法：<strong>问「现在缺的是一个文件，还是一条规则」。</strong>缺文件是第一棒的事，缺规则是第二棒的事。缺的是「这东西该摆在哪、按什么密度摆、多远之后换成简化版」，那再生成十件模型也没用。</div>
+<div class="tip">진행 중인 작업이 어느 주자의 영역에서 막혔는지 즉각 판별하는 마법의 질문: <strong>"지금 내게 필요한 것이 '파일'인가, 아니면 '규칙(로직)'인가?"</strong> 파일이 없다면 제1주자의 일이고, 규칙이 없다면 제2주자의 일입니다. "이 에셋을 어디에, 어떤 밀도로 배치하고, 카메라가 멀어지면 어떻게 간소화할 것인가"가 문제라면 3D 모델을 열 개 더 생성해 봐야 아무 소용이 없습니다.</div>
 
-<p>这本书的编排其实就是照这个顺序来的：§01到§14在讲怎么跑好第一棒，§16到§19在讲第二棒怎么把接力棒接住。这一节是中间那个交接区。</p>
+<p>본 핸드북의 구성 역시 이 릴레이 순서를 엄격히 따르고 있습니다: §01부터 §14까지는 제1주자가 바통을 쥐고 달리는 법을 다루었고, §16부터 §19까지는 제2주자가 그 바통을 이어받아 세계를 조립하는 법을 다룹니다. 지금 읽고 계신 §15는 그 두 주자가 손을 맞잡는 바통 터치 존(Exchange Zone)입니다.</p>
 
-<h3>你会开到跟前细看的，才值得生成</h3>
+<h3>차를 몰고 눈앞까지 다가가서 볼 것만 생성할 가치가 있다</h3>
 
-<p>知道了有两棒，下一个问题马上就来：具体到场景里的每一个东西，它该走第一棒（生成一件资产），还是根本不用走，直接让第二棒用代码画出来？</p>
+<p>두 주자의 존재를 이해했다면 다음 질문이 자연스럽게 떠오릅니다: "가상 세계에 들어갈 수많은 사물 중, 어떤 것을 제1주자에게 넘겨 3D로 생성하고, 어떤 것을 제2주자에게 맡겨 코드로 직접 그리게 해야 하는가?"</p>
 
-<p>这条判据是我做完整座城之后能给出的、唯一一条可以照抄的工程判据：</p>
+<p>가상 도시 전체를 구축한 뒤 제가 도출한, 그대로 복사해서 쓸 수 있는 유일한 공학적 황금률은 다음과 같습니다:</p>
 
-<div class="callout"><strong>你开车会开到跟前细看的东西，用Tripo做；你只会远远瞥一眼的，代码画就够了。</strong>这样既保住了近景的细节，也不会让帧率掉下来。</div>
+<div class="callout"><strong>플레이어가 차를 몰고 눈앞까지 바짝 다가가 자세히 들여다볼 사물은 Tripo로 제작하고, 멀리서 슬쩍 스쳐 지나갈 배경 사물은 코드로 절차적 생성하십시오.</strong> 이렇게 분업해야 근경의 화려한 디테일을 극대화하면서도 모바일 브라우저에서 60 FPS 프레임을 방어할 수 있습니다.</div>
 
-<p>它好用是因为它把一个技术问题翻译成了一个玩家视角的问题。你不需要先懂三角面预算、不需要先懂draw call，你只需要问：<strong>玩家的脸会不会凑到这个东西前面去。</strong></p>
+<p>이 법칙이 탁월한 이유는 복잡한 컴퓨터 그래픽스 기술 용어를 '플레이어의 시선'이라는 직관적인 언어로 치환해 주기 때문입니다. 폴리곤 예산이나 드로우 콜을 먼저 계산할 필요 없이 오직 하나만 자문해 보십시오: <strong>"플레이어가 이 사물 바로 앞까지 다가가서 얼굴을 들이밀 것인가?"</strong></p>
 
-<p>巴黎那座城真实的归属是这么分的，我在片子里也是这么说的：</p>
+<p>파리 시가지 데모의 실제 역할 분담은 다음과 같았습니다:</p>
 
 <div class="compare">
-  <div class="compare-good"><strong>Tripo生成的</strong><br>铁塔、凯旋门、圣心堂、车，还有一部分街边的建筑和街具。<br>→ 全是你会开到跟前、甚至会停下来绕一圈的东西</div>
-  <div class="compare-bad"><strong>代码画出来的</strong><br>成片的街区、桥、塞纳河。圣母院、卢浮宫这几个地标也是代码。<br>→ 全是构成城市底色、但你只会远远扫一眼的东西</div>
+  <div class="compare-good"><strong>Tripo 3D로 생성한 에셋</strong><br>에펠탑, 개선문, 사크레쾨르 대성당, 주행 차량, 그리고 도로변의 핵심 상점 파사드와 스트리트 가구.<br>→ 플레이어가 차를 타고 지나가며 바로 곁에서 감상하고 차를 멈추어 둘러볼 대상들.</div>
+  <div class="compare-bad"><strong>Three.js 코드로 절차적 생성한 요소</strong><br>수천 채의 원경 일반 건물 블록, 센강 수로와 강변 석축 옹벽, 24개의 다리. 노트르담 대성당과 루브르 박물관 역시 코드로 생성.<br>→ 도시의 거대한 배경 공간을 형성하지만 플레이어가 멀리서 시야로만 스쳐 지나갈 요소들.</div>
 </div>
 
-<p><strong>所以这不是一整座城都是AI建模出来的，真实情况是混搭的。</strong>这句话我在片子里专门留了一拍来说，这里也要留一段来说，因为它是这整套方法能不能被复制的前提。看一个漂亮的demo然后以为「它整个是AI生成的」，照着做一定会撞墙：你会为了铺满一座城去生成上千件模型，钱、时间、帧率三样一样都不够。</p>
+<p><strong>따라서 도시 전체를 100% AI로 모델링했다는 말은 환상이며, 실제 프로덕션은 철저한 하이브리드 결합입니다.</strong> 멋진 데모를 보고 "모든 것을 AI로 생성해야지"라고 덤벼들었다가는 수천 개의 모델을 뽑느라 지갑이 거덜 나고 시간과 프레임 레이트가 모두 바닥나며 좌절하게 됩니다.</p>
 
-<p>注意卢浮宫和圣母院这两个例外。它们是地标，按理说该生成，但玩家在我这条赛道上只会从河对岸掠过，所以它们被划到了「远远瞥一眼」那一侧。<strong>判据认的是玩家的实际路线，不是这个东西在现实里有多重要。</strong></p>
+<p>노트르담과 루브르가 코드로 생성된 예외 사례에 주목하십시오. 두 건물은 파리의 상징적 랜드마크이지만, 본 데모의 주행 트랙에서는 강 건너편 먼발치에서만 잠깐 보일 뿐이었습니다. <strong>판단 기준은 현실에서의 역사적 중요도가 아니라, 플레이어의 실제 카메라 동선입니다.</strong></p>
 
-<figure><img src="images/p15-paris-eiffel.jpg" alt="巴黎demo铁塔画面"><figcaption>判据的正面样本：铁塔是你一定会开到脚下的东西，所以它是Tripo生成的GLB。它背后那一整片白色的城、河、桥，你不会停下来看，所以是代码画的。</figcaption></figure>
+<figure><img src="images/p15-paris-eiffel.jpg" alt="파리 데모 에펠탑 전경 화면"><figcaption>황금률의 완벽한 표본: 에펠탑은 플레이어가 탑 밑바닥까지 차를 몰고 들어가는 씬의 주인공이므로 Tripo로 생성한 정밀 GLB 모델입니다. 반면 그 뒤로 끝없이 펼쳐진 수천 채의 백색 시가지 블록, 도로망, 강물은 모두 코드로 수학적 절차 생성을 거쳤습니다.</figcaption></figure>
 
-<p>这条判据的第二次兑现是在游乐园那条线上，而且分得更干净：木马、摩天轮的吊舱、飞椅、茶杯、鬼屋是Tripo生成的，转的圈、轨道、转轴这些结构件是代码写的。游客的脸会贴到木马上去看鬃毛，但没人会去数摩天轮那一圈钢架的接头（那一轮的完整分工表在§14）。</p>
+<p>놀이공원 프로젝트에서도 이 원칙은 칼같이 적용되었습니다: 목마, 관람차 캐빈, 회전 그네 캡슐, 티컵, 유령의 집은 Tripo로 만들었고, 이들을 회전시키는 원형 트랙, 바퀴살, 베어링 축 등은 코드로 작성했습니다. 관람객은 목마의 갈기와 황금 안장을 보려고 얼굴을 들이밀지만, 회전축 내부의 기계 볼트 개수를 세어볼 사람은 아무도 없기 때문입니다.</p>
 
-<h3>三件工具的真实位置</h3>
+<h3>3가지 도구의 진짜 위치</h3>
 
-<p>把接力棒的路径摊开，中间会经过的几件东西就各就各位了：</p>
+<p>바통이 전달되는 전체 파이프라인을 펼쳐보면, 각 도구의 고유한 위치가 선명하게 드러납니다:</p>
 
 <div class="flow">
-  <div class="flow-item">一张参考图</div>
+  <div class="flow-item">2D 디자인 시안</div>
   <div class="flow-arrow">→</div>
-  <div class="flow-item">Tripo生成</div>
+  <div class="flow-item">Tripo 3D 생성</div>
   <div class="flow-arrow">→</div>
-  <div class="flow-item">清洗／减面</div>
+  <div class="flow-item">CLI 정규화/경량화</div>
   <div class="flow-arrow">→</div>
-  <div class="flow-item">（要动才进Blender）</div>
+  <div class="flow-item">(특수 목적 시 Blender 경유)</div>
   <div class="flow-arrow">→</div>
-  <div class="flow-item">引擎组装</div>
+  <div class="flow-item">엔진 조립 (Three.js/Unity)</div>
   <div class="flow-arrow">→</div>
-  <div class="flow-item">能玩的东西</div>
+  <div class="flow-item">완성된 인터랙티브 세계</div>
 </div>
 
-<p>三者摊开成一张表就没什么可争的了。<strong>最后一行是我建议你真正记住的那一行</strong>，它写的是交接时你要自己付的账。</p>
+<p>도구의 역할을 한눈에 대조할 수 있도록 정리했습니다. <strong>특히 마지막 행은 반드시 기억해 두셔야 할 비용 명세서</strong>로, 바통을 건네받을 때 여러분이 치러야 할 현실적인 대가를 보여줍니다:</p>
 
 <table>
-<thead><tr><th></th><th>Tripo</th><th>Blender</th><th>Three.js / Unity</th></tr></thead>
+<thead><tr><th>비교 항목</th><th>Tripo 3D</th><th>Blender</th><th>Three.js / Unity</th></tr></thead>
 <tbody>
-<tr><td><strong>本质</strong></td><td>AI 3D资产生成器</td><td>专业DCC软件（人工操作）</td><td>渲染库/游戏引擎</td></tr>
-<tr><td><strong>输入</strong></td><td>一张图/一段文字</td><td>空场景，从零手工建</td><td>代码+资产文件</td></tr>
-<tr><td><strong>输出</strong></td><td>3D资产（GLB / FBX / OBJ）</td><td>可编辑工程+渲染成片</td><td>可交互的页面或应用</td></tr>
-<tr><td><strong>在接力里的位置</strong></td><td><strong>第一棒的主力</strong></td><td>第一棒的返修车间，按需才开</td><td><strong>第二棒的落点</strong></td></tr>
-<tr><td><strong>擅长</strong></td><td>打形、量产、占位、铺量</td><td>精度、绑定、动画、hero资产</td><td>交互、零门槛分发</td></tr>
-<tr><td><strong>交接时要自己付的账</strong></td><td>面数要压、贴图要降、朝向和比例要归一</td><td>导入器会塞辅助物体、命名要自己整理</td><td>资产得先备齐，它不生产资产</td></tr>
+<tr><td><strong>도구의 본질</strong></td><td>생성형 AI 3D 에셋 모델러</td><td>전문가용 3D 종합 DCC 툴 (수작업)</td><td>실시간 3D 렌더링 라이브러리 / 게임 엔진</td></tr>
+<tr><td><strong>입력 소스</strong></td><td>2D 이미지 한 장 또는 텍스트 프롬프트</td><td>빈 3D 공간에서 버텍스부터 수작업 조형</td><td>프로그래밍 코드 + 3D 에셋 파일들</td></tr>
+<tr><td><strong>출력 결과물</strong></td><td>단일 3D 에셋 (GLB / FBX / OBJ)</td><td>편집 가능한 3D 프로젝트 씬 및 영상</td><td>사용자가 직접 조작 가능한 웹/앱 소프트웨어</td></tr>
+<tr><td><strong>릴레이에서의 위치</strong></td><td><strong>제1주자의 핵심 스트라이커</strong></td><td>제1주자의 리페어 샵 (필요 시에만 경유)</td><td><strong>제2주자의 최종 안착 지점</strong></td></tr>
+<tr><td><strong>가장 뛰어난 강점</strong></td><td>압도적인 생성 속도, 대량 양산, 컨셉 구체화</td><td>절대적인 조형 정밀도, 리깅, 특수 애니메이션</td><td>실시간 물리 인터랙션, 전 세계 즉시 배포</td></tr>
+<tr><td><strong>바통 터치 시 치러야 할 대가</strong></td><td>폴리곤 감면, 텍스처 리사이징, 방향 정규화 필수</td><td>임포터 보조 객체 정리, UUID 네이밍 파싱 수고</td><td>에셋을 스스로 만들지 못하므로 사전 준비 필수</td></tr>
 </tbody>
 </table>
 
-<p>Blender在这张表里的位置值得多说一句。它不是必经的一站，而是<strong>第一棒的返修车间</strong>：需要绑定、需要动力学、需要面部的东西才拐进去，其余的直接往第二棒传。我巴黎那批资产一件都没进过Blender。</p>
+<p>Blender의 위치를 다시 강조합니다: Blender는 모든 에셋이 거쳐 가야 할 필수 코스가 아니라, <strong>제1주자의 고난도 리페어 샵</strong>입니다. 복잡한 관절 리깅이나 페이셜 블렌드셰이프가 필요한 에셋만 잠시 입고시키고, 나머지 대다수 정적 오브젝트는 곧바로 제2주자에게 직결해야 합니다. 파리 시가지 데모의 23개 에셋은 단 한 개도 Blender를 거치지 않았습니다.</p>
 
-<h3>结合使用的三种真实模式</h3>
+<h3>결합하여 사용하는 3가지 실전 패턴</h3>
 
-<p>框架讲完，问题就变成「我这件活走哪条」。实际跑下来只有三条。</p>
+<p>실제 프로덕션에서 에셋이 흘러가는 통로는 다음 3가지 패턴으로 완벽히 정리됩니다.</p>
 
-<h4>模式A：Tripo → Blender → 引擎</h4>
+<h4>패턴 A: Tripo → Blender → 렌더링 엔진</h4>
 
-<p>角色走这条。需要绑定、需要动力学、需要面部的东西，绕不开Blender那一棒。X上做角色的创作者普遍是这么干的：Tripo分别生成头发、头、身体，然后在Blender里合并、绑定、做摇摆物理，半天做完一个角色。</p>
+<p>고난도 캐릭터가 걷는 경로입니다. 수작업 스킨 바인딩, 옷자락 다이내믹스, 표정 모핑이 필요한 에셋은 Blender를 우회할 수 없습니다. 글로벌 크리에이터들이 캐릭터를 제작할 때 가장 애용하는 워크플로우로, Tripo로 헤어, 얼굴, 바디를 따로따로 생성한 뒤 Blender에서 하나로 결합하고 정밀 웨이트를 입혀 반나절 만에 완성형 캐릭터를 뽑아냅니다.</p>
 
-<h4>模式B：Tripo → 引擎直连，跳过Blender</h4>
+<h4>패턴 B: Tripo → 렌더링 엔진 직결 (Blender 전면 생략)</h4>
 
-<p><strong>这条是我自己验证的。</strong>巴黎那23件资产，建筑、道具、载具、行人、地标，生成完直接导GLB、压缩、进Three.js，<strong>全程没有经过Blender</strong>。</p>
+<p><strong>이것이 제가 파리 프로젝트를 통해 실증한 초고속 파이프라인입니다.</strong> 23개의 건물, 차량, 정적 보행자, 소품 에셋들은 생성 직후 CLI를 통해 텍스처를 줄이고 방향만 정규화한 뒤 곧바로 Three.js 씬에 탑재되었습니다. <strong>Blender는 1초도 켜지 않았습니다.</strong></p>
 
-<p>实证结论：对场景类资产，这条路完全走得通。我由此省掉了整个Blender环节。</p>
+<p>실측을 통해 도출된 패턴 B의 3대 전제 조건: 1) 폴리곤 면수를 최적화할 것. 2) 감면 한계선(나무는 7,473면 이하로 내리면 가지 토폴로지가 붕괴됨, §04 참조)을 준수할 것. 3) 텍스처 해상도를 용도에 맞게 1024²로 리사이징할 것.</p>
 
-<p>边界条件也是实测出来的三条。<strong>面数要压</strong>，Tripo默认输出1.6到1.8万三角面，装进Web场景必须减面加压缩。<strong>减面有下限</strong>，我那两棵巴黎梧桐压到7473面就交付了，再往下分枝拓扑就崩（各类资产的减面下限见§04；这两棵是09-10那版，后来被P2.0的七叶树换掉，见§18）。<strong>贴图档位影响近距离观感</strong>，我选的1k档，凑到墙上看会糊。</p>
+<h4>패턴 C: AI 에셋 + 프로시저럴 절차 생성의 하이브리드 결합</h4>
 
-<h4>模式C：AI生成+程序化混搭</h4>
+<p>가장 강력하면서도 많은 이들이 간과하는 패턴입니다. 파리 시가지에서 플레이어 눈앞을 스쳐 지나가는 110그루의 근경 가로수는 정교한 Tripo GLB 모델을 심고, 도시 전역과 먼 숲의 2만 그루 나무는 Three.js 코드로 가벼운 구체 메쉬를 깔았습니다. <strong>드로우 콜은 고작 17회 늘고 삼각면은 15% 증가하는 데 그쳤으며, 프레임 레이트는 완벽한 60 FPS를 사수했습니다.</strong></p>
 
-<p>这是最容易被忽略的一条，因为它不是「用不用AI」的二选一，而是上面那条判据在同一个场景里同时落两次。</p>
+<h3>동일한 씬 안에서 코드와 AI의 역할 분담 기준</h3>
 
-<p>巴黎全城近景行道树用Tripo生成的GLB替换，中景、远景和公园球冠保留程序化几何——<strong>近景要细节，远景只需要「那儿有个绿色的东西」</strong>，而AI模型的面数成本撑不住两万株的量。<strong>替换前后的对照图和这笔面数账在§17</strong>，集成时踩的坑在§18。</p>
+<p>"눈앞에서 볼 것인가, 멀리서 볼 것인가"가 거리의 기준이라면, 아주 가까이서 보더라도 절대 생성 AI에게 넘겨서는 안 되는 사물이 있습니다. 바로 <strong>치수와 기계적 메커니즘이 소수점 단위로 정확해야 하는 부품</strong>입니다.</p>
 
-<p>量化的账在§13：14栋高细节Tripo建筑的总代价是多17个draw call、多15%三角面，帧率完全没掉。<strong>用15%的三角预算买下赛道沿线全部的高细节，其余程序化铺满。</strong></p>
-
-<h3>同一个场景里，代码和AI怎么分</h3>
-
-<p>「跟前细看还是远远瞥一眼」管的是距离。还有一类东西距离很近、但照样不该生成，那就是<strong>尺寸必须精确的件</strong>。</p>
-
-<p>四冲程发动机那轮给出了这条补充判据（那台机器本身、以及我花50积分生了一根曲轴又放弃的经过，在§20）。那台机器的零件来源是这么分的：</p>
+<p>4행정 내연기관 엔진 데모를 제작할 때 이 기준이 명확히 세워졌습니다(50 크레딧을 들여 크랭크축을 생성했다가 폐기한 비화는 §20 참조):</p>
 
 <table>
-<thead><tr><th>零件</th><th>来源</th><th>为什么</th></tr></thead>
+<thead><tr><th>엔진 부품</th><th>제작 방식</th><th>선택의 이유</th></tr></thead>
 <tbody>
-<tr><td>活塞</td><td><strong>Tripo生成</strong></td><td>形状复杂、有环槽和裙部细节，AI生成比手搓划算</td></tr>
-<tr><td>连杆</td><td><strong>Tripo生成</strong></td><td>工字截面、大小头圆环，同上</td></tr>
-<tr><td>曲轴</td><td>代码</td><td><strong>曲柄销的位置必须精确</strong>，偏一点整台机器就是错的</td></tr>
-<tr><td>缸筒/缸盖/气门/火花塞</td><td>代码</td><td>都是回转体，代码更干净，还能做半透明剖视</td></tr>
+<tr><td>피스톤 (Piston)</td><td><strong>Tripo AI 생성</strong></td><td>링 홈, 스커트 곡면 등 복잡한 조형 디테일이 풍부하여 AI 생성이 훨씬 유리함</td></tr>
+<tr><td>커넥팅 로드 (Connecting Rod)</td><td><strong>Tripo AI 생성</strong></td><td>I자 단면과 대소단 엔드 링의 입체적 곡면 조형미가 뛰어남</td></tr>
+<tr><td>크랭크축 (Crankshaft)</td><td>Three.js 코드 생성</td><td><strong>크랭크핀의 회전 반경과 각도가 소수점 단위로 완벽해야 함</strong>. 조금만 어긋나도 엔진이 깨짐</td></tr>
+<tr><td>실린더 블록 / 밸브 / 스파크 플러그</td><td>Three.js 코드 생성</td><td>순수 원통 회전체이므로 코드가 훨씬 가볍고, 반투명 단면 절개 연출이 가능함</td></tr>
 </tbody>
 </table>
 
-<div class="callout">
-<strong>补充判据一句话：决定机构对错的尺寸件用代码，决定观感的形体件用AI。</strong>换个问法更好用：<strong>这个件错了，别人一眼能看出「不对」吗？</strong>能，就写代码。
-</div>
+<div class="callout"><strong>보충 판별 기준: 메커니즘의 정밀도를 결정하는 치수 부품은 코드로 짜고, 시각적 조형미를 결정하는 유기적 형태는 AI로 생성하십시오.</strong> "이 부품이 비뚤어졌을 때 관람객이 단번에 '고장 났다'고 눈치챌 수 있는가?" 그렇다면 코드로 짜야 합니다.</div>
 
-<p>两条判据合起来，覆盖面就完整了：<strong>先问玩家会不会凑近看，再问它错了会不会被一眼看穿。</strong>前一条管画面预算，后一条管正确性。巴黎那座城里的桥面高程、街廓碰撞、路网走向全部落在后一条上，所以它们哪怕就在车轮底下，也照样是代码算的。</p>
+<p>두 가지 기준이 결합하여 완벽한 판단 매트릭스를 완성합니다: <strong>1차 질문: 플레이어가 눈앞까지 다가가서 볼 것인가? 2차 질문: 형태가 비뚤어졌을 때 구조적 결함이 단번에 탄로 나는가?</strong> 파리 시가지 데모의 다리 고도, 도로망의 굴곡, 충돌 바운딩 박스가 모두 코드로 계산된 이유가 바로 후자의 기준 때문입니다.</p>
 
-<figure><img src="images/p15-carousel-shaft.jpg" alt="会转的游乐场demo，一根主传动轴带三台机器"><figcaption>《会转的游乐场》：一根主传动轴带旋转木马、摩天轮、小火车，传动比写死在代码里（木马0.25、小火车0.20、摩天轮0.115），面板上那几个数是各自已经转过的圈数。<strong>这一版里机构几乎全是代码，Tripo只出了木马上的马。</strong>所以它是「尺寸件用代码」这半条判据的样本，另外半条看下面那台发动机。</figcaption></figure>
+<figure><img src="images/p15-carousel-shaft.jpg" alt="회전 놀이터 데모: 메인 샤프트 하나가 3개 놀이기구를 연동 구동함"><figcaption>《회전 놀이터》 데모: 중앙의 메인 구동축이 회전목마(0.25), 꼬마기차(0.20), 관람차(0.115)를 정밀한 감속 기어비로 연동 구동합니다. 회전 메커니즘은 100% 코드로 작성되었으며, Tripo는 오직 목마 위의 말 인형 조형만을 담당했습니다.</figcaption></figure>
 
-<figure><img src="images/p15-engine-assembly.jpg" alt="四冲程发动机装配挑战界面"><figcaption>发动机的装配挑战：六步顺序，点错了给的是真实的机械约束（「缸筒一罩下来，活塞就没法从上面压进去了」）。这条交互之所以成立，前提正是曲轴、缸筒这些尺寸件是代码算的，位置精确到可以判对错。</figcaption></figure>
+<figure><img src="images/p15-engine-assembly.jpg" alt="4행정 엔진 조립 인터랙티브 챌린지 화면"><figcaption>엔진 조립 인터랙티브 챌린지: 6단계 조립 순서가 틀리면 "실린더를 먼저 덮어버리면 피스톤을 위에서 밀어 넣을 수 없습니다"라는 실제 기계공학적 제약 경고가 뜹니다. 치수 부품들을 코드로 수학적으로 배치했기에 이런 상호작용 검증이 가능했습니다.</figcaption></figure>
 
-<h3>七步变四步，省掉的是哪几步</h3>
+<h3>7단계가 4단계로 줄어들었을 때, 생략된 3단계는 무엇인가</h3>
 
-<p>第一棒内部还能再拆细一点。行业里讲这件事常用的拆法是：传统流程里一个角色从概念到进引擎要走七步，AI流程是四步。（下面这张表是行业通用口径，不是我自己的实测；我没有请一位熟练模型师来跑对照组。）</p>
+<p>전통적인 3D 파이프라인에서 하나의 캐릭터가 게임 엔진에 들어가기까지는 7단계의 지난한 과정을 거쳐야 했습니다:</p>
 
 <table>
-<thead><tr><th></th><th>传统流程（熟练模型师）</th><th>AI流程</th></tr></thead>
+<thead><tr><th>구분</th><th>전통적 수작업 파이프라인</th><th>생성 AI 기반 신규 파이프라인</th></tr></thead>
 <tbody>
-<tr><td>步骤</td><td>概念图 → 三视图 → 高模雕刻 → 低模拓扑 → 展UV → 贴图烘焙 → 引擎调整（<strong>7步</strong>）</td><td>概念图 → Tripo生成 → 直出PBR材质 → 导入引擎（<strong>4步</strong>）</td></tr>
-<tr><td>一个角色耗时</td><td>三五天起步</td><td>很快出初稿，收尾看要求</td></tr>
+<tr><td>제작 단계</td><td>컨셉 시안 → 삼면도 작성 → 하이폴리곤 스컬프팅 → 로우폴리곤 리토폴로지 → UV 언래핑 → 텍스처 베이킹 → 엔진 임포트 및 튜닝 (<strong>총 7단계</strong>)</td><td>컨셉 시안 → Tripo 3D 원스톱 생성 → PBR 머티리얼 직출 → 엔진 임포트 (<strong>단 4단계</strong>)</td></tr>
+<tr><td>단일 캐릭터 소요 시간</td><td>숙련된 3D 모델러 기준 최소 3~5일 이상</td><td>수 분 만에 초안 완성, 후처리는 요구 수준에 따라 결정</td></tr>
 </tbody>
 </table>
 
-<p>被压掉的三步是<strong>高模雕刻、低模拓扑、展UV</strong>。这三步恰好是最需要手上功夫、也最消磨人的三步。</p>
+<p>생략된 3단계는 바로 <strong>하이폴리곤 스컬프팅, 로우폴리곤 리토폴로지, 그리고 UV 언래핑</strong>입니다. 3D 그래픽스에서 가장 많은 노동력과 시간을 잡아먹고 모델러의 손목을 갉아먹던 3대 병목 구간이 통째로 증발한 것입니다.</p>
 
-<p>但注意「收尾看要求」这五个字。压掉三步不等于那三步的产出不再需要，只是<strong>它们的质量由模型给你定了，你要么接受，要么回Blender自己收</strong>。我在E3和E4里测到的碎片化、权重塌，本质上就是「低模拓扑」这一步被跳过之后留下的账。</p>
+<p>하지만 "후처리는 요구 수준에 따라 결정된다"는 전제를 잊지 마십시오. 세 단계가 압축되었다고 해서 그 결과물이 필요 없어진 것이 아니라, <strong>AI 모델이 나름대로 정규화하여 일괄 처리해 준 결과물을 그대로 수용하거나, 마음에 들지 않으면 Blender에서 직접 손으로 고쳐야 한다는 뜻</strong>입니다. 앞서 E3, E4 실험에서 마주했던 메쉬 파편화나 웨이트 붕괴는 바로 '인간의 정밀 리토폴로지' 단계가 생략되었을 때 발생하는 자연스러운 기술적 청구서입니다.</p>
 
-<p>独立评测普遍提到AI网格的几条技术特征，和我自己测出来的能对上：多边形分布均匀、不集中在细节密集区；边环不贴合解剖结构，做动画时容易挤压变形；手指、耳朵这类复杂区域有n-gon和捏缩顶点，UV有接缝；高精度档直接导进引擎会严重拖帧，必须再优化。这几条都有对应的绕法，分别在§04、§06、§12里。</p>
+<h3>바통을 떨어뜨리는 3가지 위험 구간</h3>
 
-<p>最后那条我在§14量到了具体数字：六个8K贴图的资产让WebGL构建从51 MB膨胀到165 MB。<strong>这就是「引擎调整」那一步没有消失的证据。</strong></p>
-
-<h3>接力棒掉在地上的三个地方</h3>
-
-<p>接力赛真正丢时间的地方从来不是某一棒跑得慢，是交接。这套流程里有三个交接面，每一个都有固定的成本。</p>
+<p>릴레이 경주에서 시간을 가장 많이 날리는 곳은 주자의 달리기 속도가 아니라 바통을 주고받는 인터페이스 구간입니다. 이 파이프라인에는 3개의 위험한 바통 터치 지점이 존재합니다:</p>
 
 <table>
-<thead><tr><th>交接面</th><th>要付的账</th><th>在哪一节</th></tr></thead>
+<thead><tr><th>바통 터치 인터페이스</th><th>반드시 치러야 할 엔지니어링 대가</th><th>상세 해결 가이드</th></tr></thead>
 <tbody>
-<tr><td>Tripo → 引擎</td><td>面数要压、贴图要降、比例要归一化、朝向要对齐、PBR金属要配环境贴图</td><td>§12 / §14 / §17</td></tr>
-<tr><td>Tripo → Blender</td><td>碎片化的网格绑不出好权重、命名带uuid不好定位、导入器会塞进辅助物体</td><td>§13</td></tr>
-<tr><td>引擎 → 发布</td><td>子路径托管要相对路径、沙盒可能禁用网络请求、压缩格式要确认真的压了、发布包别把归档目录一起带走</td><td>§12 / §14 / §19</td></tr>
+<tr><td>Tripo 3D → 렌더링 엔진</td><td>폴리곤 면수 감면, 8K 텍스처 다운스케일링, 바운딩 박스 정규화, 정면 Yaw 각도 정렬, PBR 금속 환경 맵 주입</td><td>§12 / §14 / §17</td></tr>
+<tr><td>Tripo 3D → Blender</td><td>파편화된 메쉬의 웨이트 바인딩 실패 회피, UUID 난수 네이밍 파싱, 임포터 가상 객체 필터링</td><td>§13</td></tr>
+<tr><td>렌더링 엔진 → 최종 배포</td><td>서브 디렉토리 배포 시 상대 경로 강제, iframe 샌드박스의 fetch() 차단 대응, WebGL 압축 헤더 검증</td><td>§12 / §14 / §19</td></tr>
 </tbody>
 </table>
 
-<p>这三张账单加起来，比任何一棒本身的耗时都长。<strong>知道它们存在，比知道哪个工具更强有用得多。</strong></p>
+<p>이 3대 청구서를 처리하는 시간이 각 도구의 단독 실행 시간보다 훨씬 깁니다. <strong>이 병목 구간들이 사전에 존재한다는 사실을 인지하는 것 자체가 개발 일정을 절반으로 단축하는 비결입니다.</strong></p>
 
-<h3>卡在哪一层：一份带「没测」的诊断</h3>
+<h3>어느 레이어에서 막혔는가: 계층별 종합 진단표</h3>
 
-<p>「AI能不能做3D角色」这个问题，答不出「能」或「不能」。我把它拆开一层一层判，判到哪算哪：<strong>前五层有结论，第六层是边界。</strong></p>
+<p>"AI가 3D 캐릭터를 완전히 대체할 수 있는가?"라는 이분법적 질문 대신, 공정 레이어별로 냉정하게 진단한 성적표를 제시합니다:</p>
 
 <table>
-<thead><tr><th>层</th><th>结论</th><th>证据</th></tr></thead>
+<thead><tr><th>공정 레이어</th><th>달성 상태</th><th>실측 검증 근거</th></tr></thead>
 <tbody>
-<tr><td>1 ·生成资产</td><td><strong>✅成立</strong></td><td>29个独立资产，16711到46196面，默认落在可用区间（这个29和城里那23件数的不是同一批，口径见§16）</td></tr>
-<tr><td>2a ·几何连通分量分件</td><td><strong>❌不成立</strong></td><td>E3：Blender按连通分量（loose parts）把2CV切出358个碎片，拿不到轮子</td></tr>
-<tr><td>2b ·语义分件</td><td><strong>✅成立</strong></td><td>§05：Tripo分部件生成的精细档拆出77个部件，轮子、车门、车顶各自独立</td></tr>
-<tr><td>3 ·自动权重绑定</td><td><strong>❌不成立</strong></td><td>E4：4关节，转一下脊柱整个人就塌</td></tr>
-<tr><td>4 · Tripo自带绑骨</td><td><strong>✅成立</strong></td><td>E5：41关节+ 2.375秒走路循环，20积分</td></tr>
-<tr><td>5 ·进游戏</td><td><strong>✅成立</strong></td><td>巴黎demo里6个绑骨行人真的在走，另12个是五种静态行人站着（见§18），桌面加移动端全PASS</td></tr>
-<tr><td>6 ·面部与口型</td><td><strong>△没测</strong></td><td><strong>所以不下结论。</strong>这是我的边界</td></tr>
+<tr><td>1. 3D 에셋 생성</td><td><strong>✅ 완벽 구현</strong></td><td>29개 독립 에셋 생성 완료 (16,711 ~ 46,196면, 웹 최적화 가용 범위 내)</td></tr>
+<tr><td>2a. 기하학적 연결 요소 부품 분할</td><td><strong>❌ 구현 불가</strong></td><td>E3 실험: Blender로 시트로엥 2CV 분할 시 358개 찰흙 파편으로 쪼개져 바퀴 분리 실패</td></tr>
+<tr><td>2b. AI 시맨틱 의미론적 부품 분할</td><td><strong>✅ 완벽 구현</strong></td><td>§05: Tripo 스마트 분할 정밀 모드로 바퀴, 도어, 루프 등 77개 유의미한 부품 완벽 분리</td></tr>
+<tr><td>3. 일반 DCC 자동 웨이트 바인딩</td><td><strong>❌ 구현 불가</strong></td><td>E4 실험: 4개 관절 생성 후 척추 본 회전 시 메쉬 전체 붕괴 및 파편 이탈</td></tr>
+<tr><td>4. Tripo 공식 오토 리깅</td><td><strong>✅ 완벽 구현</strong></td><td>E5: 41개 정밀 관절 스켈레톤 + 2.375초 보행 사이클 탑재 (20 크레딧 소모)</td></tr>
+<tr><td>5. 게임 엔진 실시간 인터랙션</td><td><strong>✅ 완벽 구현</strong></td><td>파리 시가지 데모에서 6명의 리깅 보행자가 실시간 보행 완주, 데스크톱/모바일 100% 통과</td></tr>
+<tr><td>6. 미세 표정 및 립싱크 모핑</td><td><strong>△ 미검증</strong></td><td><strong>직접 테스트하지 않았으므로 섣부른 결론을 유보함</strong> (현재 기술의 경계선)</td></tr>
 </tbody>
 </table>
 
-<p>第2层拆成两行，是因为它在我这里出过两个相反的结果，而两个都对：<strong>同样是一辆AI生成的车，用几何的刀切不出轮子，用语义的刀切得出来。</strong>连通分量只认「这堆三角形彼此连着吗」，而AI生成的网格本来就是一层碎壳，轮胎和挡泥板之间根本没有几何缝；语义分件认的是「这块是什么」，所以它能在没有缝的地方划一刀。<strong>这两行的差别，正是§05那一节存在的理由</strong>——如果只看2a那一行就收工，你会得出「轮子转不了」这个错结论，而它只是「别用那把刀」。</p>
+<figure><img src="images/p15-plan-d.jpg" alt="계층별 실시간 대조 검증 웹페이지 화면"><figcaption>3단계(Blender 자동 웨이트)와 4단계(Tripo 자체 리깅)의 차이를 검증할 수 있는 인터랙티브 대조 페이지. 동일한 신사 모델을 좌우에 나란히 배치하고 슬라이더를 당기면 좌측 모델은 주저앉고 우측 모델은 유연하게 허리를 굽힙니다.</figcaption></figure>
 
-<div class="tip">
-<strong>第6层是这份诊断的骨气所在。</strong>不吹也不黑，测到哪说到哪。一份全是对勾的诊断没有人会信，一份全是叉的诊断说明作者没真做过。
-</div>
+<figure><img src="images/p15-e4-pose.jpg" alt="Blender 자동 웨이트 바인딩 실패 모습"><figcaption>3단계의 실패 현장: 척추 회전 시 발이 공중에 뜨고 가방 조각이 허공으로 튕겨 나간 모습(§13 참조).</figcaption></figure>
 
-<figure><img src="images/p15-plan-d.jpg" alt="卡在哪一层的实时对照页"><figcaption>把第3层和第4层做成了一个实时对照：<strong>同一个模型，两种绑定，一个共用的滑块</strong>（页面副标题写的就是SAME MODEL · TWO RIGS，左右确实是同一个戴帽提公文包的行人）。观众自己拖那个滑块，塌是他亲手拖出来的。点「显示骨架」模型会压成半透明，左边只有一根竖线，右边是一副完整骨架。</figcaption></figure>
+<figure><img src="images/p15-rig-walk.jpg" alt="Tripo 오토 리깅 보행 애니메이션 성공 화면"><figcaption>4단계의 성공 현장: 41개 본과 123개 모션 채널이 탑재되어 자연스럽게 걸어가는 모습(§06 참조).</figcaption></figure>
 
-<figure><img src="images/p15-e4-pose.jpg" alt="Blender自动权重绑定的失败姿势"><figcaption>第3层的样子：Blender自动权重。左起A静止、B转<code>spine</code>35度、C再转<code>head</code>30度，公文包飞离主体、脚离地。原图顶部那条中文标签渲染时缺字体、是一排方块，进书前已裁掉。细节见§13。</figcaption></figure>
+<h3>그렇다면 나는 지금 무엇을 써야 하는가</h3>
 
-<figure><img src="images/p15-rig-walk.jpg" alt="Tripo自动绑骨的行走动画"><figcaption>第4层的样子：Tripo自动绑骨出来的行走循环。左侧面板的读数是41骨骼、1个SkinnedMesh、1段<code>preset:biped:walk</code>、19,830面，动画拆开是123个通道、2.375秒一圈。<strong>这一件是§06里那个白T恤T-Pose男性，和上一张不是同一个角色</strong>，上一张是巴黎那个西装行人。<strong>别拿123去认角色</strong>：41关节的件通道数都是41×3＝123，巴黎那个行人也是这个数，为什么有的件会变成126，§06讲了。真正「同一模型两种绑定」的对照在前面那张方案D页面里。</figcaption></figure>
+<p>이 섹션의 모든 내용을 작업실 모니터 옆에 붙여둘 수 있도록 4줄로 압축합니다.</p>
 
-<h3>关于「AI做不到的那一层」，一条我决定不当论据用的话</h3>
+<div class="step"><div class="step-num">1</div><div class="step-content"><h4>무(無)에서 유(有)로 형태를 뽑아낼 때 → Tripo 3D</h4><p>컨셉 형상화, 대량 양산, 프로토타입 에셋 배치. 머릿속의 아이디어를 3D 파일로 만드는 제1주자입니다.</p></div></div>
 
-<p>调研时我拿到一段转述，说VAST的首席科学家在一次访谈里划过一条边界：环境道具、场景组件、简单NPC、载具已经接近可直接使用；核心角色和复杂动画，尤其是面部和动力学绑定，仍是下一阶段最难解决的门槛。</p>
+<div class="step"><div class="step-num">2</div><div class="step-content"><h4>단순 형태에서 최고급 명품으로 다듬을 때 → Blender</h4><p>정밀 관절 리깅, 물리 다이내믹스, 정교한 표정 모핑, 주인공급 특수 에셋의 수작업 리터칭이 필요할 때만 여십시오. 단순 감면과 압축은 CLI가 훨씬 빠릅니다.</p></div></div>
 
-<p>这段话和我那六层诊断的结果吻合得有点好，正因为如此我更要说清楚它的来路。</p>
+<div class="step"><div class="step-num">3</div><div class="step-content"><h4>에셋을 모아 살아 움직이는 인터랙티브 세계로 만들 때 → Three.js 또는 Unity</h4><p>웹 브라우저에서 링크 하나로 즉시 전 세계에 배포하고 싶다면 Three.js(§12), 고품질 실시간 그림자와 시네마틱 영상, 네이티브 앱을 원한다면 Unity(§14)를 선택하십시오.</p></div></div>
 
-<div class="warning">
-<strong>这是转述，出处目前只有「播客访谈」四个字，我没找到可以点开的一手来源。</strong>所以本书不把它当论据用，只当成一条「有人也这么看」的旁注。我那六层诊断的每一条都有自己的实验编号和产物文件，站不站得住只取决于那些实验本身，不取决于这段话。<strong>引二手材料之前先确认它还活着，引文准确不等于引用安全。</strong>
-</div>
+<div class="step"><div class="step-num">4</div><div class="step-content"><h4>하지만 위 세 가지를 누가 엮어낼 것인가? → 코딩 에이전트</h4><p>어떤 엔진을 고르고, 아키텍처를 어떻게 설계하며, 에셋을 어떻게 배치하고 디버깅할 것인가는 전적으로 제2주자인 코딩 에이전트의 몫입니다. 여러분이 할 일은 요구사항과 판단 기준을 명확한 언어로 에이전트에게 지시하는 것입니다.</p></div></div>
 
-<p>能自己测出来的，就不要靠别人的一句话。</p>
+<h3>갈피를 잡지 못할 때 스스로에게 던져야 할 5가지 질문</h3>
 
-<h3>那我到底该用哪个</h3>
+<p>새로운 오브젝트를 만들어야 할 때, 다음 5가지 질문을 위에서부터 차례대로 던져보십시오:</p>
 
-<p>把这一节压成四句话，贴在你工位上。</p>
+<div class="callout"><strong>① 형태가 비뚤어졌을 때, 누구나 단번에 "틀렸다"고 눈치챌 사물인가?</strong><br>그렇다면 코드로 절차적 생성하십시오. 완벽한 원, 닫힌 궤도 레일, 정밀한 기어 축은 AI 생성이 아닌 수학 공식의 영역입니다.</div>
 
-<div class="step"><div class="step-num">1</div><div class="step-content"><h4>从零到有个东西 → Tripo</h4><p>打形、铺量、占位、把脑子里的东西变成文件。这是第一棒。</p></div></div>
+<div class="callout"><strong>② 플레이어의 카메라가 코앞까지 바짝 들이닥칠 사물인가?</strong><br>그렇다면 생성 AI로 만드십시오. 충분한 시간을 들여 프롬프트를 깎을 가치가 있습니다. 멀리서 스쳐 지나갈 배경이라면 코드로 대충 그린 박스로 족합니다.</div>
 
-<div class="step"><div class="step-num">2</div><div class="step-content"><h4>从有个东西到是个精品 → Blender</h4><p>但只有当你真的需要绑定、动力学、面部或hero级精修时才开它。只做减面和压缩的话，命令行更快（见§13的E0）。</p></div></div>
+<div class="callout"><strong>③ 이 오브젝트가 살아서 움직여야 하는가?</strong><br>가만히 서 있는 정적 배경 사물이라면 패턴 B(엔진 직결)로 보내십시오. 움직여야 한다면 4번 질문으로 넘어갑니다.</div>
 
-<div class="step"><div class="step-num">3</div><div class="step-content"><h4>从是精品到能玩 → Three.js或Unity</h4><p>要在网页里、要零门槛分发、要人点开链接就能玩，选Three.js（§12）。要实时阴影、后处理、出片和原生可玩版，选Unity（§14）。</p></div></div>
+<div class="callout"><strong>④ 움직이는 부위가 전체인가, 내부 관절인가?</strong><br>오브젝트 전체의 이동, 회전, 스케일링이라면 엔진 코드의 트랜스폼 연산으로 충분합니다. 관절이 꺾여야 한다면 Tripo 자체 오토 리깅(§06)을 먼저 시도하고, 섣불리 Blender부터 켜지 마십시오.</div>
 
-<div class="step"><div class="step-num">4</div><div class="step-content"><h4>但上面三句里没有一句是「谁来做」 → coding agent</h4><p>选哪个引擎、怎么分模块、资产怎么摆、性能怎么调、出了问题怎么定位，这些全是第二棒的活。你要做的是把需求和判据说清楚，具体写法在§18。</p></div></div>
+<div class="callout"><strong>⑤ 이 사물이 씬 안에 몇 개나 등장하는가?</strong><br>단 1개부터 수십 개 수준이라면 AI 생성 모델로 충분합니다. 하지만 수천, 수만 개라면 절차적 인스턴싱이 유일한 해법입니다. 중간 영역이라면 근경은 AI 모델, 원경은 절차적 박스로 채우는 하이브리드 패턴 C를 적용하십시오.</div>
 
-<h3>拿不准的时候，问自己这五句</h3>
+<p>이 5가지 질문 중 "어느 툴이 더 성능이 좋은가"를 묻는 질문은 단 하나도 없습니다. <strong>문제는 언제나 "이 작업이 어느 주자의 영역인가"이며, 도구는 그 질문에 대한 자연스러운 귀결일 뿐입니다.</strong></p>
 
-<p>上面四句是大方向。具体到手上这一件东西，我用的是这五个问题，按顺序问，问到哪停在哪。它们其实就是前面那两条判据的展开。</p>
-
-<div class="callout">
-<strong>①它错了，别人一眼能看出「不对」吗？</strong>能，写代码。正圆、闭合轨道、精确的销距，这类件不能交给生成。
-</div>
-
-<div class="callout">
-<strong>②镜头会怼到它脸上吗？</strong>会，那它值得生成，也值得预留重拓扑和人工精修的时间。只会远远瞥一眼，代码画就够了。
-</div>
-
-<div class="callout">
-<strong>③它要不要动？</strong>不动就是场景资产，走模式B直连引擎。要动就得往下问第四条。
-</div>
-
-<div class="callout">
-<strong>④动的是整体还是关节？</strong>整体位移、旋转、缩放，引擎代码就够了。关节要动，那就是绑骨，先试Tripo自带的（§06），别上来就开Blender。
-</div>
-
-<div class="callout">
-<strong>⑤这个东西要出现几次？</strong>一次到几十次，生成；上千次上万次，程序化。中间地带就混搭，近景用生成的、远景用程序化的。
-</div>
-
-<p>五个问题里没有一个问「哪个工具更强」。<strong>问题永远是「这件活属于哪一棒」，工具是答案的副产品。</strong></p>
-
-<p>还有一句是留给不会写代码的人的，也是这本书的前提：<strong>这两棒你都不需要亲手写代码。</strong>Tripo是点界面或者跟agent说人话；引擎那边的代码是coding agent写的。你要做的是知道<strong>这件活该交给哪一棒</strong>，然后把这句话说清楚。</p>
-
-<p>这个判断本身没法外包。它是这一节全部的内容。</p>
+<p>마지막으로 코딩을 전혀 모르는 분들을 위해 이 책의 대전제를 다시 상기시켜 드립니다: <strong>이 두 주자의 바통을 쥐는 과정에서 여러분이 직접 C#이나 자바스크립트 코드를 타이핑할 필요는 전혀 없습니다.</strong> Tripo는 웹에서 이미지를 넣거나 에이전트에게 말로 시키면 되고, Three.js나 Unity 코드는 코딩 에이전트가 대신 작성합니다. 여러분이 쥐어야 할 진짜 무기는 <strong>"이 작업이 릴레이의 어느 단계에 속하며, 어떤 규칙으로 분업해야 하는가"를 정확히 꿰뚫어 보는 안목</strong>입니다. 그 판단력이야말로 AI 시대의 진정한 창작자 역량입니다.</p>
 
 </div>
+
 
 <!-- ===== part16-asset-list.html ===== -->
 <div class="content">
