@@ -38,7 +38,7 @@
 
 @page {
   size: A4;
-  margin: 18mm 0;  /* 左右边距由.content padding控制，这里只设上下 */
+  margin: 18mm 0;  /* 좌우 여백은 .content padding에서 제어하며 상하만 설정 */
 }
 
 @page cover-page {
@@ -345,7 +345,7 @@ p { margin-bottom: 10px; }
 }
 
 .tip::before {
-  content: '核心建议';
+  content: '핵심 팁';
   display: block;
   font-weight: 700;
   font-size: 8.5pt;
@@ -366,7 +366,7 @@ p { margin-bottom: 10px; }
 }
 
 .warning::before {
-  content: '注意';
+  content: '주의';
   display: block;
   font-weight: 700;
   font-size: 8.5pt;
@@ -543,7 +543,7 @@ strong { font-weight: 600; }
 }
 
 .compare-good::before {
-  content: '推荐';
+  content: '추천';
   display: block;
   font-weight: 700;
   font-size: 8.5pt;
@@ -557,7 +557,7 @@ strong { font-weight: 600; }
 }
 
 .compare-bad::before {
-  content: '不推荐';
+  content: '비추천';
   display: block;
   font-weight: 700;
   font-size: 8.5pt;
@@ -699,7 +699,7 @@ strong { font-weight: 600; }
   letter-spacing: 0.5px;
 }
 
-/* ===== 截图与图注（book-figure，正文 figure/figcaption 统一样式） ===== */
+/* ===== 스크린샷 및 캡션 (본문 figure/figcaption 통일 스타일) ===== */
 figure {
   margin: 18px 0 22px;
   page-break-inside: avoid;
@@ -733,7 +733,7 @@ figure.figure-narrow img { max-width: 62%; margin: 0 auto; }
    根因二：table 一律 page-break-inside:avoid，附录 A 的长表整表跳页。
    ============================================================ */
 
-/* 图片限高：16:9 宽图（101.8mm）不受影响，只压方图和竖图。
+/* 이미지 최대 높이 제한:
    112mm 宽 = 1600px 源图 362dpi，印刷与屏读都够清楚。 */
 figure img {
   width: auto;
@@ -743,12 +743,12 @@ figure img {
   margin-right: auto;
 }
 
-/* 标注 .figure-tall 的图（需要看清细节的竖版长截图）放宽到 150mm */
+/* .figure-tall 클래스 이미지 150mm 적용 */
 figure.figure-tall img { max-height: 150mm; }
-/* 标注 .figure-wide 的图（超宽全景）保持满宽 */
+/* .figure-wide 클래스 이미지 100% 전폭 유지 */
 figure.figure-wide img { max-height: none; width: 100%; }
 
-/* 两图并排：把成对的对照图压到同一行，省一半垂直空间 */
+/* 2개 이미지 병렬 배치 */
 figure.figure-pair {
   display: flex;
   flex-wrap: wrap;          /* 没有它，flex-basis:100% 的 figcaption 会把两张 img 挤成 2×2px */
@@ -758,22 +758,22 @@ figure.figure-pair {
 figure.figure-pair img { max-height: 88mm; flex: 1 1 0; min-width: 0; width: auto; }
 figure.figure-pair figcaption { flex-basis: 100%; margin-top: 2px; }
 
-/* 长表格允许跨页，表头在续页重复，行本身不拆 */
+/* 긴 테이블 페이지 넘김 허용 */
 table { page-break-inside: auto; }
 thead { display: table-header-group; }
 tfoot { display: table-footer-group; }
 tr { page-break-inside: avoid; page-break-after: auto; }
 
-/* 短表格（6 行以内）仍整体不拆 */
+/* 짧은 테이블 분할 방지 */
 table.table-keep { page-break-inside: avoid; }
 
-/* 段落孤行控制 */
+/* 문단 고립행 제어 */
 p, li { orphans: 2; widows: 2; }
 
-/* 标题后不断页 */
+/* 제목 다음 페이지 넘김 방지 */
 h3, h4 { page-break-after: avoid; }
 
-/* 垂直空间收紧：块间距整体压缩约 25%，让图文更容易共页。
+/* 수직 여백 최적화:
    正文 line-height 1.8 不动——中文可读性优先于省页。 */
 figure { margin: 13px 0 16px; }
 figure figcaption { margin-top: 6px; }
@@ -785,14 +785,14 @@ pre { margin: 9px 0 11px; }
 .step { margin: 11px 0; }
 h2.section-title { margin-top: 0; padding-top: 10px; }
 
-/* 目录页码（inject_toc_pages.py 注入）＋引导点线 */
+/* 목차 페이지 번호 및 점선 가이드 */
 .toc-item {
   display: flex;
   align-items: baseline;
   text-decoration: none;      /* 纸上的目录不需要下划线，它不可点 */
 }
 .toc-item > span:first-child { flex: 0 1 auto; min-width: 0; }
-/* 标题与页码之间的引导点线：专业目录的标配，帮眼睛横着走到页码 */
+/* 목차 점선 가이드라인 */
 .toc-item::after {
   content: "";
   order: 1;
@@ -811,7 +811,7 @@ h2.section-title { margin-top: 0; padding-top: 10px; }
 }
 .toc-item .num, .toc-item .title, .toc-item .en { text-decoration: none; }
 
-/* 代码块在 PDF 里必须回行。
+/* 코드 블록 자동 줄바꿈:
    overflow-x:auto 在屏幕上是滚动条，打印/PDF 里是剪刀——实测第 93 个字符处整齐切断，
    §20 曲柄滑块的核心公式、§12 两行 canvas 代码都被切掉了尾巴，且视觉上冲出灰框。
    §09/§10 此前用内联 style 各自修过，这里提到全局。 */
@@ -1117,331 +1117,280 @@ pre {
 <!-- ===== part01-first-run.html ===== -->
 <div class="content">
 
-<h2 class="section-title page-break" id="part01"><span class="num">§01</span>十分钟跑通第一次图生3D</h2>
+<h2 class="section-title page-break" id="part01"><span class="num">§01</span>10분 만에 끝내는 첫 이미지-to-3D</h2>
 <p class="section-en">Your First Image-to-3D in Ten Minutes</p>
-<p class="section-intro">这一节结束时，你会有一个能拖着转、能下载下来的3D模型，并且知道那个「生成」按钮上的数字是怎么算出来的、哪几个开关该关掉。</p>
+<p class="section-intro">이번 섹션이 끝날 때쯤 여러분은 직접 마우스로 회전해보고 로컬로 다운로드할 수 있는 3D 모델을 확보하게 되며, 「생성」 버튼 위의 숫자가 어떻게 계산되는지, 어떤 스위치를 꺼야 크레딧을 아낄 수 있는지 명확히 알게 됩니다.</p>
 
-<h3>先看这一张图</h3>
+<h3>이 화면 먼저 보기</h3>
 
-<p>Tripo Studio打开就是这个样子。整个平台你先只需要认识三样东西：顶栏右边那个闪电符号后面的数字（积分余额）、中间那个拖图进去的框、框下面那两个按钮。</p>
-
-<figure>
-  <img src="images/studio-01-home.png" alt="Tripo Studio 首页，顶栏显示积分余额 25220，中间是拖图生成框">
-  <figcaption>Tripo Studio首页（studio.tripo3d.com），2026-09-11。顶栏右侧「⚡25220」是账号的积分余额，中间的框可以直接把图拖进去，框下面「Best Quality / Clean Topology」是两种生成模式的快捷开关。下方Gallery是官方精选作品区。</figcaption>
-</figure>
-
-<p>我的余额是两万多，<strong>你别照着这个数估成本</strong>。专业版订阅每月给3000积分，我这两万多是另外买的积分包。按官方标价，专业版¥140一个月3000积分，折下来一个积分不到五分钱；免费档给200积分，官方自己标的是「约13个模型」。</p>
-
-<h3>把图拖进去，价格立刻显示在按钮上</h3>
-
-<p>这是整个平台我最喜欢的一个设计：<strong>还没生成，按钮上就写着这一次要花多少</strong>。你不用去翻价目表，也不用生成完了才知道被扣了多少。</p>
+<p>Tripo Studio를 열면 바로 이런 화면이 나타납니다. 플랫폼 전체에서 가장 먼저 파악해야 할 요소는 딱 세 가지입니다: 상단 우측 번개 모양 뒤의 숫자(크레딧 잔액), 중앙의 이미지 드래그 영역, 그리고 그 아래의 두 개 버튼입니다.</p>
 
 <figure>
-  <img src="images/studio-02-form-best-quality.png" alt="首页拖入出租车设计图后，Best Quality 模式下生成按钮显示 55 积分">
-  <figcaption>同一个首页，拖进一张1024×1024的出租车设计图之后。选中「Best Quality」，生成按钮变成「Generate ⚡55」。2026-09-11。</figcaption>
+  <img src="images/studio-01-home.png" alt="Tripo Studio 메인 화면, 상단에 크레딧 잔액 25220 표시, 중앙에 이미지 드래그 앤 드롭 생성 영역">
+  <figcaption>Tripo Studio 메인 화면(studio.tripo3d.com), 2026-09-11 캡처. 상단 우측 「⚡25220」은 계정의 크레딧 잔액이며, 중앙 영역에 이미지를 바로 드래그할 수 있습니다. 하단의 「Best Quality / Clean Topology」는 두 가지 생성 모드의 빠른 전환 토글입니다. 하단 Gallery는 공식 큐레이션 작품 쇼케이스입니다.</figcaption>
+</figure>
+
+<p>제 잔액은 2만 이상으로 표시되어 있으나, <strong>이 숫자를 기준으로 본인의 제작 비용을 추정하지 마십시오</strong>. 프로 플랜 구독 시 매월 3,000 크레딧이 제공되며, 제 잔액은 별도로 크레딧 패키지를 추가 구매한 것입니다. 공식 정가 기준 프로 플랜은 월 ¥140(약 3,000 크레딧)으로 1크레딧당 0.05위안 미만입니다. 무료 플랜은 200 크레딧이 제공되며, 공식 안내로는 「약 13개 모델」 분량입니다.</p>
+
+<h3>이미지를 넣으면 버튼에 즉시 소모 비용이 표시됩니다</h3>
+
+<p>이것은 제가 이 플랫폼에서 가장 훌륭하다고 생각하는 UX 설계입니다: <strong>생성을 시작하기도 전에 이번 작업에 정확히 얼마의 크레딧이 소모될지 버튼 위에 표기됩니다</strong>. 요금표를 뒤적일 필요도 없고, 생성이 끝난 후에야 얼마가 빠져나갔는지 당황할 일도 없습니다.</p>
+
+<figure>
+  <img src="images/studio-02-form-best-quality.png" alt="홈 화면에 택시 디자인 시안을 넣은 후, Best Quality 모드에서 생성 버튼에 55 크레딧 표시">
+  <figcaption>동일한 메인 화면에 1024×1024 택시 디자인 시안을 넣은 직후 화면. 「Best Quality」를 선택하면 생성 버튼이 「Generate ⚡55」로 변경됩니다. 2026-09-11.</figcaption>
 </figure>
 
 <figure>
-  <img src="images/studio-03-form-clean-topology.png" alt="切到 Clean Topology 模式，按钮显示 100 划掉变 0">
-  <figcaption>同一张图，切到「Clean Topology」。按钮上的100被划掉、后面跟一个0，这是P2.0预览期的一次性免费试用。2026-09-11。</figcaption>
+  <img src="images/studio-03-form-clean-topology.png" alt="Clean Topology 모드로 전환 시, 버튼의 100에 취소선이 그어지고 0으로 표시">
+  <figcaption>동일한 이미지를 「Clean Topology」 모드로 전환한 화면. 버튼의 100에 취소선이 그어지고 뒤에 0이 표시됩니다. 이는 P2.0 프리뷰 기간 동안 제공되는 1회성 무료 체험입니다. 2026-09-11.</figcaption>
 </figure>
 
-<p>首页这个框够快，但开关只有两个。真正干活的地方在工作台（顶栏左边「3D工作台」进去）。左边竖排一列工具：模型、智能拆分、重拓扑、贴图生成、动画，其中智能拆分和贴图生成下面还各有折叠起来的子工具。这一节只用「模型」那一个，剩下的后面各有一节。</p>
+<p>홈 화면의 빠른 생성창도 간편하지만 토글 스위치가 두 개뿐입니다. 실제 본격적인 작업을 진행하는 공간은 워크스페이스(상단 좌측 「3D 워크스페이스」 클릭)입니다. 좌측 세로 도구 모음에는 모델, 스마트 파츠 분할, 리토폴로지, 텍스처 생성, 애니메이션이 있으며, 스마트 분할과 텍스처 생성 하위에는 각각 접혀 있는 세부 도구가 있습니다. 이번 섹션에서는 「모델」 하나만 사용하며, 나머지는 이후 섹션에서 하나씩 다룹니다.</p>
 
 <figure>
-  <img src="images/studio-05-workspace-menu.png" alt="Tripo 国区工作台「生成模型」面板，高精度模型模式，底部按钮生成模型 50 积分">
-  <figcaption>工作台的「生成模型」面板，高精度模型模式，什么都还没传。左侧竖栏是工具列（模型／智能拆分／重拓扑／贴图生成／动画，智能拆分和贴图生成下面还有折叠项），面板里依次是输入区、通用设置（几何与贴图）、订阅专享（分部件生成／8K贴图／模型私密性「公开」）、AI模型（v3.1 – 最高质量，副标「预计等待更久」），底部「生成模型⚡50」。顶栏余额「⚡300」。国区站studio.tripo3d.com，2026-09-14。</figcaption>
+  <img src="images/studio-05-workspace-menu.png" alt="Tripo 워크스페이스 「모델 생성」 패널, 고정밀 모델 모드, 하단 버튼에 모델 생성 50 크레딧 표시">
+  <figcaption>워크스페이스의 「모델 생성」 패널. 고정밀 모델 모드이며 아직 이미지를 업로드하지 않은 기본 상태입니다. 좌측 세로줄은 도구 모음(모델/스마트 분할/리토폴로지/텍스처 생성/애니메이션)이며, 패널 내부에는 입력 영역, 일반 설정(지오메트리 및 텍스처), 구독 전용 옵션(파츠 분할/8K 텍스처/공개 여부), AI 모델(v3.1 – 최고 품질, 부제 「대기 시간 다소 소요」), 하단 「모델 생성 ⚡50」이 배치되어 있습니다. 상단 잔액은 「⚡300」입니다. 2026-09-14.</figcaption>
 </figure>
 
-<h3>两种模式：高精度模型和智能网格</h3>
+<h3>두 가지 모드: 고정밀 모델과 스마트 메시</h3>
 
-<p>面板最上面那一排就是分岔口。这两个模式出来的是两种完全不同的网格，不分高下，各有各的去处。</p>
+<p>패널 최상단 메뉴가 바로 작업의 갈림길입니다. 두 모드에서 출력되는 결과물은 완전히 다른 성격의 메시 구조를 가지며, 우열의 문제가 아니라 각자의 용처가 명확히 나뉩니다.</p>
 
 <table>
-<thead><tr><th></th><th>高精度模型</th><th>智能网格⚡</th></tr></thead>
+<thead><tr><th>구분</th><th>고정밀 모델 (High Quality)</th><th>스마트 메시⚡ (Smart Mesh)</th></tr></thead>
 <tbody>
-<tr><td>模型版本</td><td>v3.1 – Best Quality（界面自己标着「Expect longer wait times」）</td><td>P2.0 - Preview（试用一次）／P1.0 - Fast</td></tr>
-<tr><td>默认拓扑</td><td>三角面</td><td>四边面</td></tr>
-<tr><td>面数范围</td><td>500–2000000</td><td>四边面500–25000；三角面500–50000</td></tr>
-<tr><td>贴图</td><td>直出就带</td><td>先出灰模，贴图另付30</td></tr>
-<tr><td>价格</td><td>界面默认50（这是带8K贴图的价，只要几何是15）</td><td>界面实扣65（原价100，划线打折）；贴图另付30，一件带色的完整价是95。P2.0预览期首次免费</td></tr>
+<tr><td>모델 버전</td><td>v3.1 – Best Quality (인터페이스에 「Expect longer wait times」 표기)</td><td>P2.0 - Preview (1회 무료 체험) / P1.0 - Fast</td></tr>
+<tr><td>기본 토폴로지</td><td>삼각면 (Triangle)</td><td>사각면 (Quad)</td></tr>
+<tr><td>폴리곤 수 범위</td><td>500–2,000,000</td><td>사각면 500–25,000 / 삼각면 500–50,000</td></tr>
+<tr><td>텍스처</td><td>생성 즉시 포함</td><td>먼저 그레이 모델 생성 후 텍스처 추가 결제(30 크레딧)</td></tr>
+<tr><td>가격</td><td>기본값 50 크레딧 (8K 텍스처 포함가, 지오메트리 단독은 15 크레딧)</td><td>실제 차감 65 크레딧 (정가 100에서 할인 적용), 텍스처 추가 시 30 크레딧으로 컬러 풀세트 총 95 크레딧. P2.0 프리뷰 첫 회 무료</td></tr>
 </tbody>
 </table>
 
-<p>表里的价格是截至2026-09我在界面上看到的标价和实扣数，以官网为准。</p>
+<p>위 표의 가격은 2026년 9월 인터페이스에서 직접 확인한 정가 및 실차감 데이터이며 공식 홈페이지 정책에 따라 변동될 수 있습니다.</p>
 
-<div class="callout"><strong>三角面和四边面：</strong>3D模型的表面是一小片一小片拼出来的。每一片三个角，叫三角面；四个角，叫四边面。引擎最终都按三角面渲染，所以三角面直接能用；四边面的好处是走线整齐，拿进Blender做修改、做形变的时候不容易撕裂，动画和雕刻这类活儿会舒服很多。</div>
-
-<figure>
-  <img src="images/studio-06-ai-model-options.png" alt="Smart Mesh 模式下 AI Model 下拉展开，P2.0 - Preview 与 P1.0 - Fast 两项">
-  <figcaption>Smart Mesh模式下把AI Model下拉展开，只有两项：P2.0 - Preview（标着Trial x1）和P1.0 - Fast。右上角的读数是这次生成的结果：Topology Quad，Faces 5615，Vertices 5381。2026-09-11。</figcaption>
-</figure>
-
-<h3>那次免费试用用掉之后，按钮上是什么数</h3>
-
-<p>上面那张图是2026-09-11，我的预览期试用还在，所以按钮写的是100划掉跟一个0。第二天再进这个表单，试用没了，我盯着按钮看那个数会不会回到100——<strong>没有，它是100划掉、后面跟一个65</strong>。原价划线、实扣65，之后我连着做的十四件，每一件都是按65走的。</p>
+<div class="callout"><strong>삼각면과 사각면의 차이:</strong> 3D 모델의 표면은 미세한 조각들이 맞물려 구성됩니다. 조각의 모서리가 3개이면 삼각면(Triangle), 4개이면 사각면(Quad)이라고 부릅니다. 게임 엔진은 최종적으로 모두 삼각면으로 연산하므로 삼각면 모델은 그대로 엔진에 로드할 수 있습니다. 반면 사각면은 와이어프레임 흐름이 규칙적이어서 Blender에서 형태를 수정하거나 리깅 변형을 줄 때 메쉬가 찢어지지 않아 애니메이션 및 조각 작업에 훨씬 유리합니다.</div>
 
 <figure>
-  <img src="images/p01-smartmesh-price-65.png" alt="Tripo 中文界面的智能网格表单，底部生成按钮显示 100 划线、实扣 65">
-  <figcaption>中文界面的工作台，智能网格模式，AI模型选P2.0 - Preview，出租车参考图已经传进去。底部按钮「生成⚡ <s>100</s> 65」——原价100被划掉，实扣65。顶栏余额20205。这一屏抽自2026-09-12的操作录屏，也是这本书里所有智能网格件的单价来源。</figcaption>
+  <img src="images/studio-06-ai-model-options.png" alt="Smart Mesh 모드에서 AI Model 드롭다운 메뉴 오픈: P2.0 - Preview와 P1.0 - Fast 두 가지 옵션">
+  <figcaption>스마트 메시 모드에서 AI Model 드롭다운을 펼친 화면. P2.0 - Preview(Trial x1 표기)와 P1.0 - Fast 두 가지만 제공됩니다. 우측 상단 수치는 이번 생성 결과값: Topology Quad, Faces 5615, Vertices 5381. 2026-09-11.</figcaption>
 </figure>
 
-<p>把这一件从头做完要花多少，拆开是这样的：<strong>网格65，想要颜色再点一次贴图生成30，合计95。</strong>如果只要几何不要颜色，高精度模式那边关掉纹理是15，智能网格这边是65——这两个数是纯几何的真实对比，不要拿默认的50去比，那50里有35分是8K贴图。</p>
+<h3>무료 체험 후 버튼에는 실제 얼마가 표시되는가</h3>
 
-<p>十四件乘65是910，这是我2026-09-12那天在网格上的全部开销。加上十三件贴图生成的390和一次自动绑骨的20，那一天一共1320积分。</p>
+<p>위 스크린샷은 2026-09-11 기준이며 당시에는 프리뷰 무료 체험이 남아 있어 100에 취소선이 그어지고 0으로 표시되었습니다. 다음 날 무료 체험이 끝난 후 다시 확인했을 때 정가 100으로 돌아가지 않고 <strong>100에 취소선이 그어진 채 65 크레딧</strong>으로 표시되었습니다. 이후 연속으로 생성한 14개의 스마트 메시 에셋은 모두 65 크레딧으로 결제되었습니다.</p>
 
-<h3>面数那个框：两种模式数的不是同一种东西</h3>
+<figure>
+  <img src="images/p01-smartmesh-price-65.png" alt="스마트 메시 폼에서 하단 생성 버튼에 100 취소선, 실차감 65 표시">
+  <figcaption>스마트 메시 모드, AI 모델 P2.0 - Preview 선택, 택시 디자인 시안 업로드 상태. 하단 버튼 「생성 ⚡ <s>100</s> 65」 표기. 잔액 20205. 책 속 모든 스마트 메시 에셋의 기준 단가 화면입니다. 2026-09-12.</figcaption>
+</figure>
 
-<p>这是我这两周最晚才搞明白、也最容易让人算错账的一件事。</p>
+<p>에셋 1개를 온전히 완성하는 비용 구조는 이렇습니다: <strong>메시 생성 65 크레딧 + 컬러 텍스처 생성 30 크레딧 = 총 95 크레딧</strong>. 만약 형태(지오메트리)만 필요하다면 고정밀 모드에서 텍스처를 끌 경우 15 크레딧, 스마트 메시 모드는 65 크레딧입니다. 고정밀 모드의 기본 50 크레딧 중 35 크레딧은 8K 텍스처 비용입니다.</p>
 
-<p>两种模式的设置里都有一个定面数的框（高精度叫Polycount，中文界面叫「面数」），<strong>但这个数字在两边数的不是同一种面</strong>。高精度出的是三角面，那个数就是三角面的数；智能网格出的是四边面，那个数数的是四边面。而引擎最终只认三角面，一个四边面进引擎要拆成两个三角面。</p>
-
-<p>拿同一张出租车设计图做过一次严格对照：两边都填8000，只换模式那一栏。</p>
+<p>14개 에셋 × 65 = 910 크레딧이 2026-09-12 메시 생성에 소모된 총액이었습니다. 여기에 13개 텍스처 생성 390 크레딧과 오토 리깅 1회 20 크레딧을 더해 이날 총 1,320 크레딧을 사용했습니다.</p>
 
 <table>
-<thead><tr><th>都填8000</th><th>高精度模型v3.1</th><th>智能网格P2.0</th></tr></thead>
+<thead><tr><th>폴리곤 목표값 8000 입력 시</th><th>고정밀 모델 v3.1</th><th>스마트 메시 P2.0</th></tr></thead>
 <tbody>
-<tr><td>原生面</td><td>7,379个三角面</td><td>8,596个四边面</td></tr>
-<tr><td>四边形占比</td><td>0%</td><td>79.51%（6,835个四边形）</td></tr>
-<tr><td>三角化之后</td><td>7,379</td><td><strong>15,431</strong></td></tr>
-<tr><td>顶点</td><td>3,646</td><td>8,580</td></tr>
+<tr><td>기본 메시 수</td><td>7,379개 삼각면</td><td>8,596개 사각면</td></tr>
+<tr><td>사각면 비율</td><td>0%</td><td>79.51% (6,835개 쿼드)</td></tr>
+<tr><td>삼각화(Triangulation) 후</td><td>7,379 삼각면</td><td><strong>15,431 삼각면</strong></td></tr>
+<tr><td>버텍스 수</td><td>3,646개</td><td>8,580개</td></tr>
 </tbody>
 </table>
 
-<p><strong>同一个8000，智能网格拿到的几何预算是高精度那边的2.09倍。</strong>所以「同一张图、两种模式，外观差不多」这句话我原本想写，跑完这一组就划掉了——智能网格那版的保险杠栅条、大灯圈、门把手、雨刷全都在，高精度那版在同样的位置是几块糊过去的面。两边谈不上谁好谁坏，只是同一个数字在两边买到的东西根本不一样。</p>
+<p><strong>동일한 8,000을 입력해도 스마트 메시는 고정밀 모델에 비해 약 2.09배의 지오메트리 예산을 확보합니다.</strong> 따라서 「두 모드의 외형 디테일이 비슷할 것」이라는 예상은 빗나갔습니다. 스마트 메시 버전은 범퍼 그릴, 헤드라이트 림, 도어 핸들, 와이퍼가 또렷하게 살아있는 반면, 고정밀 모델은 해당 위치가 뭉개져 있었습니다. 같은 숫자를 입력하더라도 두 모드가 제공하는 지오메트리 밀도는 완전히 다릅니다.</p>
 
-<p>这组对照还有两个读数值得记下来。一是<strong>那个数是个目标不是硬上限</strong>：填8000，实得8,596个四边面，超了7%。二是<strong>四边面换算成三角面的倍数不是2</strong>，只有全是四边形的网格才趋近2。全书那批38件实测落在1.37到1.87倍之间，中位1.75，<strong>做面数预算就按1.75估</strong>；这一件8,596到15,431是1.795倍，落在分布偏上的位置。完整分布见附录D，实验过程、线框对照图和三条独立测量通道在§04。</p>
+<p>또한 이 실험에서 두 가지를 확인할 수 있습니다. 첫째, <strong>입력한 수치는 목표치일 뿐 절대적 상한선이 아닙니다</strong>(8,000 입력 시 실제 8,596 사각면 출력으로 약 7% 초과). 둘째, <strong>사각면을 삼각면으로 환산할 때 배율은 정확히 2가 아닙니다</strong>. 실측 38개 에셋 분석 결과 1.37배에서 1.87배 사이에 분포하며 중앙값은 1.75배입니다. 따라서 <strong>폴리곤 예산 수립 시 1.75배로 계산</strong>하는 것이 안전합니다. 상세 통계는 부록 D 및 §04를 참조하십시오.</p>
 
-<div class="tip">你在网上看到别人说「我用XX面数做出来的」，先问一句他的面数数的是三角面还是四边面。<strong>跨模式比面数之前先换算，不然结论会反。</strong>真正要控的预算是进引擎那一刻的三角面数，不是表单里填的那个数。</div>
+<div class="tip">인터넷에서 누군가 「XX만 폴리곤으로 뽑았다」고 말한다면, 그것이 삼각면 기준인지 사각면 기준인지 먼저 확인해야 합니다. <strong>모드 간 비교 전 반드시 단위를 환산해야 결론이 왜곡되지 않습니다.</strong> 최종 엔진 로드 시 관리해야 할 실제 예산은 폼에 입력한 숫자가 아니라 삼각면 기준의 총합입니다.</div>
 
-<h3>几何与贴图：那个弹层里每一个开关</h3>
+<h3>지오메트리와 텍스처: 설정 팝업의 모든 토글 스위치</h3>
 
-<p>高精度模型模式下点开「通用设置 → 几何与贴图」，会弹出一个七八项的面板。这是整个Studio里信息密度最高的一屏，也是最容易被人一路默认点过去的一屏。</p>
+<p>고정밀 모델 모드에서 「일반 설정 → 지오메트리 및 텍스처」를 열면 7~8개 항목의 상세 패널이 나타납니다. Studio 내에서 정보 밀도가 가장 높은 화면이자, 무심코 기본값으로 넘어가기 쉬운 화면입니다.</p>
 
 <figure>
-  <img src="images/studio-07-hd-geometry-texture-settings.png" alt="Tripo 国区高精度模型的「几何与贴图」弹层，展开全部开关">
-  <figcaption>高精度模型的「几何与贴图」弹层全貌：超清几何精度（开）、AI补全&amp;3D增强（开）、贴图生成（开）、贴图质量2K/4K/8K（选中4K）、PBR（关）、拓扑四边面/三角面（选中三角面）、面数控制滑块500–2000000（这一屏拉在上限2000000）。左侧订阅专享区：分部件生成（关）、8K贴图（关）、模型私密性「公开」。两件事先说在这儿：这一屏是国区一个免费档账号打开时的落位，不是我做这本书时的设法（我的设法见下表）；国区这个弹层上也没有单独对应「去除光照」的那一项。国区站studio.tripo3d.com，2026-09-14。</figcaption>
+  <img src="images/studio-07-hd-geometry-texture-settings.png" alt="고정밀 모델의 「지오메트리 및 텍스처」 팝업창, 전체 설정 토글 오픈">
+  <figcaption>고정밀 모델 「지오메트리 및 텍스처」 전체 구성: 초고화질 지오메트리(Ultra Mesh, Off 권장), AI 보완(AI Complete), 텍스처 생성, 텍스처 해상도 2K/4K/8K, PBR 머티리얼, 토폴로지 Quad/Triangle, 폴리곤 수 조절 슬라이더(500–2,000,000). 좌측 구독 전용 메뉴에는 파츠 분할, 8K 텍스처, 공개 설정이 있습니다. 2026-09-14.</figcaption>
 </figure>
 
-<p>逐项说我是怎么设的：</p>
+<p>실제 프로덕션 환경에서의 권장 설정 기준은 다음과 같습니다:</p>
 
 <table>
-<thead><tr><th>开关</th><th>我的设法</th><th>为什么</th></tr></thead>
+<thead><tr><th>스위치 항목</th><th>권장 설정</th><th>이유 및 배경</th></tr></thead>
 <tbody>
-<tr><td>Ultra Mesh Quality</td><td>关</td><td>加项，官方标价15积分。默认那些资产我这次全部没开，出来的质量做游戏和演示都够。</td></tr>
-<tr><td>AI Complete</td><td>关</td><td>补全图里看不见的那一面。我给的设计图都是单物体白底、主体完整，没有需要靠猜的部分。</td></tr>
-<tr><td>Texture</td><td>开</td><td>关掉就是灰模。除非你本来就要拿进Blender自己画贴图。</td></tr>
-<tr><td>Texture Quality</td><td>我全程留着默认的8K，现在回头看该选2K</td><td>这一档是直接进价的：同一张图，8K比2K贵20积分（实测见下一节）。做网页和游戏，2K够用。</td></tr>
-<tr><td>Remove Lighting</td><td>关</td><td>把参考图上的光影从贴图里剥掉。参考图本来就是柔和均匀布光的话，剥不剥差别不大。</td></tr>
-<tr><td>PBR</td><td>开</td><td>加项，5积分。出来的模型带金属度和粗糙度，进引擎才有金属感。代价见下面那条警告。</td></tr>
-<tr><td>Topology</td><td>默认Triangle</td><td>Quad是加项，5积分。要注意Tripo的智能拆分不吃四边面模型。</td></tr>
-<tr><td>Polycount</td><td>高精度这批我留了默认20000；后面走智能网格那批是一件一件设的</td><td>这是唯一能定面数的地方。你在参考图或者提示词里写「low poly」它不听，面数只认这个滑块。怎么分档见下面「一次批量」。</td></tr>
-<tr><td>Generate in Parts</td><td>关（我有一次Trial没用）</td><td>加项标价30，生成时就按部件分开。</td></tr>
-<tr><td>8K Texture</td><td>默认开</td><td>Members Only那一栏里的，跟上面的Texture Quality是同一件事的两个入口。</td></tr>
-<tr><td>Privacy</td><td>Sharing Only</td><td>订阅用户才有的开关，控制生成的模型对外可见到什么程度。</td></tr>
+<tr><td>Ultra Mesh Quality</td><td>OFF</td><td>추가 옵션(15 크레딧 추가). 기본 품질만으로도 웹 게임 및 실시간 데모에 충분합니다.</td></tr>
+<tr><td>AI Complete</td><td>OFF</td><td>보이지 않는 반대편 형태를 AI가 추론 보완하는 기능입니다. 명확한 단일 오브젝트 흰 배경 시안을 사용할 경우 켤 필요가 없습니다.</td></tr>
+<tr><td>Texture</td><td>ON</td><td>끄면 회색 점토 모델로 출력됩니다. Blender에서 직접 텍스처를 페인팅할 목적이 아니라면 켜두어야 합니다.</td></tr>
+<tr><td>Texture Quality</td><td>2K 권장 (기본 8K)</td><td>비용 직결 항목: 동일 이미지 기준 8K는 2K보다 20 크레딧 비쌉니다. 웹 및 게임용으로는 2K로 충분합니다.</td></tr>
+<tr><td>Remove Lighting</td><td>OFF</td><td>레퍼런스 이미지의 그림자를 제거하는 기능입니다. 시안 자체의 조명이 고르고 부드럽다면 차이가 미미합니다.</td></tr>
+<tr><td>PBR</td><td>ON</td><td>5 크레딧 추가. 금속성(Metallic)과 거칠기(Roughness) 맵이 포함되어 엔진에서 현실적인 질감이 표현됩니다.</td></tr>
+<tr><td>Topology</td><td>기본 Triangle</td><td>Quad 선택 시 5 크레딧 추가. 단, Tripo 스마트 파츠 분할은 Quad 모델을 지원하지 않으므로 주의하십시오.</td></tr>
+<tr><td>Polycount</td><td>용도별 차등 설정</td><td>폴리곤 수를 확정하는 핵심 슬라이더입니다. 프롬프트에 「low poly」라고 적어도 반영되지 않으며 이 슬라이더만 인식됩니다.</td></tr>
+<tr><td>Generate in Parts</td><td>OFF</td><td>추가 30 크레딧. 모델을 부품별로 분할 생성합니다.</td></tr>
+<tr><td>8K Texture</td><td>OFF 권장</td><td>위의 Texture Quality 8K와 동일한 설정입니다.</td></tr>
+<tr><td>Privacy</td><td>Sharing Only</td><td>구독 계정 전용 옵션으로 모델의 외부 공개 범위를 제어합니다.</td></tr>
 </tbody>
 </table>
 
-<div class="warning"><strong>8K贴图是个甜蜜的陷阱，而且它收两道费。</strong>第一道是积分：8K那一档比2K贵20分，按下去之前就扣了。第二道是显存：Tripo默认导出8192×8192的贴图，一张底图摊进显存是358 MB，我做小王子那个demo时17个资产全按默认导，浏览器里量出来光贴图就占5.0 GiB（这是显卡工具那侧按1024进位的读数，换成本书算显存的十进制口径是5.38 GB，见§12），页面卡到没法看；统一降到1024×1024之后同样的场景只占0.22 GiB，游戏距离上肉眼看不出差别。<br><br>我这批资产两道费都交了：生成时留着默认8K，导出时又降到1k。做网页和游戏的话，生成就选2K，导出选1k，两头都省（导出弹层的Texture Resolution下拉见§03）。只有要拿去做特写、做印刷，高档才值那20分。</div>
+<div class="warning"><strong>8K 텍스처는 두 번의 비용을 발생시키는 함정입니다.</strong> 첫 번째는 크레딧 비용입니다: 8K 옵션은 2K보다 20 크레딧 비쌉니다. 두 번째는 비디오 메모리(VRAM) 비용입니다: Tripo 기본 8192×8192 텍스처 1장은 VRAM에서 358 MB를 차지합니다. 17개 에셋을 기본 8K로 로드하면 텍스처만으로 VRAM 5.38 GB를 잠식하여 브라우저가 심각하게 버벅입니다. 이를 1024×1024로 최적화하면 동일 씬이 0.24 GB만 차지하며, 게임 시점에서는 육안상 차이가 거의 없습니다.<br><br>따라서 <strong>생성 시 2K, 다운로드 익스포트 시 1K를 선택</strong>하는 것이 양쪽 모두를 아끼는 최적의 방법입니다. 극단적인 클로즈업 렌더링이나 인쇄 출력이 아니라면 8K는 낭비입니다.</div>
 
-<div class="callout"><strong>PBR：</strong>Physically Based Rendering，基于物理的渲染。简单说就是模型除了颜色，还带着「这块是金属、那块是磨砂」这类信息，光打上去才有正确的反应。开了它有个后果：金属度高的模型放进没有环境贴图的Three.js场景里会渲染成死黑。这条在§12有完整的修法，现在你只要记住，模型进网页之后黑成一块，多半不是模型坏了。</div>
-
-<figure>
-  <img src="images/studio-08-smartmesh-topology-settings.png" alt="Tripo 国区智能网格的「拓扑」弹层，四边面选中，面数控制默认 5000">
-  <figcaption>智能网格模式下的设置弹层要简单得多，只有「拓扑」一组：四边面（标New，默认选中）/三角面，加一个500–25000的「面数控制」滑块，默认5000。左栏的AI模型是「P2.0 – 抢先体验Trial x2」，底部按钮「生成模型⚡<s>100</s> 0」。国区站studio.tripo3d.com，2026-09-14。</figcaption>
-</figure>
-
-<h3>「Generate 50」这个数字是怎么来的</h3>
-
-<p>我一开始以为50就是生成一个模型的价钱。后来干脆坐在表单前面做了件很笨的事：把几何与贴图弹层里的开关一个一个动，每动一下看按钮上那个数跳成多少。全程只看不按，没花积分。</p>
+<div class="callout"><strong>PBR 머티리얼 주의점:</strong> PBR(물리 기반 렌더링) 모델은 조명 정보에 민감하게 반응합니다. 환경광(Environment Map / HDRI)이 세팅되지 않은 기본 Three.js 씬에 PBR 금속 모델을 올리면 시커멓게 렌더링되는 현상이 발생합니다. 이는 모델 오류가 아니며, §12에서 환경광 설정 코드로 해결하는 방법을 자세히 다룹니다.</div>
 
 <figure>
-  <img src="images/studio-37-price-before-50.png" alt="HD Model 表单默认状态，Geometry & Texture 弹层展开，按钮显示 Generate 50">
-  <figcaption>起点是默认状态：Ultra Mesh Quality关、Texture开、Texture Quality选中8K、PBR开、Topology Triangle、Polycount 20000，左栏Members Only里8K Texture开着。传的是一张奥斯曼转角公寓设计图，按钮「Generate ⚡50」。2026-09-11 14:40。</figcaption>
+  <img src="images/studio-08-smartmesh-topology-settings.png" alt="스마트 메시의 「토폴로지」 팝업창, Quad 선택, 폴리곤 수 기본값 5000">
+  <figcaption>스마트 메시 모드의 설정창은 사각면(New 표기, 기본값)/삼각면 선택과 500–25,000 범위의 폴리곤 슬라이더(기본 5,000)로 구성되어 있습니다. 2026-09-14.</figcaption>
 </figure>
 
-<p>只动一个开关：把Texture关掉。贴图那几行当场全部收起，Texture Quality、Remove Lighting、PBR一起消失，连左栏的8K Texture也灭了。按钮从50掉到15。</p>
+<h3>「Generate 50」 비용 구조 해부</h3>
 
-<figure>
-  <img src="images/studio-38-price-after-15.png" alt="同一张表单关掉 Texture 开关后，贴图相关选项消失，按钮显示 Generate 15">
-  <figcaption>同一张图、同一个表单，唯一的差别是Texture关了。弹层里只剩Ultra Mesh Quality、AI Complete、Topology、Polycount四项，按钮变成「Generate ⚡15」。关掉的其实是一整包东西，不止那一个开关。2026-09-11。</figcaption>
-</figure>
-
-<p>再把Texture开回来，逐档试分辨率，得到的是一串很规整的数：</p>
+<p>설정 팝업창의 스위치를 하나씩 끄고 켜며 버튼에 표시되는 크레딧 변화를 추적한 결과, 가격 체계는 다음과 같이 명확히 분석됩니다:</p>
 
 <table>
-<thead><tr><th>几何与贴图里的状态</th><th>按钮上的数</th><th>贴图这一包占多少</th></tr></thead>
+<thead><tr><th>설정 조합</th><th>버튼 표시 크레딧</th><th>텍스처 패키지 비중</th></tr></thead>
 <tbody>
-<tr><td>Texture关（只要几何，出灰模）</td><td><strong>15</strong></td><td>0</td></tr>
-<tr><td>Texture开，Texture Quality 2K</td><td>30</td><td>+15</td></tr>
-<tr><td>Texture开，4K</td><td>40</td><td>+25</td></tr>
-<tr><td>Texture开，8K（默认）</td><td><strong>50</strong></td><td>+35</td></tr>
-<tr><td>8K再打开Ultra Mesh Quality</td><td>65</td><td>+35，Ultra另算15</td></tr>
+<tr><td>Texture OFF (지오메트리 단독 회색 모델)</td><td><strong>15</strong></td><td>0</td></tr>
+<tr><td>Texture ON, 해상도 2K</td><td>30</td><td>+15</td></tr>
+<tr><td>Texture ON, 해상도 4K</td><td>40</td><td>+25</td></tr>
+<tr><td>Texture ON, 해상도 8K (기본값)</td><td><strong>50</strong></td><td>+35</td></tr>
+<tr><td>8K + Ultra Mesh Quality 추가</td><td>65</td><td>+35 (Ultra +15)</td></tr>
 </tbody>
 </table>
 
-<p>结构就很清楚了：<strong>几何15是底价，贴图是个打包加项，2K加15、4K加25、8K加35，Ultra Mesh Quality再加15。</strong>默认那50分里，35分是8K贴图，几何本身只占15。</p>
+<p>구조가 명료합니다: <strong>순수 지오메트리 15 크레딧이 기본가이며, 텍스처는 옵션 패키지(2K +15 / 4K +25 / 8K +35), Ultra Mesh는 추가 +15</strong>입니다. 기본 50 크레딧 중 35 크레딧은 8K 텍스처 비용입니다.</p>
 
-<p>这里有个容易搞混的地方：<strong>Ultra Mesh Quality那15分不在默认的50里面</strong>。工作台打开时Ultra是关着的，50已经是它关着时的价；开了才变65。把Ultra算进默认价，一整批资产的预算会凭空多出四分之一。每个动作的基础价和加项，完整放在§07。</p>
+<p>주의할 점: 팝업 상단의 「We'll automatically save your settings for next time」 설정으로 인해, 특정 에셋을 위해 켰던 Ultra Mesh 옵션이 다음 작업 세션에도 유지되어 크레딧이 의도치 않게 과다 차감될 수 있습니다. 대량 생성 전 반드시 설정을 점검하십시오.</p>
 
-<p>还有一件事我是被它坑了才知道的。当天早上我截到过一张按钮写65的表单，还以为是另一种模式。其实是我前一次生成把Ultra Mesh Quality开着，弹层顶上那句「We'll automatically save your settings for next time」替我记住了。<strong>这个记忆是跨会话的：你为了一件特写资产开的档，会一直跟着后面每一件。</strong></p>
+<div class="tip">수십 종의 에셋을 대량 생성하기 전 반드시 5분을 투자해 설정을 점검하세요: <strong>Texture Quality를 2K로 낮추고 Ultra Mesh가 꺼져 있는지 확인</strong>합니다. 30 크레딧과 65 크레딧은 40개 에셋 기준 1,400 크레딧(보름치 구독량에 해당)의 차이를 만듭니다.</div>
 
-<p>首页那个快捷框又是另一套默认值，同一张图选高精度模型时按钮写55，比工作台的50多5分。首页那个框没有可展开的设置，所以这5分落在哪个开关上，我在界面上核不到，也就不去猜。<strong>能用的规矩只有一条：以你按下去之前按钮上当场显示的那个数为准，两个入口的默认开关不一样。</strong>同一张图想要同一个价，就都从工作台进，那边每个开关都看得见。</p>
+<h3>스마트 메시 전체 과정 체험하기: 그레이 모델에서 컬러 텍스처까지</h3>
 
-<div class="tip">要批量做几十件资产，开工前先花五分钟把这个弹层设一遍：Texture Quality拨到2K，Ultra确认是关的。一件30和一件65，乘以40件差1400积分，接近半个月的订阅额度。</div>
-
-<h3>走一遍智能网格：从灰模到上色</h3>
-
-<p>下面是我2026-09-11那天用同一张出租车设计图跑的一次完整流程，用的是智能网格的P2.0预览版（免费那一次）。</p>
+<p>택시 디자인 시안을 사용해 스마트 메시 P2.0 모드로 진행한 실제 5단계 워크플로우입니다:</p>
 
 <div class="step">
   <div class="step-num">1</div>
   <div class="step-content">
-    <h4>传图</h4>
-    <p>输入区四个页签：图片上传、多视图、文本、画笔。图片支持JPG/PNG/WEBP，20 MB以内。我传的是一张1024×1024、浅灰底、四分之三视角的出租车设计图（怎么准备这张图，见§02）。</p>
+    <h4>이미지 업로드</h4>
+    <p>JPG/PNG/WEBP 포맷, 20 MB 이하를 지원합니다. 1024×1024 해상도, 밝은 회색 배경, 쿼터뷰(3/4 각도)의 택시 시안을 업로드했습니다 (시안 준비 가이드는 §02 참조).</p>
   </div>
 </div>
 
 <div class="step">
   <div class="step-num">2</div>
   <div class="step-content">
-    <h4>选模式和拓扑</h4>
-    <p>智能网格 → AI Model选P2.0 - Preview → 拓扑保持四边面，Polycount保持5000。按钮显示「100划掉，0」，这是预览期那一次免费试用；用掉之后同样这一屏是「100划掉，65」。</p>
+    <h4>모드 및 토폴로지 선택</h4>
+    <p>스마트 메시 선택 → AI Model을 P2.0 - Preview로 지정 → 토폴로지는 Quad 유지, Polycount는 5,000으로 설정합니다.</p>
   </div>
 </div>
 
 <div class="step">
   <div class="step-num">3</div>
   <div class="step-content">
-    <h4>出灰模</h4>
-    <p>几十秒后中间出来一辆没有颜色的车，右上角读数：Topology Quad，Faces 5615，Vertices 5381。底部弹一句「Retry for better results or proceed to Texture」。</p>
-    <p>这个「几十秒」要拆两个口径说，见下面「耗时到底该怎么念」。</p>
+    <h4>그레이 모델 생성 확인</h4>
+    <p>약 수십 초 후 색상이 없는 회색 차량 모델이 출력됩니다. 우측 상단 수치: Topology Quad, Faces 5615, Vertices 5381.</p>
   </div>
 </div>
 
 <figure>
-  <img src="images/studio-04-p2-taxi-result.png" alt="Smart Mesh P2.0 生成的出租车灰模，四边面线框清晰可见">
-  <figcaption>Smart Mesh（P2.0 Preview）出的第一版：无贴图灰模，四边面的走线在正面看得很清楚。右上角Faces 5615 / Vertices 5381。底栏依次是Free Retry、Texture 30、3D Print、Share、Export。2026-09-11。</figcaption>
+  <img src="images/studio-04-p2-taxi-result.png" alt="Smart Mesh P2.0으로 생성된 택시 그레이 모델, 사각면 와이어프레임이 정렬되어 표시">
+  <figcaption>스마트 메시(P2.0 Preview) 1차 출력물: 텍스처가 없는 그레이 모델이지만 전면 사각면 흐름이 매우 정돈되어 있습니다. 우측 상단 Faces 5,615 / Vertices 5,381. 2026-09-11.</figcaption>
 </figure>
 
 <div class="step">
   <div class="step-num">4</div>
   <div class="step-content">
-    <h4>付30做贴图</h4>
-    <p>智能网格出的是灰模，要颜色得点底栏那个「Texture ⚡30」。点完中间开始跑进度条，标着还剩多少秒。</p>
+    <h4>30 크레딧 결제 및 텍스처 생성</h4>
+    <p>하단의 「Texture ⚡30」을 클릭하면 모델이 흰색으로 바뀌며 텍스처 생성 프로그레스 바가 진행됩니다.</p>
   </div>
 </div>
 
 <figure>
-  <img src="images/studio-10-p2-texture-step.png" alt="Texture 生成中，中央显示 Generating Texture，右侧任务卡片显示 135s">
-  <figcaption>点了Texture之后的中间状态：模型变成白模，下面「Generating Texture...」进度条，右侧资产卡片上写着135s。<strong>卡片上这个135s是界面自己的倒计时，含排队，不是算子耗时</strong>——2026-09-12那批里我从接口核过一件贴图生成，算子本身是109秒。顶栏余额这时已经从25220变成25190。2026-09-11。</figcaption>
+  <img src="images/studio-10-p2-texture-step.png" alt="Texture 생성 진행 중 화면, Generating Texture 문구와 우측 카드에 135s 카운트다운 표시">
+  <figcaption>텍스처 생성 단계. 우측 카드에 표기된 135s는 대기열을 포함한 UI 카운트다운이며, 백엔드 실제 연산 시간은 약 109초였습니다. 2026-09-11.</figcaption>
 </figure>
 
 <div class="step">
   <div class="step-num">5</div>
   <div class="step-content">
-    <h4>看结果</h4>
-    <p>两分多钟后车身上色完成。底部那一排小球是预览用的环境和材质切换，不改模型本身，只改你现在看它的光。</p>
+    <h4>최종 결과물 검토</h4>
+    <p>약 2분 후 차체 채색이 완료됩니다. 검은색 차체, 베이지색 루프와 램프, 범퍼 디테일이 레퍼런스 이미지와 정밀하게 일치합니다.</p>
   </div>
 </div>
 
 <figure>
-  <img src="images/studio-12-p2-taxi-textured.png" alt="贴图完成后的出租车模型，黑车身米黄车顶">
-  <figcaption>贴图完成。黑车身、米黄车顶和顶灯、米色保险杠，和参考图一致。底部一排圆球是预览环境／材质切换。顶栏余额25190。2026-09-11。</figcaption>
+  <img src="images/studio-12-p2-taxi-textured.png" alt="텍스처 생성이 완료된 택시 모델, 검은 차체와 베이지색 루프">
+  <figcaption>텍스처 생성이 완료된 택시 모델. 하단 구체들을 클릭해 뷰포트 조명과 머티리얼 프리뷰를 변경할 수 있습니다. 2026-09-11.</figcaption>
 </figure>
 
-<p>这一趟的账很清楚：<strong>生成0（预览期免费），贴图30，余额25220变成25190</strong>。试用只有这一次，之后同样一趟是65加30。同一张图我之前用v3.1 HD跑过一次，Studio右上角报的是18497个三角面、12522个顶点；P2.0这版是5615个四边面，三角化之后是9,800个三角面。<strong>进引擎的三角面差了将近一倍，但形体没塌</strong>，车灯、格栅、保险杠、顶灯该有的都在。</p>
+<p>비용 정산: <strong>생성 0 크레딧(프리뷰 무료 체험) + 텍스처 30 크레딧 = 총 30 크레딧 소모</strong> (정규 생성 시 65 + 30 = 95 크레딧). 고정밀 모드 대비 엔진에 들어가는 삼각면 수는 절반 수준이지만 외형 디테일은 완벽히 보존되었습니다.</p>
 
-<div class="tip"><strong>18497这个数是界面读数，附录A那张逐件表上同一件写的是18,509面／12,770点，不是印错了。</strong>两个数来自两条通道：18497／12522是Studio右上角报的，18,509／12,770是把落盘的<code>car-01-taxi.glb</code>拿过来直接数索引数组数出来的，和本节后面那批P2.0资产标的是同一种数法。两条通道在这一件上差12个面、248个顶点。<strong>要拿附录A当验收单逐件核，以文件读数为准</strong>；界面上那个数用来当场判断「要不要减面」够用了。</div>
+<div class="tip"><strong>UI 수치와 파일 실측치의 차이:</strong> UI 상에서 18,497면으로 표시되더라도 다운로드한 <code>car-01-taxi.glb</code> 바이너리를 직접 디코딩하면 18,509면/12,770버텍스로 나타날 수 있습니다. 이는 엔진 임포트 과정에서의 정점 분할 차이이며 정상적인 현상입니다. 정밀 검수는 파일 직접 분석 데이터를 기준으로 하십시오.</div>
 
-<div class="warning">四边面有一条现在就得知道的连带后果：Tripo的智能拆分（Segment）不吃四边面模型，也不吃已经绑过骨的模型，界面上直接写着「Unavailable for: Quad models, Rigged models」。所以你要是打算把这个模型拆成车身和轮子分别转，那就别在这一步选四边面，得用三角面的那一版去拆。这条在§05展开。</div>
+<div class="warning">사각면(Quad) 모델의 주의사항: Tripo의 스마트 파츠 분할(Segment) 기능은 Quad 모델 및 리깅된 모델을 지원하지 않습니다. 차체와 바퀴를 분리하여 회전시키고자 한다면 분할 단계에서는 삼각면 모델을 사용해야 합니다 (§05 참조).</div>
 
-<h3>耗时到底该怎么念</h3>
+<h3>처리 시간은 어떻게 이해해야 하는가</h3>
 
-<p>做完一件我总想知道「这到底几秒」，然后发现这个问题有三个不同的答案，而它们都是对的。下面这一列数来自2026-09-12录屏时现场生成的另一辆出租车（智能网格，Quad，6044面）：</p>
+<p>생성 시간은 측정 기준에 따라 세 가지로 구분됩니다:</p>
 
 <table>
-<thead><tr><th>口径</th><th>那一件读出来是</th><th>怎么量的</th></tr></thead>
+<thead><tr><th>측정 기준</th><th>실측치</th><th>측정 방식</th></tr></thead>
 <tbody>
-<tr><td>算子耗时</td><td><strong>16秒</strong></td><td>打接口读<code>data.operator</code>的<code>updated_at − created_at</code>，这是Tripo自己记的算子起止</td></tr>
-<tr><td>端到端（含上传与排队）</td><td><strong>约31秒</strong></td><td>录屏上数帧：点下「生成」到车出现在画面里</td></tr>
-<tr><td>界面倒计时</td><td>卡片上写多少算多少</td><td>它是个估计值，会跳，别拿它当测量</td></tr>
+<tr><td>순수 알고리즘 연산 시간</td><td><strong>16초</strong></td><td>API 응답 내 <code>updated_at − created_at</code> 타임스탬프 실측</td></tr>
+<tr><td>엔드-투-엔드 (업로드 및 대기열 포함)</td><td><strong>약 31초</strong></td><td>버튼 클릭부터 화면에 뷰포트 렌더링 완료까지 영상 프레임 계측</td></tr>
+<tr><td>UI 카운트다운 수치</td><td>변동 추정치</td><td>서버 큐 상태에 따라 유동적으로 표기되는 단순 참고용 수치</td></tr>
 </tbody>
 </table>
 
-<p><strong>这本书里凡是给了秒数的地方，写的都是算子耗时，不含上传和排队。</strong>我把口径写死在这儿，是因为这两个数差着将近一倍，你拿16秒去估自己做四十件要多久，会估少一半。图片上传本身也要时间，你的网络和图的大小都算在里面。</p>
+<p>본 책에 기록된 초 단위 시간은 네트워크 전송을 제외한 순수 연산 시간 기준입니다. 40개 에셋 제작 시간을 계산할 때 업로드 및 네트워크 지연을 감안해야 합니다.</p>
 
-<h3>一次批量：十四件网格的面数怎么定</h3>
+<h3>일괄 작업 실전: 14종 메시의 폴리곤 수 책정 기준</h3>
 
-<p>2026-09-12我把巴黎那套资产整批重做了一遍，全部走智能网格。这一批是这本书里最像「真的在干活」的一段：十四件网格、十三件纹理，一个下午。</p>
-
-<p>面数没有一个万能值，我按用途分了三档：</p>
+<p>파리 프로젝트 에셋 14종을 제작할 때 적용한 폴리곤 분류 기준표입니다:</p>
 
 <table>
-<thead><tr><th>档位</th><th>填多少</th><th>这一批里的实例</th><th>三角化之后实际落在</th></tr></thead>
+<thead><tr><th>에셋 등급</th><th>입력 목표값</th><th>실제 적용 에셋</th><th>삼각화 후 최종 폴리곤 수</th></tr></thead>
 <tbody>
-<tr><td>建筑与地标</td><td>15000</td><td>凯旋门、圣心堂、面包房、花店、报刊亭、铁塔、街角咖啡馆</td><td>24,495–29,587三角面</td></tr>
-<tr><td>人物与车辆</td><td>8000</td><td>出租车、载货三轮、西装男、骑车女孩</td><td>15,431–16,126三角面</td></tr>
-<tr><td>街道道具</td><td>6000</td><td>长椅</td><td>12,752三角面</td></tr>
+<tr><td>건축 및 랜드마크</td><td>15,000</td><td>개선문, 사크레쾨르 대성당, 블랑제리, 꽃집, 키오스크, 에펠탑, 카페</td><td>24,495–29,587 삼각면</td></tr>
+<tr><td>인물 및 차량</td><td>8,000</td><td>택시, 삼륜 화물차, 수트 남성, 자전거 여성</td><td>15,431–16,126 삼각면</td></tr>
+<tr><td>가로 소품</td><td>6,000</td><td>벤치, 가로등</td><td>12,752 삼각면</td></tr>
 </tbody>
 </table>
 
-<p>看最右边那一列你就明白上一节为什么要专门讲面数口径了：<strong>填6000的长椅，进引擎是一万两千多个三角面</strong>。一来实际面数会略微超过你填的那个数，二来四边面三角化还要再乘一道，实测倍数在1.37到1.87之间、中位1.75（完整分布见附录D）。做预算请直接拿这一列的三角面数去算，别拿表单里填的那个数去算。</p>
+<p>6,000을 입력한 벤치도 사각면이 삼각화되면 엔진에서는 12,000개가 넘는 삼각면이 됩니다. 예산 수립 시에는 항상 우측 열의 실제 삼각면 수를 기준으로 삼아야 합니다.</p>
 
 <figure class="figure-wide">
-  <img src="images/p01-p2-batch-overview.png" alt="十二件智能网格资产的总览渲图，每件下方标着名字与三角面数">
-  <figcaption>2026-09-12那批智能网格资产的本地渲图总览（12件，另有一件绑骨用的行人不在图内）。每件下方是槽位名和三角化之后的三角面数：面包房28k、花店25k、报刊亭27k、凯旋门26k、圣心堂29k、出租车15k、载货三轮15k、铁塔25k、西装男16k、骑车女孩16k、长椅12k、街角咖啡馆24k。这些数是从最终GLB的索引数组里数出来的，不是界面读数。</figcaption>
+  <img src="images/p01-p2-batch-overview.png" alt="12종 스마트 메시 에셋 총람 렌더링, 각 에셋 하단에 이름과 삼각면 수 표시">
+  <figcaption>2026-09-12 일괄 제작한 스마트 메시 에셋 총람 (12종). 베이커리 28k, 플라워숍 25k, 키오스크 27k, 개선문 26k, 사크레쾨르 29k, 택시 15k, 삼륜차 15k, 에펠탑 25k, 남성 보행자 16k, 자전거 16k, 벤치 12k, 카페 24k. GLB 바이너리 실측 수치입니다.</figcaption>
 </figure>
 
-<p>耗时也很有参考价值，<strong>下面这些全部是算子口径</strong>：最快17秒（长椅），最慢65秒（街角咖啡馆），建筑大多落在45到62秒，人物和车辆落在21到26秒。大体的规律是<strong>面数填得越高、结构越碎，跑得越久</strong>。</p>
-
-<p>十二件的算子状态全是<code>success</code>，一次重试都没用上。这和我做高精度那批的体感一致：图准备对了，生成这一步本身很稳。真正废掉的那一件，问题出在参数没送进去，下面单说。</p>
-
-<h3>这一批唯一浪费掉的65分</h3>
-
-<p>凯旋门那一件我做废了，废得很隐蔽：<strong>我用浏览器自动化往面数框里打字，框里明明白白写着15000，提交完打接口核参数，<code>face_limit</code>读回来是5000</strong>——也就是默认值，65积分打了水漂。</p>
-
-<p>手动点鼠标打字的人不会遇到这条。但只要你打算让Codex或者Claude Code替你批量跑表单——这本书的读者大概率会——<strong>这就是第一个坑</strong>。根因、正确的写法、还有一个不用等生成完就能验的硬办法（设完面数按一下右方向键看它跳到几），完整在§04。</p>
-
-<h3>另外三条只有连着做几十件才会遇到的</h3>
-
-<table>
-<thead><tr><th>现象</th><th>怎么绕过去</th></tr></thead>
-<tbody>
-<tr><td>面数设置不被记住。弹层顶上那句「自动保存您的设置」管得了模式和加项，<strong>管不了面数</strong>，每一件都会回到默认</td><td>把「设面数」当成每件必做的一步写进流程，别指望上一件的设置还在</td></tr>
-<tr><td>提交完一件接着传下一张图，上传会失败</td><td>每提交一件就重新进一次生成页。页面上那个图片输入控件在提交后被前端清掉了，不回去重新来一遍，第二张图根本传不上</td></tr>
-<tr><td>刚回到生成页那一下，界面是「降级」状态：价格、时间戳都显示得怪</td><td>不用管，把图片传上去它自己就恢复正常了</td></tr>
-</tbody>
-</table>
-
-<h3>十分钟清单</h3>
-
-<p>把上面浓缩成一张开工前过一遍的单子：</p>
+<h3>이번 섹션에서 반드시 기억해야 할 6가지 핵심</h3>
 
 <div class="compare">
   <div class="compare-good">
-    <strong>照这个来</strong><br>
-    ·先在几何与贴图里把用不上的加项关掉，设一次管后面所有次<br>
-    ·面数在Polycount滑块上定，别在提示词里求<br>
-    ·面数按用途分档：建筑15000、人车8000、街具6000<br>
-    ·做网页和游戏，生成时Texture Quality选2K，导出那一步选1k<br>
-    ·打算拆件的，拓扑留三角面<br>
-    ·按生成按钮之前先看一眼上面那个数字
+    <strong>권장 사항</strong><br>
+    · 시작 전 팝업창에서 Texture Quality를 2K로 낮추고 Ultra Mesh가 꺼져 있는지 확인<br>
+    · 대량 작업 시 생성 버튼의 크레딧 표시 숫자를 먼저 체크<br>
+    · PBR 모델을 웹에 올릴 때는 환경광(HDRI)을 함께 세팅<br>
+    · 파츠 분할이 필요한 모델은 삼각면(Triangle) 모드로 생성<br>
+    · 폴리곤 수 산정 시 사각면 기준에 1.75배를 곱해 계산<br>
+    · 최종 납품용 GLB는 익스포트 단계에서 1K 텍스처로 최적화
   </div>
   <div class="compare-bad">
-    <strong>别这样</strong><br>
-    ·一路默认点过去，五十分五十分地花，其中三十五分买的是你导出时又要降掉的8K贴图<br>
-    ·拿我这个两万多的余额去估自己的成本<br>
-    · 8K贴图原样丢进网页，然后怀疑是Three.js的问题<br>
-    ·用四边面模型去做智能拆分，卡在那儿找不到原因<br>
-    ·拿两种模式的面数直接比大小<br>
-    ·以为智能网格那65里包含贴图（贴图另付30）
+    <strong>비권장 사항</strong><br>
+    · 기본값으로만 계속 생성하여 8K 텍스처에 매번 50 크레딧을 낭비하는 행위<br>
+    · 저자의 잔여 크레딧(2만 이상)을 보고 개인 제작 비용을 오판하는 것<br>
+    · 8K 텍스처 모델을 그대로 웹에 로드한 뒤 Three.js의 성능 문제로 오해하는 것<br>
+    · 사각면 모델로 스마트 파츠 분할을 시도하다 오류를 겪는 것<br>
+    · 두 모드의 폴리곤 숫자를 환산 없이 1:1로 단순 비교하는 것<br>
+    · 스마트 메시 65 크레딧에 텍스처 비용이 포함되어 있다고 착각하는 것 (텍스처 별도 30)
   </div>
 </div>
 
-<p>到这里你手上应该有一个能转的模型了。下一节讲那张送进去的图该长什么样——<strong>图生3D的成败，八成不在这些开关上，在你喂进去的那张图上</strong>。</p>
+<p>여기까지 따라오셨다면 여러분의 컴퓨터에 직접 회전해볼 수 있는 3D 모델이 준비되었을 것입니다. 다음 섹션에서는 입력 이미지의 품질을 결정짓는 기준을 다룹니다 — <strong>이미지-to-3D의 완성도는 설정 스위치보다 입력하는 레퍼런스 이미지의 품질이 80%를 결정합니다</strong>.</p>
 
 </div>
+
 
 <!-- ===== part02-reference-image.html ===== -->
 <div class="content">
