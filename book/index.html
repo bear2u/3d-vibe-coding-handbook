@@ -6979,136 +6979,137 @@ asmRestore();                     // 렌더링 직후 즉시 기구학 원위치
 <!-- ===== part90-appendix-b.html ===== -->
 <div class="content">
 
-<h2 class="section-title page-break" id="part90"><span class="num">附录B</span>踩坑索引</h2>
+<h2 class="section-title page-break" id="part90"><span class="num">부록 B</span>트러블슈팅 색인</h2>
 <p class="section-en">Appendix B · Pitfall Index</p>
-<p class="section-intro">这里收的全是踩过并且修好的，估算和推测一条都不进。碰到症状先在这几张表里查，对得上就直接照修法做，要看来龙去脉再回正文对应的那一节。出处那一列标「本附录」的，正文没有展开过，全部内容就在那一行里。这几张表里的词密度比正文高，看到不认识的（meshopt、ORM、包围盒、实例化池这些）直接翻附录D，那里按你会撞上它们的顺序讲了一遍人话。</p>
+<p class="section-intro">이곳에 수록된 항목들은 모두 실제로 직접 겪고 해결까지 마친 검증된 트러블슈팅 기록이며, 단순 추정이나 가설은 단 한 줄도 포함되지 않았습니다. 작업 중 특정 이상 증상이 발생하면 먼저 이 표들에서 찾아보고, 일치하는 증상이 있다면 기재된 해결법을 즉시 적용하십시오. 상세한 전후 맥락을 파악하고 싶다면 본문의 해당 섹션으로 돌아가시면 됩니다. 출처 열에 「본 부록」으로 표기된 항목은 본문에서 다루지 않은 실전 노하우로, 그 행 자체에 해결책이 완결되어 있습니다. 이 표들은 전문 용어의 밀도가 높으므로 낯선 단어(meshopt, ORM, 바운딩 박스, 인스턴싱 풀 등)를 마주치면 부록 D의 용어 사전을 참조하십시오.</p>
 
-<h3>一、Three.js与加载GLB</h3>
+<h3>일, Three.js 및 GLB 로딩 트러블슈팅</h3>
 
 <table>
-<thead><tr><th>症状</th><th>根因</th><th>修法</th><th>出处</th></tr></thead>
+<thead><tr><th>증상</th><th>근본 원인</th><th>해결 방법</th><th>출처</th></tr></thead>
 <tbody>
-<tr><td>白底下模型渲成一片死黑，深色底却正常</td><td>Tripo的PBR材质金属度高，漫反射被抑制，亮度全靠反射环境；场景没有环境贴图</td><td>用canvas画一张带暗部的渐变当全景环境贴图，走<code>PMREMGenerator</code>赋给<code>scene.environment</code>（代码见本附录末）；别开ACESFilmic色调映射</td><td>§12 §20</td></tr>
-<tr><td>整个画面发白、没有重量感</td><td>环境贴图从白到浅灰，金属反射回来全是亮色</td><td>给环境贴图一块暗部，相当于摄影棚的黑旗</td><td>§20</td></tr>
-<tr><td>模型被放大到画面里只剩两只鞋</td><td><code>Box3.setFromObject</code>量SkinnedMesh量不准——不是「它拿绑定姿势」（three.js从r155起已按当前姿势算），是那个包围盒缓存不会自己更新，姿势变了你量到的还是上一帧</td><td>直接读GLB里 <code>POSITION</code> accessor的<code>min</code>/<code>max</code>拿真实尺寸</td><td>§12</td></tr>
-<tr><td>一排角色像仪仗队，动作完全同步</td><td>带skeleton的模型用普通<code>clone()</code>会共享骨骼</td><td>改用<code>SkeletonUtils.clone()</code>，相位用<code>(x*0.37+z*0.11)%duration</code>错开。注意这个工具不在精简版vendor目录里，要补对应版本</td><td>§12</td></tr>
-<tr><td>拆解时某些零件一路飞出屏幕</td><td>偏移在每帧的位置计算里累加；静态件不会被重置，被别处每帧赋值的件（气门）加了也白加</td><td>偏移只在渲染那一刻生效：<code>asmApply()</code> → <code>render()</code> → <code>asmRestore()</code></td><td>§20</td></tr>
-<tr><td>改了<code>material.transparent</code>没反应</td><td>需要重新编译shader</td><td>加<code>needsUpdate = true</code>。同理<code>SkeletonHelper</code>被网格挡住时要 <code>depthTest=false</code> +<code>renderOrder=999</code></td><td>本附录</td></tr>
-<tr><td>自建几何一旋转就被甩变形</td><td>形状是相对别的参照点定义的</td><td>先移到支点再旋转，形状在自己的局部坐标里画</td><td>本附录</td></tr>
-<tr><td>拖了滑块没反应，看着像交互坏了</td><td>异步竞态，模型还没加载完，控件事件白丢</td><td>所有模型load完之后，把当前控件值补应用一次</td><td>本附录</td></tr>
-<tr><td>后台标签页截图拿到旧画布</td><td><code>requestAnimationFrame</code>在隐藏页会被暂停，Chrome对定时器还有密集节流</td><td>本地自校验加<code>setInterval(frame, 340)</code>兜底；要自动化截图直接走无头Chrome</td><td>§12</td></tr>
-<tr><td>两个零件互相穿进去</td><td>把存在几何约束的两个量当成独立参数各设了一条曲线</td><td>先找出约束方程，让其余参数从它推出来。判据：两个量之间有物理或几何约束，就不能各设一条曲线</td><td>本附录</td></tr>
-<tr><td>算出来的指标和领域常识相反</td><td>简化模型撑不住那个物理量</td><td>先怀疑自己的模型，换一个能逐项验算的纯几何指标，落点通常更强</td><td>本附录</td></tr>
-<tr><td>某个零件还没装，画面上却已经飘着</td><td>独立mesh没归进任何一件</td><td>凡是<code>scene.add</code>的东西都要有归属</td><td>§20</td></tr>
-<tr><td>连调四轮材质都「还是发白」</td><td>页面的加载遮罩没淡出，盖在整个画面上</td><td>截图自校验前先确认遮罩消失，自检副本里把它设成<code>display:none</code>。判据：整体发白且各元素受影响一致，先查覆盖层</td><td>§20</td></tr>
-<tr><td>headless渲染命令什么都没干</td><td>macOS没有<code>timeout</code>命令，静默变成command not found</td><td>换别的超时方式；跑之前先<code>pkill -f "headless=new"</code>清掉堆积的实例</td><td>§12</td></tr>
-<tr><td>headless Chrome报FAIL，以为截图失败</td><td>它写完文件不退出，命令超时报错，但文件已经写出来了</td><td>收尾按文件是否存在重新盘点，别信退出码</td><td>§12</td></tr>
-<tr><td>GLB加载被CORS挡住</td><td>页面是用<code>file://</code>打开的</td><td>起一个<code>python3 -m http.server</code>。纯静态、无外部资源的HTML不受此限</td><td>§21</td></tr>
-<tr><td>同一个GLB，这个工具量出来1米，那个工具量出来三万多米</td><td>文件用了<code>KHR_mesh_quantization</code>，顶点坐标是<code>normalized:true</code>的int16；不认这个标志的解析器把原始整数直接当世界坐标读，于是高度1.0被读成32767</td><td>按分量类型归一化再读。症状很好认：出现32767或它的倍数就是这个，我那次的自动缩放算出了32783的系数</td><td>§12</td></tr>
-<tr><td>近处的树凭空消失，远处的树好好画着</td><td>实例池配额满了就<strong>整棵不画</strong>，没有降级分支。同一个写法在树、烟囱、路灯三处都出现过</td><td>抢不到近景坑位就退到远景池画简化版，不是不画。顺带把配额调大：实测三角面144万涨到244万，draw call还是77，<strong>几乎不花钱</strong></td><td>§18</td></tr>
-<tr><td>车撞墙后停住了，码表却一直显示2 km/h</td><td><code>speed *= .65</code>这行有不动点：每帧油门加0.317，乘0.65，解<code>v=(v+0.317)*0.65</code>得0.589 m/s，位移是0但速度永远降不到0</td><td>别对速度整体乘系数，按墙的法线把速度拆成法向和切向，法向去掉、切向留一部分。改完撞墙会卸力、贴着墙还能滑出去</td><td>§18</td></tr>
-<tr><td>街上十几个行人长得一模一样</td><td>生成函数<code>makeWalker(key, …)</code>的第一个参数从头到尾没被用过，条件分支无条件命中同一支，18个行人全是同一具模型</td><td>这类bug画面上看着「有人在走」，一切正常。判据是把实际用到的资产名打出来对账，别看画面</td><td>§18</td></tr>
-<tr><td>把相机摆到地标前截图，八个里七个「什么都没有」</td><td>游戏循环每帧用跟车相机覆盖<code>world.camera</code>，你设的机位下一帧就没了，截到的是玩家当前朝向的随机视角</td><td><strong>改车不改相机</strong>：把车头转向目标，等跟车相机自己插值到位再截。线索是那次有一个地标居然拍对了，不一致本身就是「测法错了」的信号</td><td>§18</td></tr>
-<tr><td>帧时间方差大得离谱，中位8.57 ms、p95 61.8 ms、最小3.19 ms</td><td>另一条命令行正在用无头浏览器跑录制，在抢同一块GPU</td><td>量性能前先确认没有别的进程在用GPU。最小值往往还是可信的（那次min 3.19和干净测得的3.29吻合），但那是推断不是测量，别写进结论</td><td>本附录</td></tr>
-<tr><td>时间轴的标签和横条对不上</td><td>刻度用<code>flex:1</code>平分，而真实跨度不是均分的</td><td>按<code>(t-T0)/SPAN</code>绝对定位；挑一两个已知点核对</td><td>本附录</td></tr>
+<tr><td>화이트 배경에서 모델이 새까만 실루엣으로 렌더링되는데, 다크 배경에서는 정상으로 보임</td><td>Tripo의 PBR 재질은 금속성(metalness)이 높아 난반사가 억제되고 밝기를 환경 반사에 의존함. 씬에 환경 맵(IBL)이 없음</td><td>Canvas API로 암부(Black Flag)가 포함된 그라디언트를 동적으로 그려 <code>PMREMGenerator</code>를 통해 <code>scene.environment</code>에 주입(코드 하단 참조). 화이트 배경에서 ACESFilmic 톤매핑 비활성화</td><td>§12 §20</td></tr>
+<tr><td>화면 전체가 허옇게 뜨고 무게감이 전혀 없음</td><td>환경 맵이 화이트~밝은 회색으로만 채워져 금속 표면이 밝은 빛만 반사함</td><td>환경 맵에 짙은 암부 구간을 배치하여 스튜디오의 검은 가림막(Black Flag) 역할을 하도록 만듦</td><td>§20</td></tr>
+<tr><td>모델이 비정상적으로 거대해져 화면에 신발 두 짝만 보임</td><td><code>Box3.setFromObject</code>가 SkinnedMesh를 계측할 때 바운딩 박스 캐시가 자동으로 갱신되지 않아, 포즈가 바뀌어도 이전 프레임의 크기를 측정함</td><td>GLB 내부 <code>POSITION</code> accessor의 <code>min</code> / <code>max</code> 버퍼 값을 직접 읽어 실제 메시 치수를 도출함</td><td>§12</td></tr>
+<tr><td>거리의 보행자들이 군대 열병식처럼 완벽히 동일한 동작으로 걸어감</td><td>스켈레톤이 포함된 모델을 일반 <code>clone()</code>으로 복제하면 모든 인스턴스가 동일한 본 인스턴스를 공유함</td><td><code>SkeletonUtils.clone()</code>으로 복제하고 애니메이션 위상을 <code>(x*0.37 + z*0.11) % duration</code>으로 분산시킴. 해당 유틸이 vendor 폴더에 누락되었는지 확인 필요</td><td>§12</td></tr>
+<tr><td>분해 모드 작동 시 특정 부품이 화면 밖으로 날아가 버림</td><td>위치 오프셋이 매 프레임의 위치 연산에서 누적됨. 정적 부품은 리셋되지 않고 <code>+=</code>가 누적되며, 밸브처럼 매 프레임 덮어써지는 부품은 오프셋이 무시됨</td><td>오프셋을 렌더링 직전에만 일시 적용하고 즉시 복원: <code>asmApply()</code> → <code>render()</code> → <code>asmRestore()</code></td><td>§20</td></tr>
+<tr><td><code>material.transparent</code> 속성을 변경해도 시각적 변화가 없음</td><td>셰이더 재컴파일 플래그가 누락됨</td><td>속성 변경 후 <code>material.needsUpdate = true</code> 추가. <code>SkeletonHelper</code>가 메시에 가려질 때는 <code>depthTest = false</code> + <code>renderOrder = 999</code> 설정</td><td>본 부록</td></tr>
+<tr><td>직접 생성한 절차적 지오메트리를 회전시키면 형태가 왜곡되어 날아감</td><td>버텍스 형상이 자신이 아닌 외부의 다른 참조점을 기준으로 정의되어 있음</td><td>먼저 로컬 회전 피벗(원점)으로 이동시킨 뒤 회전하고, 형상은 자체 로컬 좌표계 안에서 드로잉함</td><td>본 부록</td></tr>
+<tr><td>슬라이더를 조작해도 화면에 반응이 없어 인터랙션이 고장 난 것처럼 보임</td><td>비동기 레이스 컨디션: 3D 모델 로딩이 아직 완료되지 않아 UI 이벤트가 허공에 버려짐</td><td>모든 모델의 로딩 완료 콜백 시점에 현재 UI 컨트롤러의 최신 상태값을 강제로 1회 재적용함</td><td>본 부록</td></tr>
+<tr><td>백그라운드 탭에서 캡처 시 낡은 이전 화면이 찍힘</td><td>비활성 탭에서는 브라우저가 <code>requestAnimationFrame</code> 루프를 일시 중지하며 타이머를 스로틀링함</td><td>로컬 검증 시 <code>setInterval(frame, 340)</code> 백업 루프를 병행 가동하거나, 자동화 캡처는 헤드리스 크롬(Headless Chrome)으로 실행</td><td>§12</td></tr>
+<tr><td>두 기계 부품이 서로의 내부를 뚫고 지나가는 관통 충돌 발생</td><td>기하학적 구속 관계가 존재하는 두 물리량을 독립된 파라미터로 취급하여 각각 별도의 보간 곡선을 부여함</td><td>두 부품 사이의 기구학 구속 방정식을 먼저 세우고 종속 부품의 좌표를 수학적으로 유도함</td><td>본 부록</td></tr>
+<tr><td>시뮬레이션 계산 결과가 해당 분야의 상식과 정반대로 도출됨</td><td>지나치게 단순화된 수학 모델이 대상 물리 현상을 지탱하지 못함</td><td>이론 모델의 한계를 인정하고, 단계별 검증이 가능한 순수 기하학적 측정 지표로 전환함</td><td>본 부록</td></tr>
+<tr><td>특정 부품을 아직 조립하지 않았는데 화면 허공에 둥둥 떠 있음</td><td>독립 메시가 특정 부품 그룹에 바인딩되지 않고 전역 씬에 직속으로 추가됨</td><td><code>scene.add</code>로 들어가는 모든 메시는 반드시 명확한 상위 부품 그룹에 소속시켜 계층 구조를 일원화함</td><td>§20</td></tr>
+<tr><td>재질을 4회 연속 수정해도 화면이 "계속 허옇게 뜬 상태"로 유지됨</td><td>로딩 마스크 오버레이가 페이드아웃되지 않고 화면 전체를 불투명 흰색으로 덮고 있었음</td><td>스크린샷 검증 전에 로딩 마스크가 완전히 소멸했는지 확인하고 진단용 코드에서 <code>display: none</code> 처리함</td><td>§20</td></tr>
+<tr><td>헤드리스 렌더링 명령어를 실행했으나 아무런 작업도 수행되지 않음</td><td>macOS에는 리눅스의 <code>timeout</code> 명령어가 기본 내장되어 있지 않아 command not found로 조용히 증발함</td><td>macOS 호환 타임아웃 방식을 적용하고, 실행 전 <code>pkill -f "headless=new"</code>로 백그라운드 좀비 프로세스를 정리함</td><td>§12</td></tr>
+<tr><td>헤드리스 크롬이 FAIL 에러를 뿜어 캡처가 실패한 줄 착각함</td><td>크롬이 스크린샷 파일을 정상 작성한 뒤에도 프로세스를 종료하지 않아 명령어 타임아웃 에러를 냈으나 파일은 생성되어 있었음</td><td>종료 코드(Exit Code)를 맹신하지 말고 대상 캡처 파일이 디스크에 실제로 생성되었는지 파일 시스템으로 직접 확인함</td><td>§12</td></tr>
+<tr><td>GLB 파일 로딩이 브라우저 CORS 정책에 가로막혀 실패함</td><td>HTML 파일을 파일 탐색기에서 더블클릭하여 <code>file://</code> 프로토콜로 열었음</td><td>로컬 HTTP 개발 서버(<code>python3 -m http.server</code>)를 기동하여 서빙함. 외부 에셋이 없는 순수 단일 HTML만 <code>file://</code> 실행 가능</td><td>§21</td></tr>
+<tr><td>동일한 GLB 파일을 열었을 때 어떤 툴은 1미터로 측정하고 어떤 툴은 3만 미터로 측정함</td><td>해당 파일이 <code>KHR_mesh_quantization</code> 압축을 사용하여 정점 좌표를 <code>normalized: true</code>의 int16으로 인코딩했으나, 구형 파서가 정수를 월드 좌표로 직독하여 1.0이 32767로 뻥튀기됨</td><td>정점 버퍼를 컴포넌트 타입에 맞춰 정규화(float 변환) 후 읽어들임. 수치에 32,767이나 그 배수가 나타나면 100% 양자화 파싱 오류임</td><td>§12</td></tr>
+<tr><td>가까운 거리의 가로수는 눈앞에서 증발하고 저 멀리 있는 나무는 멀쩡히 서 있음</td><td>인스턴스 풀의 용량이 가득 차면 <strong>나무를 아예 그리지 않고 무시</strong>하는 버그가 있었음 (다운그레이드 분기 누락)</td><td>근경 슬롯 부족 시 원경의 단순 수관 인스턴스로 안전하게 폴백(Fallback). 인스턴스 풀 용량 자체를 대폭 상향함 (드로우 콜 불변)</td><td>§18</td></tr>
+<tr><td>차가 벽에 정면 충돌하여 정지했는데 속도계가 영원히 2 km/h에 고정됨</td><td><code>speed *= 0.65</code> 감속과 프레임당 가속 <code>0.317</code>의 합산이 <code>v = (v + 0.317) × 0.65</code> 방정식에 갇혀 0.589 m/s라는 수학적 고정점에 박제됨</td><td>스칼라 속도에 단순 배율을 곱하지 말고, 벽면 법선 벡터를 기준으로 속도를 법선 성분(반발 탄성 적용)과 접선 성분(마찰 감쇠 적용)으로 분해함</td><td>§18</td></tr>
+<tr><td>거리의 보행자 18명이 전부 똑같은 옷을 입은 동일 인물임</td><td>스폰 함수 <code>makeWalker(key, …)</code> 내부에서 리깅 성공 분기 진입 시 전달받은 <code>key</code> 인자를 무시하여 첫 번째 모델만 강제 인스턴싱됨</td><td>시각적으로는 "사람이 걸어 다닌다"며 정상인 척 위장하므로, 씬 그래프에 실제 로딩된 에셋 키를 덤프하여 대조 검증해야 함</td><td>§18</td></tr>
+<tr><td>랜드마크를 순찰하며 스크린샷을 찍었으나 8곳 중 7곳에서 허허벌판만 찍힘</td><td>Three.js 메인 렌더 루프의 차량 추적 카메라 로직이 매 프레임마다 스크립트로 강제 주입한 카메라 위치를 덮어써 버림</td><td>카메라를 강제로 옮기지 말고, <strong>차량 자체의 전방 각도를 랜드마크 방향으로 회전</strong>시킨 뒤 추적 카메라가 정렬될 때까지 대기 후 캡처</td><td>§18</td></tr>
+<tr><td>프레임 타임 분산이 극심하여 중앙값 8.57ms, p95 61.8ms, 최소 3.19ms로 요동침</td><td>백그라운드의 다른 터미널에서 헤드리스 브라우저 화면 녹화 프로세스가 동일한 GPU 자원을 경합하고 있었음</td><td>벤치마크 전 GPU 점유 프로세스 전수 정리. 잡음 속에서도 최소값(3.19ms)은 정상 상태에 근접한 지표가 됨</td><td>본 부록</td></tr>
+<tr><td>타임라인 UI의 레이블 위치와 진행 바의 위치가 완전히 어긋남</td><td>스케일 눈금을 CSS <code>flex: 1</code>로 단순 균등 분할했으나, 실제 시간 간격은 비선형적이었음</td><td><code>(t - T0) / SPAN</code> 공식에 따라 절대 위치(absolute)로 픽셀 배치하고 기준 앵커 포인트를 대조 검증함</td><td>본 부록</td></tr>
 </tbody>
 </table>
 
-<div class="callout"><strong>唯一一段建议直接抄走的代码</strong>（白底3D的环境贴图，不需要任何外部HDR文件）：</div>
+<div class="callout"><strong>가장 강력히 추천하는 복사 전용 스니펫</strong> (외부 HDR 파일 없이 화이트 배경에서 완벽한 금속 질감을 연출하는 Canvas 환경 맵 생성 코드):</div>
 
 <pre><code>function studioEnv(rd){
-  const c=document.createElement('canvas'); c.width=128; c.height=128;
-  const g=c.getContext('2d'), grd=g.createLinearGradient(0,0,0,128);
-  grd.addColorStop(0,'#ffffff'); grd.addColorStop(.34,'#e8e4da');
-  grd.addColorStop(.52,'#928d82'); grd.addColorStop(.75,'#5c574e'); grd.addColorStop(1,'#403c35');
-  g.fillStyle=grd; g.fillRect(0,0,128,128);
-  g.fillStyle='rgba(255,255,255,.9)'; g.beginPath(); g.ellipse(40,24,26,13,0,0,Math.PI*2); g.fill();
-  const t=new THREE.CanvasTexture(c); t.mapping=THREE.EquirectangularReflectionMapping;
-  const pm=new THREE.PMREMGenerator(rd); const env=pm.fromEquirectangular(t).texture;
+  const c = document.createElement('canvas'); c.width = 128; c.height = 128;
+  const g = c.getContext('2d'), grd = g.createLinearGradient(0, 0, 0, 128);
+  grd.addColorStop(0, '#ffffff'); grd.addColorStop(0.34, '#e8e4da');
+  grd.addColorStop(0.52, '#928d82'); grd.addColorStop(0.75, '#5c574e'); grd.addColorStop(1, '#403c35');
+  g.fillStyle = grd; g.fillRect(0, 0, 128, 128);
+  g.fillStyle = 'rgba(255,255,255,0.9)'; g.beginPath(); g.ellipse(40, 24, 26, 13, 0, 0, Math.PI * 2); g.fill();
+  const t = new THREE.CanvasTexture(c); t.mapping = THREE.EquirectangularReflectionMapping;
+  const pm = new THREE.PMREMGenerator(rd); const env = pm.fromEquirectangular(t).texture;
   pm.dispose(); t.dispose(); return env;
 }
 scene.environment = studioEnv(renderer);</code></pre>
 
-<h3>二、Unity（10条，外加三条追加的）</h3>
+<h3>이, Unity 트러블슈팅 (10가지 기본 함정 + 3가지 추가 실무 팁)</h3>
 
 <table>
-<thead><tr><th>症状</th><th>根因</th><th>修法</th><th>出处</th></tr></thead>
+<thead><tr><th>증상</th><th>근본 원인</th><th>해결 방법</th><th>출처</th></tr></thead>
 <tbody>
-<tr><td>东西都对但看着像模型展览，怎么调光都不对</td><td>Tripo导出的GLB被归一化到<strong>最长边</strong>约1.0单位——不是高度（长椅1.0×0.549×0.413、出租车0.522×0.570×1.0，撑满1.0的那条边各不相同），<code>scale = 1</code>等于把每栋楼当成1米</td><td>实例化后量包围盒，<code>s = 目标高度 / bounds.size.y</code>，再把底面压到地面。宽扁件按最长边归一</td><td>§14</td></tr>
-<tr><td>GLB在磁盘上、<code>.meta</code>也生成了，加载却返回null</td><td>Tripo CDN上的<code>_meshopt</code>变体带<code>EXT_meshopt_compression</code>，工程里没装解码器（glTFast本身支持，装<code>com.unity.meshopt.decompress</code>即可）。线索只在<code>.meta</code>的<code>reportItems</code>里</td><td>本地先解压：<code>npx @gltf-transform/cli copy in.glb out.glb</code>。别指望换URL，去掉<code>_meshopt</code>是403</td><td>§14</td></tr>
-<tr><td>批处理建场景，新拷进来的GLB找不到</td><td>glTFast的导入是延迟的，批处理里没有帧循环等它，<code>AssetDatabase.Refresh()</code>也不够</td><td>同一条命令跑两遍，第一遍触发导入，第二遍资产就在了</td><td>§14</td></tr>
-<tr><td>场景里有个完整的摩天轮，但不在你以为的地方</td><td><code>AddComponent&lt;Light&gt;()</code>加在root上，改它的<code>localPosition</code>就是改root自己</td><td>灯挂到子物体上。诊断别靠猜，直接打印root位置和包围盒</td><td>§14</td></tr>
-<tr><td>轮子炸成一把乱插的棍子</td><td>Unity的<code>Cylinder</code>轴向是Y，绕Z转φ之后轴指向(−sinφ, cosφ, 0)，辐条和外圈的90°弄反了</td><td>辐条φ = θ + 90°，外圈φ = θ。算一遍就清楚，别靠试</td><td>§14</td></tr>
-<tr><td>58盏路灯全开了，地面还是一片黑</td><td>每个物体能吃几盏逐像素光，由<code>QualitySettings.pixelLightCount</code>决定（Built-in前向渲染，这一档默认4），<strong>不是引擎写死的常数</strong>；而整块地面是一个物体。调大也不解决：写成8，58盏里照样有50盏进不来（§14坑六）</td><td>把光池画进地面贴图，灯位和贴图共享同一份坐标；实体点光只照立在地上的东西。切网格会出现光照接缝，不要</td><td>§14</td></tr>
-<tr><td>夜景整个糊成一片白</td><td>Bloom阈值0.72，连被照亮的墙面也一起炸</td><td>阈值提到0.92，只让真正的高光发光。这条比intensity重要得多</td><td>§14</td></tr>
-<tr><td>自校验看的是旧截图，白看两轮</td><td>macOS上中文文件名被NFD归一化，排序后旧图把新图覆盖回去</td><td>渲染直接出ASCII文件名，别在中文名上做文章</td><td>§14</td></tr>
-<tr><td>静帧里旋转木马不转、角色是T-pose</td><td>编辑器模式渲染不执行<code>Update</code>／<code>LateUpdate</code></td><td>这不是bug。要带动作的帧得进Play模式录</td><td>§14</td></tr>
-<tr><td>不知道怎么播放GLB里带的行走动画</td><td>以为必须建AnimatorController</td><td>glTFast把clip作为子资源挂进来，<code>LoadAllAssetsAtPath</code>能枚举到，用Playable直接推给Animator。记得<code>using UnityEngine.Animations;</code>，<code>PlayableGraph</code>标<code>[NonSerialized]</code></td><td>§14</td></tr>
-<tr><td>构建报Succeeded，应用启动即崩：<code>level0 is corrupted</code></td><td>批处理里「编译脚本 → AddComponent → SaveScene」同进程跑，Unity把MonoScript内联进了场景文件（没有guid的纯fileID）。中招哪些类是竞态，同一份代码两次构建结果都不同</td><td>场景里一个自定义脚本都不放：场景只存纯数据，行为写进manifest，运行时用<code>[RuntimeInitializeOnLoadMethod]</code>按层级路径挂上。构建前加闸门，场景一脏就中止</td><td>§14</td></tr>
-<tr><td>对照版「能正常启动」，于是判定问题出在别处</td><td>运行日志里有74行<code>The referenced script is missing</code>，39个组件丢了37个，它只是窗口弹出来了</td><td>验证构建产物，「进程还活着」是最弱的一级证据。三条同时看：日志里的装配计数、应用自己截的图、组件数量对账</td><td>§14</td></tr>
-<tr><td>WebGL构建165 MB，<code>WebGL.data</code>一个文件152 MB</td><td>glTFast直接创建<code>Texture2D</code>，不走<code>TextureImporter</code>，平台贴图压缩从来没生效过；六个设施是8192²贴图</td><td>在GLB层面按槽位分尺寸（基础色1024 /法线512 /金属粗糙256）。<code>--pattern</code>是glob且大小写不敏感，<code>*ORM*</code>会误伤<code>Normal</code>；<code>resize</code>只缩不放，先做小尺寸pass</td><td>§14</td></tr>
+<tr><td>에셋 배치는 맞는데 미니어처 전시장처럼 보이며 조명을 아무리 만져도 어색함</td><td>Tripo에서 내보낸 GLB 모델은 <strong>가장 긴 변</strong>을 기준으로 1.0 유닛으로 정규화됨 (높이가 아님). <code>scale = 1</code>로 두면 모든 건물이 1미터짜리 미니어처가 됨</td><td>인스턴스 생성 후 바운딩 박스를 측정하여 <code>s = 목표높이 / bounds.size.y</code>로 스케일을 잡고 바닥면을 지표면에 접지시킴</td><td>§14</td></tr>
+<tr><td>GLB 파일이 디스크에 있고 <code>.meta</code>도 생성되었으나 로딩 시 null이 반환됨</td><td>Tripo CDN의 <code>_meshopt</code> 변체는 <code>EXT_meshopt_compression</code>을 사용하는데 프로젝트에 디코더 패키지(<code>com.unity.meshopt.decompress</code>)가 누락됨</td><td>로컬에서 미리 압축 해제: <code>npx @gltf-transform/cli copy in.glb out.glb</code>. CDN URL에서 <code>_meshopt</code>를 임의로 지우면 403 에러 발생</td><td>§14</td></tr>
+<tr><td>배치 스크립트로 씬 생성 시 새로 복사한 GLB를 찾지 못함</td><td>glTFast의 에셋 임포트는 지연 비동기 방식으로 동작하며, 배치 모드에는 프레임 루프가 없어 <code>AssetDatabase.Refresh()</code>로도 즉시 로딩되지 않음</td><td>동일한 배치 빌드 명령을 2회 연속 실행: 첫 번째 실행이 임포트를 트리거하고 두 번째 실행에서 정상 참조함</td><td>§14</td></tr>
+<tr><td>씬에 관람차가 온전히 존재하지만 의도한 위치에 없음</td><td><code>AddComponent&lt;Light&gt;()</code>를 루트 오브젝트에 직접 부착한 뒤 <code>localPosition</code>을 수정하여 루트 전체의 좌표가 함께 이동함</td><td>조명 컴포넌트는 반드시 자식 게임오브젝트(Child GameObject)에 분리하여 부착함</td><td>§14</td></tr>
+<tr><td>생성한 휠의 살대들이 제멋대로 삐져나온 꼬챙이처럼 흩어짐</td><td>Unity의 내장 <code>Cylinder</code> 기본 축은 Y축이며, Z축 회전 적용 시 바큇살과 외부 림 사이의 90도 직교 관계가 뒤집힘</td><td>바큇살 각도 φ = θ + 90°, 외부 림 각도 φ = θ로 삼각함수 좌표계를 엄밀히 정렬함</td><td>§14</td></tr>
+<tr><td>가로등 58개를 모두 켰는데 바닥 지면이 여전히 새까맣게 어두움</td><td>단일 오브젝트가 수신할 수 있는 픽셀 라이트 개수는 <code>QualitySettings.pixelLightCount</code>(Built-in 포워드 렌더러 기본값 4)에 의해 엄격히 제한되는데, 지면 전체가 단 하나의 메시였음</td><td>지면에 직접 라이트 풀(Light Pool) 텍스처를 굽고, 씬의 실시간 포인트 라이트는 수직 구조물만 비추도록 분리함</td><td>§14</td></tr>
+<tr><td>야경 씬 전체가 하얗게 타버려 형체를 알아볼 수 없음</td><td>포스트 프로세싱의 블룸(Bloom) 임계값(Threshold)이 0.72로 너무 낮아 일반 조명을 받은 벽면까지 통째로 발광함</td><td>블룸 임계값을 0.92 이상으로 끌어올려 진짜 고휘도 하이라이트 지점만 선별 발광하도록 보정함</td><td>§14</td></tr>
+<tr><td>시각 검증 시 계속 구버전 스크린샷이 떠서 헛수고를 반복함</td><td>macOS 파일 시스템의 한글 파일명 NFD 정규화로 인해 유니코드 정렬 시 이전 캡처가 최신 캡처를 덮어씀</td><td>스크린샷 파일명은 반드시 영문 ASCII 및 타임스탬프 기반으로 생성함</td><td>§14</td></tr>
+<tr><td>정적 캡처 프레임에서 회전목마가 멈춰 있고 캐릭터가 T-포즈로 굳어 있음</td><td>Unity 에디터 비실행(Edit Mode) 상태에서는 <code>Update</code> 및 <code>LateUpdate</code> 루프가 실행되지 않음</td><td>이는 정상 동작이며, 본 애니메이션이 살아 있는 프레임을 얻으려면 Play 모드 상태에서 캡처를 실행해야 함</td><td>§14</td></tr>
+<tr><td>GLB에 동봉된 걷기 애니메이션을 어떻게 재생해야 할지 막막함</td><td>반드시 복잡한 AnimatorController 에셋을 생성해야 한다고 오해함</td><td>glTFast는 애니메이션 클립을 서브 에셋으로 임포트하므로, <code>PlayableGraph</code> API를 사용해 Animator 컴포넌트에 클립을 직접 밀어넣음</td><td>§14</td></tr>
+<tr><td>빌드는 성공했으나 실행 즉시 <code>level0 is corrupted</code> 치명적 크래시 발생</td><td>배치 빌드에서 스크립트 컴파일, AddComponent, 씬 저장을 동일 프로세스에서 실행하여 유효한 GUID가 없는 임시 MonoScript가 씬에 하드코딩됨</td><td>씬 내부에는 커스텀 스크립트를 일절 저장하지 않고 순수 데이터만 보관하며, 런타임에 <code>[RuntimeInitializeOnLoadMethod]</code>로 동적 부착함</td><td>§14</td></tr>
+<tr><td>대조군 빌드가 정상 실행되어 문제가 없는 줄 알았으나 실제로는 껍데기만 뜬 상태</td><td>로그 확인 결과 74건의 <code>The referenced script is missing</code> 에러가 찍혀 39개 컴포넌트 중 37개가 누락된 채 빈 껍데기 창만 뜬 것이었음</td><td>"프로세스가 죽지 않았다"는 사실은 가장 취약한 증거임. 에셋 컴포넌트 실장 카운트와 실제 인게임 캡처를 반드시 병행 대조해야 함</td><td>§14</td></tr>
+<tr><td>WebGL 빌드 결과물이 165 MB에 달하고 <code>WebGL.data</code> 파일 하나가 152 MB를 차지함</td><td>glTFast가 텍스처 임포터를 거치지 않고 <code>Texture2D</code>를 직접 인스턴싱하여 플랫폼별 텍스처 압축이 무력화되었고 8K 텍스처가 원본으로 실장됨</td><td>GLB 파일 레벨에서 텍스처 슬롯별 리사이징(베이스 컬러 1024, 노멀 512, ORM 256)을 사전에 완료한 뒤 엔진에 임포트함</td><td>§14</td></tr>
 </tbody>
 </table>
 
-<h3>三、Tripo Studio与平台侧</h3>
+<h3>삼, Tripo Studio 및 플랫폼 측면 트러블슈팅</h3>
 
 <table>
-<thead><tr><th>症状</th><th>根因</th><th>修法</th><th>出处</th></tr></thead>
+<thead><tr><th>증상</th><th>근본 원인</th><th>해결 방법</th><th>출처</th></tr></thead>
 <tbody>
-<tr><td>图上传了，dropzone还是空态，生成按钮点了没反应</td><td>文件确实进了<code>&lt;input type=file&gt;</code>，但change事件没送达React，App的state没更新</td><td>自己补发<code>input</code>和<code>change</code>两个事件。排查顺序：先量<code>files.length</code>，在input里是事件问题，不在就是根本没投进去（页面已有参考图时file input会被移除，要先刷新）</td><td>本附录</td></tr>
-<tr><td>点完生成，积分没变、页面没跳转，重试一次白花50积分</td><td>界面回显有延迟，不等于任务失败</td><td>等几秒再去任务列表复查，不要立刻重试</td><td>§21</td></tr>
-<tr><td>绑出来的骨架是错的</td><td>AI模型下拉默认是「v2.5适用于动物」</td><td>人物必须换成「v1.0适用于类人角色」</td><td>§06 §22</td></tr>
-<tr><td>第一次自动绑定失败，预览空白</td><td><strong>不是固定行为，我一度这么写是错的。</strong>2026-09-10那两次确实都是第二次才成功，但样本只有2；09-12换了一张A-Pose输入图之后，19秒第一次就过了</td><td>真正承重的不是「姿势够不够正」，是<strong>四肢和躯干分不分得开</strong>。第一次失败就重试，同时把输入图换成手臂明显离开身体的那种；重试那20积分照样要算进预算</td><td>§06 §22</td></tr>
-<tr><td>导出的绑骨模型「没有动画」</td><td>不是丢了，是分成两个文件：<code>tripo_rigging_*</code>是网格+ 41关节骨架，<code>tripo_retarget_*</code>是骨架+动画剪辑</td><td>两个都下，把前者的骨架装进场景、用后者的剪辑驱动，<code>AnimationMixer</code>按节点名字绑轨道</td><td>§06</td></tr>
-<tr><td>角色走着走着往回弹一大步</td><td>重定向出来的剪辑带位移轨，<code>Hip.position</code>的Y位移范围1.338</td><td>切掉位移轨只留旋转轨，位移归游戏代码管</td><td>§06 §22</td></tr>
-<tr><td>智能网格生成完是一只灰模型，一点颜色都没有</td><td>智能网格出的本来就是无贴图网格，底栏那句「Retry for better results or proceed to Texture」就是在说这件事</td><td>再走一次贴图生成，另付30积分。做预算时智能网格要按两笔算：生成一笔、贴图一笔。<strong>Preview期的首次Trial只免生成那一笔，贴图照付30；免完之后落回的是65这个划线折扣价，不是原价100</strong>。界面上把100划掉、实扣65，所以带贴图的完整一件是65+30=95。价格以官网当时标价为准</td><td>§07</td></tr>
-<tr><td>同一张图，今天生成按钮显示65，昨天是50</td><td>不是降级也不是涨价，是上一次把Ultra Mesh Quality开着，被表单记住了。弹层顶部那行小字写着We'll automatically save your settings for next time</td><td>点生成前先把几何与贴图弹层展开核一遍开关。这个数是拆得开的：65 =几何15 +贴图包35 + Ultra 15</td><td>§07附录C</td></tr>
-<tr><td>17个资产吃掉5.0 GB显存</td><td>导出默认给8192²贴图，一张底图268 MB（加mipmap约358 MB）</td><td><code>gltf-transform resize --width 1024 --height 1024</code>。用<code>resize</code>不用<code>optimize</code>，后者会连减面一起跑</td><td>§22</td></tr>
-<tr><td>四边面模型在智能拆分里选不了，上传完没反应</td><td>智能拆分页上写着「Unavailable for: Quad models, Rigged models」，智能拆分对四边面模型和已绑骨模型都不可用。P2.0（智能网格）默认出的就是四边面</td><td>拆件要在三角面模型上做。同一张图想既拆件又要四边面，就生成两版：v3.1三角面那版拿去智能拆分，四边面那版留着当成品</td><td>§05</td></tr>
-<tr><td>离线解析GLB读出来是乱码</td><td>CDN上拿到的是<code>_meshopt</code>压缩变体</td><td>先用gltf-transform解开；<code>tripo_retarget_</code>没有这个后缀，可以直接读</td><td>§03 §14</td></tr>
-<tr><td>下载签名URL时<code>&amp;</code>和<code>~</code>被吃掉</td><td>在shell里手敲的</td><td>交给Python的requests，或者把URL原样传给浏览器侧的下载工具</td><td>§03</td></tr>
-<tr><td>面数上限明明填了15000，出来的模型却按5000做</td><td>用脚本往输入框打字，DOM上的<code>value</code>变了，但前端框架的内部状态没收到，提交时读的还是默认值。界面显示15000、任务详情读回5000，两边都「正常」</td><td>用原生setter写值，再手动派<code>input</code>、<code>change</code>、<code>blur</code>三个事件。<strong>硬验证：设完按一次方向键右，数字变成15002就说明内部值确实是15000</strong>，没变就是没进去</td><td>§01</td></tr>
-<tr><td>上一件设好的面数，下一件又变回默认</td><td>弹层顶上那句「自动保存您的设置」保的是别的开关，面数不在其中</td><td>每一件都重设一遍，别信上一次的残留。批量做之前先想清楚这件事要花多少次重复劳动</td><td>§01</td></tr>
-<tr><td>连着提交第二件时，图片怎么都传不进去</td><td>停在任务详情页直接传下一张，那个页面的文件输入框已经被前端清掉了，上传动作会退化成「拖到页头」然后失败</td><td><strong>每提交一件就回一次生成页</strong>。回去时页面会是降级状态（价格显示、模式选择器都不对），传一张图它自己就修好了</td><td>§01</td></tr>
-<tr><td>等按钮上<code>纹理生成 30</code>这几个字出现，等到超时也等不到</td><td>那个按钮上的文字和价格是两个独立的DOM节点，按整串文本去匹配永远拼不上</td><td>别按文本等，改成等页面空闲两轮再按按钮特征点。这类「肉眼看见了、程序找不到」的，先去看那段文字是不是被拆成了两个节点</td><td>本附录</td></tr>
-<tr><td>一批提交三件，跑到一半整个动作超时中断</td><td>三件是十二步操作，实测113秒撞上超时上限</td><td><strong>每批两件</strong>，实测稳定。超时之后<strong>不要直接重试</strong>，先用任务详情接口把「哪几件其实已经提交成功了」盘清楚，否则会重复下单</td><td>本附录</td></tr>
-<tr><td>绑骨页的骨架预设下拉，点了选项没反应</td><td>它不是原生的<code>&lt;select&gt;</code>，标准的选择操作会被拒绝，直接点选项也不生效</td><td>先点开，再用方向键下加回车。<strong>选完之后那层浮层不会自己消失</strong>，会盖住底下的「自动绑定」按钮，按Esc没用，点页面别处才关得掉</td><td>§06</td></tr>
-<tr><td>套完动画，「导出」按钮从页面上消失了</td><td>不是bug，套完重定向之后那个按钮就不在DOM里了</td><td>走任务详情接口拿文件：<code>rigging.model_url</code>是网格加骨架，<code>retarget[0].model_url</code>是骨架加动画。<strong>接口这条路反而比点导出更短</strong>，套完动画立刻就能取</td><td>§06</td></tr>
-<tr><td>上传自己的模型去绑骨，先被收了50积分，还弹出一个要你转X/Y/Z的对话框</td><td>那50是外部模型的导入费，「找到最佳角度」那个弹层也只在这条路上出现</td><td><strong>模型本来就在账号里的话，去绑骨页右侧直接选</strong>，0积分，也不弹那个对话框。所以顺序是先在Studio生成、再在Studio绑骨，别下载下来又传上去</td><td>§06</td></tr>
-<tr><td>想用官方API批量提交，发现钱包是0积分，可网页上余额明明有两万多</td><td>API钱包和Studio订阅是两套独立计费，订阅的积分不会流到API那边</td><td>批量生成走网页端，或者单独给API钱包充值。做计划前先确认你要用的那条通路上有没有钱</td><td>§07</td></tr>
+<tr><td>이미지를 드롭존에 올렸는데도 빈 상태로 유지되고 생성 버튼이 비활성화됨</td><td>파일 데이터가 <code>&lt;input type=file&gt;</code>에는 주입되었으나 change 이벤트가 상위 프레임워크(React)에 전달되지 않아 state가 갱신되지 않음</td><td><code>input</code> 및 <code>change</code> 이벤트를 인위적으로 연속 디스패치함. 기존 참고 이미지가 남아 있으면 input 엘리먼트 자체가 DOM에서 제거되므로 새로고침 필요</td><td>본 부록</td></tr>
+<tr><td>생성 버튼 클릭 후 크레딧이 즉시 줄지 않아 재시도했다가 50크레딧 중복 결제됨</td><td>웹 콘솔의 상태 반영에 네트워크 지연이 발생한 것일 뿐 백엔드 작업은 이미 큐에 정상 접수됨</td><td>버튼을 연타하지 말고 수초 대기 후 작업 내역(Tasks) 목록에서 실제 접수 여부를 새로고침으로 확인</td><td>§21</td></tr>
+<tr><td>자동 리깅 결과 생성된 본 골격 구조가 완전히 엉뚱하게 뒤틀림</td><td>AI 모델 선택 드롭다운의 기본값이 「v2.5 동물용」으로 설정되어 있었음</td><td>인간형 캐릭터는 반드시 「v1.0 휴머노이드(인간형)」 프리셋으로 명시적 변경 후 리깅 진행</td><td>§06 §22</td></tr>
+<tr><td>첫 번째 자동 리깅 시도가 실패하고 뷰포트가 백지로 뜸</td><td>모델의 포즈에서 <strong>사지(팔/다리)가 몸통에서 충분히 떨어져 있지 않아</strong> 분리에 실패함</td><td>실패 시 재시도하되, 입력 시안을 양팔을 확실히 벌린 A-포즈(몸통과 팔 사이 틈새 확보)로 교체하여 재제출</td><td>§06 §22</td></tr>
+<tr><td>다운로드한 리깅 모델에 애니메이션 클립이 전혀 들어있지 않음</td><td>Tripo의 리깅 산출물은 2개 파일로 분리 제공됨: <code>tripo_rigging_*</code>은 메시+뼈대이고, <code>tripo_retarget_*</code>은 뼈대+모션 데이터임</td><td>두 파일을 모두 다운로드하여 전자의 메시에 후자의 모션 트랙을 <code>AnimationMixer</code>로 바인딩함</td><td>§06</td></tr>
+<tr><td>캐릭터가 걷다가 특정 주기마다 제자리로 홱 튕겨 돌아가는 이상 현상</td><td>리타게팅된 애니메이션 클립에 루트 모션 변위 트랙(<code>Hip.position</code> Y축 등)이 포함되어 있음</td><td>위치 변위 트랙을 잘라내고 순수 회전(Quaternion) 트랙만 남기며, 실제 공간 이동은 게임 코드가 관할하도록 분리</td><td>§06 §22</td></tr>
+<tr><td>스마트 메시 생성 완료 후 모델이 아무 색도 없는 잿빛 점토로 출력됨</td><td>스마트 메시(P2.0)는 기본적으로 무색 지오메트리만 출력하므로 후속 텍스처 생성을 추가 실행해야 함</td><td>텍스처 생성 단계를 이어서 실행 (추가 30크레딧 결제). 스마트 메시는 [지오메트리 65 + 텍스처 30 = 총 95크레딧]으로 예산을 편성해야 함</td><td>§07</td></tr>
+<tr><td>동일한 시안인데 어제는 생성 비용이 50크레딧이었고 오늘은 65크레딧으로 뜸</td><td>가격 인상이 아니라 직전 작업에서 켜두었던 Ultra Mesh Quality(울트라 화질) 옵션이 폼 설정에 자동 보존(Auto-save)되어 있었음</td><td>생성 전 지오메트리 설정 모달을 열어 울트라 옵션 활성화 여부를 확인. 기본 고정밀(지오메트리 15 + 텍스처 35 = 50) 대비 울트라 추가 시 15크레딧 가산됨</td><td>§07 부록C</td></tr>
+<tr><td>에셋 17개를 올렸더니 웹 브라우저 VRAM 점유량이 5.0 GB로 폭증함</td><td>Tripo의 기본 내보내기 텍스처 해상도가 8192×8192로 설정되어 있어 장당 메모리 언팩 시 268 MB를 차지함</td><td><code>gltf-transform resize --width 1024 --height 1024</code> 명령으로 일괄 다운샘플링. 지오메트리 감면이 동반되는 <code>optimize</code> 대신 <code>resize</code> 사용</td><td>§22</td></tr>
+<tr><td>스마트 분할(Smart Split) 기능에서 모델이 선택되지 않음</td><td>스마트 분할 가이드에 명시되어 있듯이 쿼드(Quad) 사각면 모델 및 리깅 완료 모델은 스마트 분할을 지원하지 않음 (P2.0은 쿼드 메시 기반임)</td><td>부품 분할은 삼각면(Triangle) 기반의 v3.1 모델을 투입하여 진행해야 함</td><td>§05</td></tr>
+<tr><td>오프라인 환경에서 GLB 파싱 시 바이너리 데이터가 깨져 출력됨</td><td>다운로드된 파일이 CDN의 <code>_meshopt</code> 압축 변체였음</td><td>gltf-transform으로 사전 압축 해제 후 파싱 수행</td><td>§03 §14</td></tr>
+<tr><td>다운로드 서명 URL 호출 시 <code>&</code> 및 <code>~</code> 기호가 유실되어 403 에러 발생</td><td>셸 커맨드라인에서 이스케이프 없이 URL을 수동 입력함</td><td>Python의 requests 라이브러리를 사용하거나 파라미터를 브라우저 다운로더에 문자열 그대로 전달</td><td>§03</td></tr>
+<tr><td>면수 상한선을 15,000으로 적었는데 실제 모델은 기본값인 5,000으로 생성됨</td><td>스크립트로 인풋 필드에 타이핑할 때 DOM의 <code>value</code>만 바뀌고 프레임워크 내부 상태값이 갱신되지 않아 기본값으로 제출됨</td><td>네이티브 세터로 값을 주입하고 <code>input</code>, <code>change</code>, <code>blur</code> 이벤트를 강제 트리거함. 우측 방향키를 눌러 숫자가 15002로 바뀌는지 확인하여 내부 상태 동기화 검증</td><td>§01</td></tr>
+<tr><td>방금 에셋에서 설정한 면수 값이 다음 에셋 작업 시 다시 기본값으로 롤백됨</td><td>폼 상단의 "설정 자동 저장"은 화질 옵션만 기억할 뿐 면수 상한선(숫자 필드)은 보존하지 않음</td><td>에셋을 생성할 때마다 면수 상한선을 매번 명시적으로 재입력해야 함</td><td>§01</td></tr>
+<tr><td>연속으로 두 번째 에셋을 등록하려 할 때 파일 업로드가 전혀 먹히지 않음</td><td>이전 작업의 완료 상세 페이지에 머무른 상태에서는 파일 인풋 엘리먼트가 프론트엔드에서 언마운트되어 있음</td><td><strong>새 에셋 제출 시에는 반드시 생성 메인 홈 화면으로 되돌아간 뒤</strong> 업로드를 진행해야 함</td><td>§01</td></tr>
+<tr><td>스크립트가 버튼의 <code>텍스처 생성 30</code> 텍스트를 인식하지 못하고 타임아웃 발생</td><td>버튼 안의 라벨 문구와 가격 숫자가 서로 분리된 2개의 독립 DOM 텍스트 노드로 쪼개져 있었음</td><td>문자열 풀 매칭을 피하고 버튼의 고유 클래스나 상위 컨테이너 셀렉터로 클릭 대상을 특정함</td><td>본 부록</td></tr>
+<tr><td>에셋 3개를 연속 자동 제출하다가 스크립트 타임아웃 발생</td><td>3개 에셋의 순차 처리는 총 12단계의 복합 웹 인터랙션을 요구하여 113초 타임아웃 한계를 초과함</td><td><strong>1회 자동화 배치당 최대 2개</strong>씩 분할 실행하는 것이 가장 안정적임. 타임아웃 후 중복 결제를 피하기 위해 태스크 목록을 먼저 조회할 것</td><td>본 부록</td></tr>
+<tr><td>리깅 설정의 휴머노이드 옵션을 클릭해도 드롭다운이 선택되지 않음</td><td>표준 HTML <code>&lt;select&gt;</code>가 아닌 커스텀 다이얼로그로 구현되어 있어 클릭 이벤트가 무시됨</td><td>드롭다운을 연 뒤 키보드 아래 방향키(Down)와 엔터(Enter) 키 이벤트를 전송하여 선택 완료</td><td>§06</td></tr>
+<tr><td>모션 리타게팅 완료 후 화면에서 내보내기(Export) 버튼이 사라짐</td><td>버그가 아니라 리타게팅 완료 상태에서는 메인 화면에서 내보내기 버튼이 DOM에서 제거되는 UI 구조임</td><td>태스크 상세 조회 API를 호출하여 <code>retarget[0].model_url</code> 다이렉트 링크를 통해 파일을 즉시 수거함</td><td>§06</td></tr>
+<tr><td>외부 모델을 업로드해 리깅하려 했더니 50크레딧이 차감되고 각도 보정 창이 뜸</td><td>외부 3D 파일 임포트에는 기본 50크레딧의 변환 수수료가 부과됨</td><td><strong>Tripo Studio에서 직접 생성한 모델이라면 계정 에셋 보관함에서 직접 선택</strong>할 것 (무료이며 각도 보정 창도 뜨지 않음)</td><td>§06</td></tr>
+<tr><td>공식 API로 대량 생성을 시도했으나 잔여 크레딧이 0으로 표시됨 (웹엔 2만 크레딧이 있음)</td><td>개발자 API 지갑과 Studio 웹 구독 크레딧은 서로 분리된 별개의 결제 계정임</td><td>웹 스튜디오 작업을 자동화하거나 API 전용 크레딧을 별도로 충전하여 사용해야 함</td><td>§07</td></tr>
 </tbody>
 </table>
 
-<div class="callout"><strong>一条没进上面这张表的账。</strong>游乐园那批一共提交了7次、出了6件，多出来的那一次是海盗船：它提交了两次，其中一次扣了50积分、产物始终没落到资产列表里，另一次正常出货（成品就是附录A的D组那件<code>pirate-ship.glb</code>）。这件事<strong>只发生过一次、当时没截图、也没向官方提过工单</strong>，既没踩实也没修好，不符合这份索引的准入规则，所以单独写在这儿，不当成已知缺陷读。真正能拿走的是那个习惯：<strong>批量生成前后各记一次余额，收工时按「生成次数 × 单价」把账对一遍</strong>，再回资产列表点一遍件数。两边对不上，当场就知道该去查哪一单，而不是等到收工很久以后。§21那张只有总账、没有逐笔的表，就是没做这件事的代价。</div>
+<div class="callout"><strong>공식 표에 미처 들어가지 못한 실전 경험:</strong> 놀이공원 프로젝트 당시 총 7회 제출하여 6개 에셋을 건졌는데, 1건의 초과 결제는 해적선 모델이었습니다. 1차 제출 시 50크레딧이 차감되었으나 에셋 목록에 끝내 산출물이 나타나지 않았고, 2차 제출에서야 정상 완료되었습니다(결과물이 바로 부록 A의 D그룹 <code>pirate-ship.glb</code>임). 단 1회 발생한 간헐적 이슈였기에 공식 결함으로 등재하지는 않았으나, 대량 작업 시 <strong>작업 전후의 크레딧 잔액을 반드시 메모하고 [작업 수 × 단가]로 총액을 대조</strong>하는 습관을 들이면 누락된 작업을 즉시 추적해 낼 수 있습니다.</div>
 
-<h3>四、Blender与格式转换</h3>
+<h3>사, Blender 및 포맷 변환 트러블슈팅</h3>
 
 <table>
-<thead><tr><th>症状</th><th>根因</th><th>修法</th><th>出处</th></tr></thead>
+<thead><tr><th>증상</th><th>근본 원인</th><th>해결 방법</th><th>출처</th></tr></thead>
 <tbody>
-<tr><td>从Tripo的CDN下回来的GLB，Blender直接打不开</td><td>那是<code>_meshopt</code>压缩变体，用了<code>EXT_meshopt_compression</code>扩展，Blender 4.4不支持</td><td>两条路：在Tripo的导出弹层里直接选FBX，或者本地先<code>npx @gltf-transform/cli copy in.glb out.glb</code>解开再导入</td><td>§13</td></tr>
-<tr><td>导出时为了省事关掉纹理，结果模型连UV都没有</td><td>v3.1这条路上纹理和UV是绑在一起的，关掉纹理出来的GLB只有<code>POSITION</code>和<code>NORMAL</code>，<code>materials</code>是0</td><td>想事后自己补贴图的，别关纹理，关了就得重跑一次生成。要纯几何做实验可以关，但心里知道这一步不可逆</td><td>§13</td></tr>
-<tr><td>模型渲出来一模一样，片元开销却翻了一倍</td><td><code>use_backface_culling</code>这个属性的语义是反的：不开它，导出的glTF里<code>doubleSided</code>就是<code>true</code>，每个面正反都画一遍。批量转的38件全中招</td><td>导出前设<code>mat.use_backface_culling = not 你想要的双面</code>。<strong>这个坑不看GLB里的JSON发现不了</strong>，画面上没有任何症状，只有帧时间知道</td><td>§12 §17</td></tr>
-<tr><td>给模型换个颜色，结果整个材质都坏了</td><td>把这个模型挂的贴图全改了一遍。<strong>法线图和ORM图里的RGB不是颜色</strong>，是表面朝向和材质参数，拿去挪色相等于把材质写坏</td><td>先从材质里读出哪一张挂在基色槽位上，只改那一张，读不出来就报错退出，不做盲改。P2.0出的件只有一张基色，不会踩到；v3.1那批三张齐全的一改就毁</td><td>§21</td></tr>
-<tr><td>把树叶染成秋黄，连树干也黄了</td><td>判定「这是绿色」的色相窗口开得太宽，从71°起算，树皮那种偏黄绿的棕也被卷进去</td><td>窗口收到85°起。判据是看你要动的颜色和不想动的颜色在色相环上隔多远，隔得近就把窗口收到它们中间，宁可漏改边缘</td><td>§21</td></tr>
-<tr><td>导入一次FBX，源文件旁边多出一个目录</td><td>Blender会在FBX旁边建<code>&lt;文件名&gt;.fbm/</code>把内嵌贴图解包出来</td><td>先把FBX复制进一个临时目录再导入，别在原始素材目录里跑。这条纯粹是卫生问题，但批量跑一遍之后满目录都是它</td><td>§17</td></tr>
+<tr><td>Tripo CDN에서 내려받은 GLB 파일이 Blender에서 열리지 않음</td><td><code>_meshopt</code> 압축 확장(<code>EXT_meshopt_compression</code>)을 사용한 파일로 Blender 기본 임포터가 이를 해석하지 못함</td><td>Tripo 내보내기 창에서 FBX 형식을 선택해 다운로드하거나, 로컬에서 <code>npx @gltf-transform/cli copy in.glb out.glb</code>로 압축 해제 후 임포트</td><td>§13</td></tr>
+<tr><td>용량을 줄이려고 텍스처를 끄고 내보냈더니 모델에서 UV 매핑 좌표까지 통째로 증발함</td><td>v3.1 파이프라인에서 UV 생성은 텍스처 베이킹 단계에 종속되어 있어 텍스처를 끄면 UV가 생성되지 않음</td><td>사후에 텍스처를 입힐 계획이라면 텍스처를 끄지 말고 내보내야 함. 순수 지오메트리 실험용이 아니라면 되돌릴 수 없는 손실이 발생함</td><td>§13</td></tr>
+<tr><td>모델의 외형은 완전히 동일한데 프래그먼트 셰이더 연산 비용이 정확히 2배로 폭증함</td><td>Blender의 FBX 임포터가 백페이스 컬링을 비활성화하여, glTF 내보내기 시 <code>doubleSided: true</code>(양면 렌더링)로 고정됨</td><td>내보내기 스크립트에서 <code>mat.use_backface_culling = True</code>를 강제 설정하여 단면 렌더링으로 변환. GLB 내부 JSON을 열어보지 않으면 눈으로 찾을 수 없는 함정임</td><td>§12 §17</td></tr>
+<tr><td>모델의 텍스처 색조를 변경했더니 표면 조명과 금속 반사광이 완전히 파괴됨</td><td>모델에 연결된 모든 텍스처를 일괄 변환하여, 색상이 아닌 물리 벡터 데이터인 노멀 맵과 ORM 맵까지 색조 회전이 적용됨</td><td>재질 슬롯을 파싱하여 반드시 베이스 컬러(Base Color)에 연결된 단일 텍스처만 선별 수정해야 함</td><td>§21</td></tr>
+<tr><td>가로수 잎을 가을 노랑으로 물들였더니 갈색 나무줄기까지 노랗게 탈색됨</td><td>녹색을 감지하는 색조(Hue) 필터링 윈도우를 71°로 너무 넓게 잡아 황록색 수피 영역까지 함께 마스킹됨</td><td>녹색 감지 하한선을 85° 이상으로 좁혀 수피의 갈색 톤을 보존함</td><td>§21</td></tr>
+<tr><td>FBX 파일을 임포트했더니 원본 폴더 옆에 <code><파일명>.fbm/</code> 디렉터리가 생성되며 지저분해짐</td><td>Blender가 FBX 내부에 임베디드된 텍스처를 자동으로 디스크에 언팩하는 기본 동작임</td><td>FBX 파일들을 임시 디렉터리로 복사한 뒤 임포트 작업을 수행하여 프로젝트 에셋 루트를 깨끗하게 유지</td><td>§17</td></tr>
 </tbody>
 </table>
 
-<h3>五、发布与打包</h3>
+<h3>오, 배포 및 패키징 트러블슈팅</h3>
 
 <table>
-<thead><tr><th>症状</th><th>根因</th><th>修法</th><th>出处</th></tr></thead>
+<thead><tr><th>증상</th><th>근본 원인</th><th>해결 방법</th><th>출처</th></tr></thead>
 <tbody>
-<tr><td>每换一批资产，发布包就胖一圈</td><td>打包脚本的目录拷贝没排除归档目录，换下来的旧件被整包带走。实测带了11个旧件、约7.9 MB死重</td><td>排除规则写进打包脚本，别靠每次记得手工清。顺手把缓存目录、系统隐藏文件、源格式文件一起排掉。实测从63个文件32.1 MB降到52个文件24.9 MB</td><td>§19</td></tr>
-<tr><td>zip解开之后中文目录名是一串乱码</td><td>macOS的zip不写UTF-8标志位</td><td>要发出去的包，目录名用ASCII。这条和3D没关系，但凡是打包给别人的东西都会撞上</td><td>§19</td></tr>
-<tr><td>脚本在中文路径下报模块找不到</td><td><code>new URL(import.meta.url).pathname</code>拿到的是百分号编码的串</td><td>用<code>fileURLToPath()</code>。中文目录名是国内做这行的默认状态，这条迟早撞上</td><td>§17</td></tr>
+<tr><td>에셋을 교체할 때마다 최종 배포 패키지 용량이 비정상적으로 비대해짐</td><td>빌드 스크립트의 디렉터리 복사 로직이 백업용 <code>_archive</code> 폴더를 제외하지 않아 폐기된 구버전 에셋들이 패키지에 중복 동봉됨</td><td>빌드 정규식에 <code>_archive</code>, <code>__pycache__</code>, <code>.DS_Store</code>, <code>.fbx</code> 제외 규칙을 영구 명시. 실측 결과 63개(32.1 MB)에서 52개(24.9 MB)로 군살을 제거함</td><td>§19</td></tr>
+<tr><td>생성된 ZIP 압축을 풀었더니 한글 폴더명이 물음표 사각형(???)으로 깨짐</td><td>macOS 기본 zip 유틸리티가 유니코드 UTF-8 플래그를 누락하여 타 OS에서 인코딩 불일치 발생</td><td>배포용 아카이브 내부의 디렉터리 및 파일 경로는 가급적 영문 ASCII 규격을 준수함</td><td>§19</td></tr>
+<tr><td>Node.js 환경에서 스크립트 실행 시 한글 경로의 모듈을 찾을 수 없다는 에러 발생</td><td><code>new URL(import.meta.url).pathname</code>이 한글 문자열을 퍼센트 인코딩(%EC%8A...)으로 반환하여 파일 시스템 경로와 불일치함</td><td>반드시 <code>fileURLToPath()</code> 유틸리티 함수로 디코딩을 거쳐 경로를 정규화함</td><td>§17</td></tr>
 </tbody>
 </table>
 
-<div class="tip">这五张表里出现频率最高的一类，是<strong>「报错不发生、程序不崩、画面看着也对」的静默错误</strong>：模型埋进地里0.95米、对照版其实37个组件全丢、量骨骼量到的是测量假象。它们的共同解法只有一条，<strong>把关键量打印出来对账，别靠看画面下结论。</strong></div>
+<div class="tip">이 다섯 개 표에서 가장 빈번하게 등장하는 치명적인 유형은 <strong>「에러도 안 나고, 화면도 깨지지 않으며, 겉보기엔 멀쩡한」 침묵의 결함들</strong>입니다: 지표면 아래로 0.95m 파묻힌 소품, 실제로는 컴포넌트 37개가 전부 누락된 채 껍데기 창만 뜬 빌드, 엉터리 데이터 위에서 수렴한 가짜 신장 수치 등. 이들의 유일한 해결책은 단 하나입니다: <strong>눈으로 보는 화면에 속지 말고, 핵심 물리량과 컴포넌트 카운트를 콘솔에 명시적으로 출력하여 숫자로 대조하십시오.</strong></div>
 
 </div>
+
 
 <!-- ===== part91-appendix-c.html ===== -->
 <div class="content">
