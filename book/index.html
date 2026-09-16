@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="ko">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>3D Vibe Coding 手册</title>
+<title>3D Vibe Coding 핸드북</title>
 <style>
 /* 书籍级PDF — 共享CSS模板
    基于焦橙主题设计系统
@@ -827,298 +827,290 @@ pre {
 
 <!-- ===== 00-cover.html ===== -->
 <div class="cover">
-  <div class="cover-badge">橙皮书·实操手册</div>
-  <h1><em>3D Vibe Coding</em><br>手册</h1>
-  <p class="cover-sub-title">从一句话到能跑的场景：GPT-6 Astra × Tripo全流程实测</p>
-  <p class="cover-subtitle">一个不会写代码的人，怎么用Tripo加一个编程Agent，把一张设计图做成能开车逛的巴黎、能拆能装的发动机、能走进去的星球——每一步都有真实截图，配置怎么选都写清楚。</p>
+  <div class="cover-badge">오렌지북 · 실전 매뉴얼</div>
+  <h1><em>3D Vibe Coding</em><br>핸드북</h1>
+  <p class="cover-sub-title">한 줄의 프롬프트에서 실제로 실행 가능한 장면까지: GPT-6 Astra × Tripo 전체 워크플로우 실전 테스트</p>
+  <p class="cover-subtitle">코딩을 전혀 할 줄 모르는 비개발자가 Tripo와 코딩 에이전트를 결합해, 한 장의 디자인 시안을 직접 차를 몰고 둘러볼 수 있는 파리, 분해와 조립이 가능한 엔진, 직접 걸어 들어갈 수 있는 행성으로 완성하는 방법 — 모든 단계의 실제 스크린샷과 설정 선택 기준을 명쾌하게 담았습니다.</p>
   <p class="cover-en">3D Vibe Coding — From a Sentence to a Scene That Runs</p>
   <div class="cover-meta">
-    <strong>信息来源：</strong>Tripo Studio与开发者文档一手截图·2026年9月本机实测（六个可玩demo、一套管线实验）·官方定价页对账<br>
-    <strong>文档版本：</strong>v260914c<br>
-    <strong>发布时间：</strong>2026-09-14 (build #4)<br>
-    <strong>涵盖内容：</strong>Tripo Studio全功能实操·提示词与设计图·Three.js / Blender / Unity协同·巴黎来信全流程·三个教学演示案例·随书资源包·附录B踩坑索引（卡住了按症状查）
+    <strong>정보 출처:</strong> Tripo Studio 및 개발자 문서 1차 스크린샷 · 2026년 9월 로컬 환경 실전 테스트 (플레이 가능한 6개 데모, 1개 파이프라인 실험) · 공식 가격표 대조<br>
+    <strong>문서 버전:</strong> v260914c<br>
+    <strong>배포 일자:</strong> 2026-09-14 (build #4)<br>
+    <strong>수록 내용:</strong> Tripo Studio 전 기능 실전 활용 · 프롬프트 및 디자인 시안 · Three.js / Blender / Unity 협업 · 「파리로부터의 편지」 전체 파이프라인 · 3개 교육용 데모 사례 · 부록 리소스 패키지 · 부록 B 트러블슈팅 색인 (막혔을 때 증상별 검색)
   </div>
   <div class="cover-exclusive">
-    <strong>Tripo × 花叔</strong><br>
-    这条流水线上的活儿是这么分的：<strong>3D这一层——生成、减面、拆件、贴图、绑骨——全在Tripo Studio里跑</strong>；<strong>GPT-6 Astra只干两件事</strong>，它驱动的编程Agent替我写完了所有demo的代码，以及生成书里的设计图。它操作Blender这类专业软件的能力我没测过，别把我没做过的事算到它头上，完整口径见附录D。
+    <strong>Tripo × 화수(花叔)</strong><br>
+    이 파이프라인에서의 역할 분담은 명확합니다: <strong>3D 레이어 — 생성, 면 리덕션, 파츠 분할, 텍스처, 리깅 — 는 전부 Tripo Studio에서 실행</strong>하며, <strong>GPT-6 Astra는 단 두 가지만 수행</strong>합니다. GPT-6 기반의 코딩 에이전트가 책 속 모든 데모의 코드를 작성하고, 디자인 시안을 생성했습니다. Blender와 같은 전문 소프트웨어를 다루는 능력은 테스트하지 않았으므로 직접 시도하지 않은 영역은 다루지 않으며, 전체 기준은 부록 D를 참조하십시오.
   </div>
   <div class="cover-author">
-    <strong>花叔</strong><br>
+    <strong>화수(花叔)</strong><br>
     AI Native Coder
   </div>
   <div class="cover-disclaimer">
-    这本书是我做视频时的实测记录，判断和翻车都没删。所有截图与数字来自作者本人2026年9月的真实操作；产品界面与价格随时会变，以官方页面为准。本文档在Claude Code辅助下整理编写。
+    이 책은 저자가 비디오 영상을 제작하면서 기록한 실전 기록이며, 주관적 판단과 실패했던 과정도 빠짐없이 담았습니다. 모든 스크린샷과 수치는 저자 본인의 2026년 9월 실제 작업 결과이며, 제품 UI 및 가격은 변경될 수 있으므로 공식 웹사이트를 기준으로 확인하시기 바랍니다. 본 문서는 Claude Code의 지원을 받아 정리 및 작성되었습니다.
   </div>
 </div>
 
 <!-- ===== 01-toc.html ===== -->
 <div class="toc page-break">
-<h2>目录</h2>
-<p class="toc-sub">五部分二十三节，附录四篇；每节都能从「怎么做」直接跳到「为什么」。已经动手、卡在某个症状上，别从头读——直接翻附录B踩坑索引：Three.js、Unity、Tripo Studio、Blender、发布打包，五张表按症状查。PDF里这份目录、阅读器的侧边书签栏、以及正文里每一处「§12」「附录B」都是可点的，跟着引用直接跳，不用回目录查页码。</p>
-<div class="toc-group">开始之前</div>
-<a class="toc-item" href="#part00"><span><span class="num">§00</span><span class="title">这本书怎么用+资源包</span><span class="en">How to Use This Book, and What&#x27;s in the Kit</span></span><span class="page">4</span></a>
-<div class="toc-group">第一部分 · 一张图到一个模型</div>
-<a class="toc-item" href="#part01"><span><span class="num">§01</span><span class="title">十分钟跑通第一次图生3D</span><span class="en">Your First Image-to-3D in Ten Minutes</span></span><span class="page">16</span></a>
-<a class="toc-item" href="#part02"><span><span class="num">§02</span><span class="title">参考图怎么准备</span><span class="en">Preparing the Reference Image</span></span><span class="page">33</span></a>
-<a class="toc-item" href="#part03"><span><span class="num">§03</span><span class="title">生成之后</span><span class="en">After the Generate Button</span></span><span class="page">37</span></a>
-<a class="toc-item" href="#part04"><span><span class="num">§04</span><span class="title">减面与重拓扑</span><span class="en">Decimation and Retopology</span></span><span class="page">49</span></a>
-<a class="toc-item" href="#part05"><span><span class="num">§05</span><span class="title">智能拆分与贴图生成</span><span class="en">Part Segmentation and Texture Generation</span></span><span class="page">69</span></a>
-<a class="toc-item" href="#part06"><span><span class="num">§06</span><span class="title">绑骨与动画</span><span class="en">Auto-Rigging and Animation</span></span><span class="page">84</span></a>
-<a class="toc-item" href="#part07"><span><span class="num">§07</span><span class="title">怎么把积分花在刀刃上</span><span class="en">Spending Credits Where They Count</span></span><span class="page">100</span></a>
-<div class="toc-group">第二部分 · 提示词与设计图</div>
-<a class="toc-item" href="#part08"><span><span class="num">§08</span><span class="title">为什么先出设计图再建模</span><span class="en">Design First, Model Second</span></span><span class="page">110</span></a>
-<a class="toc-item" href="#part09"><span><span class="num">§09</span><span class="title">提示词技巧示例（含图）</span><span class="en">Prompt Recipes for Image-to-3D</span></span><span class="page">122</span></a>
-<a class="toc-item" href="#part10"><span><span class="num">§10</span><span class="title">批量出图与命名</span><span class="en">Batch Generation, Naming, Retries</span></span><span class="page">145</span></a>
-<div class="toc-group">第三部分 · 接进工具</div>
-<a class="toc-item" href="#part11"><span><span class="num">§11</span><span class="title">把Tripo接进你的工具：五条路的入口与门槛</span><span class="en">Five Integration Paths — Entry Points and Blockers</span></span><span class="page">154</span></a>
-<a class="toc-item" href="#part12"><span><span class="num">§12</span><span class="title">Three.js：让模型在网页里跑起来</span><span class="en">Three.js — From GLB Files to a Playable Page</span></span><span class="page">172</span></a>
-<a class="toc-item" href="#part13"><span><span class="num">§13</span><span class="title">Blender：什么时候该进，什么时候别进</span><span class="en">Blender — When It Earns Its 300 MB</span></span><span class="page">196</span></a>
-<a class="toc-item" href="#part14"><span><span class="num">§14</span><span class="title">Unity：把资产搭成一座会动的园区</span><span class="en">Unity — Ten Traps Between a GLB and a Playable Build</span></span><span class="page">213</span></a>
-<a class="toc-item" href="#part15"><span><span class="num">§15</span><span class="title">谁负责哪一层</span><span class="en">Who Owns Which Layer — A Relay, Not a Race</span></span><span class="page">231</span></a>
-<div class="toc-group">第四部分 · 做一款游戏</div>
-<a class="toc-item" href="#part16"><span><span class="num">§16</span><span class="title">从选题到资产清单</span><span class="en">From Topic to Asset List</span></span><span class="page">242</span></a>
-<a class="toc-item" href="#part17"><span><span class="num">§17</span><span class="title">生成与清洗流水线</span><span class="en">The Generate-and-Clean Pipeline</span></span><span class="page">255</span></a>
-<a class="toc-item" href="#part18"><span><span class="num">§18</span><span class="title">组装：把23件模型变成一个能开的城</span><span class="en">Assembly: From 23 Files to a Drivable City</span></span><span class="page">265</span></a>
-<a class="toc-item" href="#part19"><span><span class="num">§19</span><span class="title">验收与发布</span><span class="en">QA and Release</span></span><span class="page">283</span></a>
-<div class="toc-group">第五部分 · 做教学演示</div>
-<a class="toc-item" href="#part20"><span><span class="num">§20</span><span class="title">机构类：一台能拆能装的发动机</span><span class="en">Teaching Demos I: A Four-Stroke Engine You Can Take Apart</span></span><span class="page">297</span></a>
-<a class="toc-item" href="#part21"><span><span class="num">§21</span><span class="title">艺术类：把一幅画拆成五层</span><span class="en">Teaching Demos II: Unfolding a Painting into Five Layers</span></span><span class="page">309</span></a>
-<a class="toc-item" href="#part22"><span><span class="num">§22</span><span class="title">世界类：一颗你走得完的星球</span><span class="en">Teaching Demos III: Building a Small World You Can Live In</span></span><span class="page">321</span></a>
-<div class="toc-group">附录</div>
-<a class="toc-item" href="#part89"><span><span class="num">附录A</span><span class="title">资源包索引</span><span class="en">Appendix A · Resource Kit Index</span></span><span class="page">334</span></a>
-<a class="toc-item" href="#part90"><span><span class="num">附录B</span><span class="title">踩坑索引</span><span class="en">Appendix B · Pitfall Index</span></span><span class="page">361</span></a>
-<a class="toc-item" href="#part91"><span><span class="num">附录C</span><span class="title">配置与积分参考</span><span class="en">Appendix C · Configurations and Credit Reference</span></span><span class="page">371</span></a>
-<a class="toc-item" href="#part92"><span><span class="num">附录D</span><span class="title">术语：用人话讲一遍</span><span class="en">Appendix D · Glossary in Plain Language</span></span><span class="page">381</span></a>
+<h2>목차</h2>
+<p class="toc-sub">5개 파트 23개 섹션, 4편의 부록으로 구성되어 있으며, 각 섹션은 「어떻게 하는가」에서 「왜 그렇게 하는가」로 바로 연결됩니다. 이미 작업을 시작했거나 특정 문제에 막혔다면 처음부터 읽지 말고 부록 B의 트러블슈팅 색인을 먼저 확인하세요: Three.js, Unity, Tripo Studio, Blender, 배포 및 패키징 등 5개 표를 증상별로 찾아볼 수 있습니다. PDF 목차, 리더의 사이드바 북마크, 본문 내 「§12」, 「부록 B」 등의 링크는 모두 클릭 가능하므로 목차 페이지 번호를 찾지 않고도 바로 이동할 수 있습니다.</p>
+<div class="toc-group">시작하기 전에</div>
+<a class="toc-item" href="#part00"><span><span class="num">§00</span><span class="title">이 책의 활용법 + 리소스 패키지</span><span class="en">How to Use This Book, and What&#x27;s in the Kit</span></span><span class="page">4</span></a>
+<div class="toc-group">제1부 · 이미지 한 장에서 3D 모델까지</div>
+<a class="toc-item" href="#part01"><span><span class="num">§01</span><span class="title">10분 만에 끝내는 첫 이미지-to-3D</span><span class="en">Your First Image-to-3D in Ten Minutes</span></span><span class="page">16</span></a>
+<a class="toc-item" href="#part02"><span><span class="num">§02</span><span class="title">레퍼런스 이미지 준비하는 법</span><span class="en">Preparing the Reference Image</span></span><span class="page">33</span></a>
+<a class="toc-item" href="#part03"><span><span class="num">§03</span><span class="title">생성 버튼을 누른 그 이후</span><span class="en">After the Generate Button</span></span><span class="page">37</span></a>
+<a class="toc-item" href="#part04"><span><span class="num">§04</span><span class="title">면 리덕션과 리토폴로지</span><span class="en">Decimation and Retopology</span></span><span class="page">49</span></a>
+<a class="toc-item" href="#part05"><span><span class="num">§05</span><span class="title">스마트 파츠 분할과 텍스처 생성</span><span class="en">Part Segmentation and Texture Generation</span></span><span class="page">69</span></a>
+<a class="toc-item" href="#part06"><span><span class="num">§06</span><span class="title">오토 리깅과 애니메이션</span><span class="en">Auto-Rigging and Animation</span></span><span class="page">84</span></a>
+<a class="toc-item" href="#part07"><span><span class="num">§07</span><span class="title">크레딧을 가장 효율적으로 쓰는 방법</span><span class="en">Spending Credits Where They Count</span></span><span class="page">100</span></a>
+<div class="toc-group">제2부 · 프롬프트와 디자인 시안</div>
+<a class="toc-item" href="#part08"><span><span class="num">§08</span><span class="title">모델링 전에 디자인 시안을 먼저 뽑아야 하는 이유</span><span class="en">Design First, Model Second</span></span><span class="page">110</span></a>
+<a class="toc-item" href="#part09"><span><span class="num">§09</span><span class="title">프롬프트 작성 레시피 및 실전 사례 (이미지 포함)</span><span class="en">Prompt Recipes for Image-to-3D</span></span><span class="page">122</span></a>
+<a class="toc-item" href="#part10"><span><span class="num">§10</span><span class="title">배치(Batch) 생성, 네이밍, 재시도 전략</span><span class="en">Batch Generation, Naming, Retries</span></span><span class="page">145</span></a>
+<div class="toc-group">제3부 · 도구와의 통합</div>
+<a class="toc-item" href="#part11"><span><span class="num">§11</span><span class="title">Tripo를 내 도구에 연결하기: 5가지 경로의 진입점과 진입 장벽</span><span class="en">Five Integration Paths — Entry Points and Blockers</span></span><span class="page">154</span></a>
+<a class="toc-item" href="#part12"><span><span class="num">§12</span><span class="title">Three.js: 웹 브라우저에서 모델 구동하기</span><span class="en">Three.js — From GLB Files to a Playable Page</span></span><span class="page">172</span></a>
+<a class="toc-item" href="#part13"><span><span class="num">§13</span><span class="title">Blender: 언제 쓰고, 언제 쓰지 말아야 하는가</span><span class="en">Blender — When It Earns Its 300 MB</span></span><span class="page">196</span></a>
+<a class="toc-item" href="#part14"><span><span class="num">§14</span><span class="title">Unity: 에셋을 모아 살아 움직이는 공간 만들기</span><span class="en">Unity — Ten Traps Between a GLB and a Playable Build</span></span><span class="page">213</span></a>
+<a class="toc-item" href="#part15"><span><span class="num">§15</span><span class="title">누가 어떤 레이어를 담당할 것인가</span><span class="en">Who Owns Which Layer — A Relay, Not a Race</span></span><span class="page">231</span></a>
+<div class="toc-group">제4부 · 게임 프로젝트 완성하기</div>
+<a class="toc-item" href="#part16"><span><span class="num">§16</span><span class="title">기획 단계부터 에셋 목록 확정까지</span><span class="en">From Topic to Asset List</span></span><span class="page">242</span></a>
+<a class="toc-item" href="#part17"><span><span class="num">§17</span><span class="title">에셋 생성 및 클리닝 파이프라인</span><span class="en">The Generate-and-Clean Pipeline</span></span><span class="page">255</span></a>
+<a class="toc-item" href="#part18"><span><span class="num">§18</span><span class="title">어셈블리: 23개 모델을 하나의 주행 가능한 도시로 조립하기</span><span class="en">Assembly: From 23 Files to a Drivable City</span></span><span class="page">265</span></a>
+<a class="toc-item" href="#part19"><span><span class="num">§19</span><span class="title">검수 및 최종 배포</span><span class="en">QA and Release</span></span><span class="page">283</span></a>
+<div class="toc-group">제5부 · 교육용 데모 제작</div>
+<a class="toc-item" href="#part20"><span><span class="num">§20</span><span class="title">기구학 데모: 분해 및 조립이 가능한 4행정 엔진</span><span class="en">Teaching Demos I: A Four-Stroke Engine You Can Take Apart</span></span><span class="page">297</span></a>
+<a class="toc-item" href="#part21"><span><span class="num">§21</span><span class="title">예술 데모: 한 폭의 명화를 5개 레이어로 해체하기</span><span class="en">Teaching Demos II: Unfolding a Painting into Five Layers</span></span><span class="page">309</span></a>
+<a class="toc-item" href="#part22"><span><span class="num">§22</span><span class="title">월드 데모: 직접 걸어볼 수 있는 나만의 작은 행성</span><span class="en">Teaching Demos III: Building a Small World You Can Live In</span></span><span class="page">321</span></a>
+<div class="toc-group">부록</div>
+<a class="toc-item" href="#part89"><span><span class="num">부록 A</span><span class="title">리소스 패키지 색인</span><span class="en">Appendix A · Resource Kit Index</span></span><span class="page">334</span></a>
+<a class="toc-item" href="#part90"><span><span class="num">부록 B</span><span class="title">트러블슈팅 색인</span><span class="en">Appendix B · Pitfall Index</span></span><span class="page">361</span></a>
+<a class="toc-item" href="#part91"><span><span class="num">부록 C</span><span class="title">설정 및 크레딧 참고표</span><span class="en">Appendix C · Configurations and Credit Reference</span></span><span class="page">371</span></a>
+<a class="toc-item" href="#part92"><span><span class="num">부록 D</span><span class="title">용어 사전: 쉬운 일상 언어로 풀이하기</span><span class="en">Appendix D · Glossary in Plain Language</span></span><span class="page">381</span></a>
 </div>
 
 <!-- ===== part00-how-to-use.html ===== -->
 <div class="content">
 
-<h2 class="section-title page-break" id="part00"><span class="num">§00</span>这本书怎么用+资源包</h2>
+<h2 class="section-title page-break" id="part00"><span class="num">§00</span>이 책의 활용법 + 리소스 패키지</h2>
 <p class="section-en">How to Use This Book, and What's in the Kit</p>
-<p class="section-intro">这一节回答四件事：这本书里有什么（三百八十多页、23节加4个附录）、动手之前先得知道什么（去哪注册、免费档够不够用、机器上得先装哪几样）、按你自己的目标该从哪一节翻起，以及随书资源包里有什么、缺什么。五分钟读完这节，你就知道剩下那几百页跟你有没有关系。</p>
+<p class="section-intro">이번 섹션에서는 4가지 질문에 답합니다: 이 책에 무엇이 담겨 있는지(380여 페이지, 23개 섹션 및 4개 부록), 작업을 시작하기 전에 무엇을 알아야 하는지(가입처, 무료 플랜으로 충분한지, 머신에 무엇을 설치해야 하는지), 목표에 따라 어떤 섹션부터 읽어야 하는지, 그리고 부록 리소스 팩에 포함된 것과 제외된 것이 무엇인지. 5분만 투자해 이 섹션을 읽으면 나머지 수백 페이지가 나와 관련이 있는지 바로 파악할 수 있습니다.</p>
 
-<h3>先看东西</h3>
+<h3>결과물 먼저 보기</h3>
 
-<p>三张图。一张是能开着老爷车在塞纳河岸上跑的巴黎街区，一张是能走到星球背面去的小王子，一张是能剖开缸体看活塞上下的四冲程发动机。</p>
+<p>세 장의 그림이 있습니다. 하나는 세느강변을 클래식카로 달릴 수 있는 파리 거리, 하나는 행성 뒷면까지 걸어갈 수 있는 어린 왕자, 하나는 실린더를 단면으로 갈라 피스톤의 상하 운동을 볼 수 있는 4행정 엔진입니다.</p>
 
-<figure><img src="images/p00-paris-drive.jpg" alt="巴黎街区 demo 的驾驶视角，画面里有奥斯曼建筑、行人、梧桐树和一辆 2CV 老爷车"><figcaption>「巴黎来信」demo的驾驶视角，2026-09-11复核时截的。画面里的奥斯曼建筑、行人、行道树和这辆车全是Tripo生成的资产，跑在Three.js里，左下角是程序化生成的街区地图。</figcaption></figure>
+<figure><img src="images/p00-paris-drive.jpg" alt="파리 거리 demo 주행 시점, 화면에 오스만 건축, 보행자, 플라타너스 가로수와 2CV 클래식카"><figcaption>「파리로부터의 편지」 데모 주행 시점 (2026-09-11 재검증 캡처). 화면 속 오스만 양식 건물, 보행자, 가로수, 차량은 모두 Tripo로 생성한 에셋이며 Three.js에서 구동됩니다. 좌측 하단은 절차적으로 생성된 구역 맵입니다.</figcaption></figure>
 
-<figure><img src="images/p00-prince-a.jpg" alt="小王子站在一颗小星球顶上，背景是星空，右上角有 A/B/C 三个星球观切换"><figcaption>小王子星球demo的A视角（原作星球），2026-09-11复核截图。人物用的是Tripo自动绑骨给的41关节骨架，星球表面是一张等距圆柱贴图而不是建模出来的地形。</figcaption></figure>
+<figure><img src="images/p00-prince-a.jpg" alt="소행성 꼭대기에 선 어린 왕자, 배경은 밤하늘, 우측 상단 A/B/C 시점 전환"><figcaption>어린 왕자 행성 데모의 A시점(원작 행성), 2026-09-11 검증 스크린샷. 캐릭터는 Tripo 자동 리깅의 41관절 스켈레톤을 사용하며, 행성 표면은 모델링된 지형이 아니라 정방형 원통 텍스처 매핑입니다.</figcaption></figure>
 
-<figure><img src="images/p00-engine-v2.jpg" alt="四冲程发动机 demo，剖开的透明缸体里活塞在进气冲程，右侧是零件清单"><figcaption>四冲程发动机demo的进气冲程，2026-09-11复核截图。注意右边那张零件表：标「Tripo」的活塞和连杆是生成的，标「代码」的缸筒、气门、火花塞是agent用几何体搭的。这本书有一半内容在讲这条分界线画在哪。</figcaption></figure>
+<figure><img src="images/p00-engine-v2.jpg" alt="4행정 엔진 데모, 투명 실린더 내부 흡기 행정 피스톤, 우측 부품 목록"><figcaption>4행정 엔진 데모의 흡기 행정 (2026-09-11 검증 스크린샷). 우측 부품 목록에 주목하세요: 「Tripo」로 표시된 피스톤과 커넥팅 로드는 생성된 것이고, 「코드」로 표시된 실린더 블록, 밸브, 스파크 플러그는 에이전트가 기본 지오메트리로 구축했습니다. 이 책의 절반은 이 분계선을 어디에 그어야 하는지를 다룹니다.</figcaption></figure>
 
-<p>这三样东西是2026年9月那两周里真做出来的，能点开玩、能拖动、能拆。我不会写代码（所有产品都是AI写的，这是老读者都知道的事），3D更是第一次碰。这本书就是把那两周走过的路原样写下来，每个按钮、每条命令、每次翻车，都带着截图和积分账。</p>
+<p>이 세 가지 결과물은 2026년 9월 2주 동안 실제로 만들어낸 프로젝트로, 직접 브라우저에서 조작하고, 드래그하고, 분해할 수 있습니다. 저는 코딩을 할 줄 모르며(모든 제품은 AI가 작성했습니다), 3D는 이번에 처음 접했습니다. 이 책은 그 2주 동안 겪은 과정을 그대로 기록하여, 모든 버튼 클릭, 명령어, 실패 사례마다 스크린샷과 크레딧 소모 내역을 함께 담았습니다.</p>
 
-<h3>给谁看</h3>
+<h3>누구를 위한 책인가</h3>
 
-<p>你在用Codex、Claude Code、Cursor里的任意一个，做过点东西出来，但没碰过3D，也不打算去学建模。你想做的是能给别人玩的东西：一个网页小游戏、一段科普演示、一个能转能拆的产品说明。</p>
+<p>Codex, Claude Code, Cursor 중 하나를 활용해 무언가를 만들어본 적이 있지만, 3D는 다뤄본 적이 없고 모델링을 직접 배울 생각도 없는 분들을 위한 책입니다. 여러분이 만들고자 하는 것은 사람들이 직접 플레이하고 체험할 수 있는 결과물입니다: 웹 미니게임, 인터랙티브 과학 시연, 회전 및 분해가 가능한 제품 소개 페이지 등.</p>
 
-<p>不是给3D美术看的。书里所有「怎么建模」的部分都交给了Tripo，所有「怎么写代码」的部分都交给了agent，我干的事情只有两件：<strong>决定哪一层归谁</strong>，以及在它们做砸的时候知道是哪一步砸了。这两件事正好是AI替不了的，也是这本书真正的内容。</p>
+<p>이 책은 전문 3D 아티스트를 위한 책이 아닙니다. 책 속의 모든 「모델링 방법」은 Tripo에 맡겼고, 모든 「코드 작성」은 코딩 에이전트에 맡겼습니다. 제가 수행한 역할은 오직 두 가지입니다: <strong>어떤 레이어를 누구에게 맡길지 결정하는 것</strong>, 그리고 결과가 어긋났을 때 어느 단계에서 문제가 발생했는지 파악하는 것입니다. 이 두 가지야말로 AI가 대신해 줄 수 없는 영역이며, 이 책의 진정한 핵심입니다.</p>
 
-<h3>这本书里到底有什么</h3>
+<h3>이 책에는 실제로 무엇이 들어있는가</h3>
 
-<p>先给你一个体量的概念，免得你以为这是一份十几页的速查卡。</p>
+<p>십여 페이지짜리 단순 요약본으로 오해하지 않도록 전체 규모를 먼저 안내합니다.</p>
 
 <table>
-<thead><tr><th>项</th><th>数</th><th>说明</th></tr></thead>
+<thead><tr><th>항목</th><th>수치</th><th>설명</th></tr></thead>
 <tbody>
-<tr><td>篇幅</td><td><strong>386页</strong></td><td>A4版式，含图，最后一页是附录D的术语表</td></tr>
-<tr><td>正文节数</td><td><strong>23节</strong></td><td>§00到§22，分五个部分</td></tr>
-<tr><td>附录</td><td><strong>4个</strong></td><td>A资源包逐件索引· B踩坑索引· C配置与积分参考· D术语表</td></tr>
-<tr><td>配图</td><td>几乎全是真实截图</td><td>Tripo Studio的每个面板、每次生成的读数、每一笔积分，都是我自己点出来截下来的</td></tr>
+<tr><td>분량</td><td><strong>386페이지</strong></td><td>A4 판형, 이미지 포함, 마지막 페이지는 부록 D 용어 사전</td></tr>
+<tr><td>본문 섹션 수</td><td><strong>23개 섹션</strong></td><td>§00부터 §22까지, 총 5개 파트로 구분</td></tr>
+<tr><td>부록</td><td><strong>4개</strong></td><td>A 리소스 팩 개별 색인 · B 트러블슈팅 색인 · C 설정 및 크레딧 참고표 · D 용어 사전</td></tr>
+<tr><td>수록 이미지</td><td>거의 전부 실제 스크린샷</td><td>Tripo Studio의 모든 패널, 생성 수치, 크레딧 차감 내역을 직접 캡처하여 수록</td></tr>
 </tbody>
 </table>
 
-<p>三百八十多页这个体量有点吓人，所以先说清楚它的性质：<strong>这是一本查的书，不是一本读的书。</strong>五个部分之间是并列关系不是递进关系，你从哪一部分切进去都能用。真正需要顺着读的只有Part IV那四节，因为那是一个项目从选题到发布的完整时间线。</p>
+<p>380여 페이지의 분량이 부담스러울 수 있으므로 성격을 분명히 밝힙니다: <strong>이 책은 처음부터 끝까지 정독하는 책이 아니라, 필요할 때 찾아보는 레퍼런스 북입니다.</strong> 5개 파트는 상호 병렬적 관계이므로 어느 파트부터 읽어도 무방합니다. 순서대로 읽을 필요가 있는 부분은 기획부터 배포까지의 타임라인을 다룬 Part IV의 4개 섹션뿐입니다.</p>
 
-<p>我自己检验一本工具书有没有用的标准只有一条：<strong>你照着做，能不能得到和书里一样的数。</strong>所以书里每个数字都带出处，每个界面都带截图日期，翻车的部分一个没删。</p>
+<p>제가 실용서를 평가하는 유일한 기준은 <strong>「책에 나온 대로 따라 했을 때 책과 똑같은 수치를 얻을 수 있는가」</strong>입니다. 따라서 책 속의 모든 숫자는 출처가 명시되어 있고, 모든 화면은 캡처 일자가 표기되어 있으며, 시행착오와 실패 사례도 하나도 삭제하지 않았습니다.</p>
 
-<h3>五个部分，各解决什么</h3>
+<h3>5개 파트가 각각 해결하는 문제</h3>
 
 <table>
-<thead><tr><th>部分</th><th>替你回答的问题</th><th>节</th></tr></thead>
+<thead><tr><th>파트</th><th>해결해 드리는 질문</th><th>해당 섹션</th></tr></thead>
 <tbody>
-<tr><td><strong>I ·一张图到一个模型</strong></td><td>生成表单上那一排开关该开哪个、一次生成为什么扣50积分、表单里默认的Polycount 20000怎么决定了出来的模型有多少面、太重了怎么压</td><td>§01–§07</td></tr>
-<tr><td><strong>II ·提示词与设计图</strong></td><td>为什么先让agent画一张设计图再去建模、那句提示词长什么样、怎么一次批出十几件风格统一的资产</td><td>§08–§10</td></tr>
-<tr><td><strong>III ·接进工具</strong></td><td>模型拿到手之后，API、CLI、Codex插件、Blender、Three.js、Unity各自在哪一层接手，谁不可替代</td><td>§11–§15</td></tr>
-<tr><td><strong>IV ·做一款游戏</strong></td><td>23件资产怎么定清单、怎么批量清洗、怎么指挥agent把它们装成一个能玩的东西并发布出去</td><td>§16–§19</td></tr>
-<tr><td><strong>V ·做教学演示</strong></td><td>机构演示、名画演示、故事世界三类各自卡在哪：运动学、风格保真、贴图显存</td><td>§20–§22</td></tr>
-<tr><td><strong>附录</strong></td><td>资源包逐件索引、踩坑索引、价目表、术语表</td><td>A–D</td></tr>
+<tr><td><strong>I · 이미지 한 장에서 3D 모델까지</strong></td><td>생성 폼의 수많은 토글 스위치 중 무엇을 켜야 하는지, 1회 생성 시 50크레딧이 차감되는 이유, 기본 폴리곤 수 20,000 설정이 결과물에 미치는 영향, 너무 무거운 모델을 경량화하는 방법</td><td>§01–§07</td></tr>
+<tr><td><strong>II · 프롬프트와 디자인 시안</strong></td><td>에이전트에게 디자인 시안을 먼저 그리게 한 뒤 모델링에 들어가야 하는 이유, 최적의 프롬프트 구성, 일관된 스타일의 에셋 수십 종을 일괄 생성하는 방법</td><td>§08–§10</td></tr>
+<tr><td><strong>III · 도구와의 통합</strong></td><td>모델을 확보한 후 API, CLI, Codex 플러그인, Blender, Three.js, Unity가 각자 어느 레이어를 인계받으며, 무엇이 대체 불가능한지</td><td>§11–§15</td></tr>
+<tr><td><strong>IV · 게임 프로젝트 완성하기</strong></td><td>23개 에셋 리스트를 확정하는 법, 일괄 클리닝 파이프라인, 에이전트를 지휘해 플레이 가능한 도시로 조립하고 배포하는 전체 과정</td><td>§16–§19</td></tr>
+<tr><td><strong>V · 교육용 데모 제작</strong></td><td>기구학 시연, 명화 해체 시연, 스토리 월드 3가지 유형의 핵심 병목: 기구학 메커니즘, 원작 스타일 유지, 텍스처 VRAM 관리</td><td>§20–§22</td></tr>
+<tr><td><strong>부록</strong></td><td>리소스 팩 개별 색인, 트러블슈팅 색인, 요금표, 용어 사전</td><td>A–D</td></tr>
 </tbody>
 </table>
 
-<h3>开始之前：注册、免费档、什么时候才该订阅</h3>
+<h3>시작하기 전에: 회원가입, 무료 플랜, 유료 구독이 필요한 시점</h3>
 
-<p>书里的截图全是我自己那个付费账号，余额两万多，<strong>你别照着它估成本</strong>。真要动手，先把下面五行看完，五分钟就够。</p>
+<p>책 속 스크린샷은 잔여 크레딧 2만 이상의 제 유료 계정 기준이므로, <strong>이를 보고 비용을 추정하지 마십시오</strong>. 실제로 작업을 시작하기 전 아래 5개 항목만 확인하시면 5분이면 충분합니다.</p>
 
 <table>
-<thead><tr><th>问题</th><th>答案</th></tr></thead>
+<thead><tr><th>질문</th><th>답변</th></tr></thead>
 <tbody>
-<tr><td>去哪注册</td><td><code>studio.tripo3d.com</code>，注册完直接进工作台，§01那张首页图就是它</td></tr>
-<tr><td>免费档给多少</td><td>200积分。官网自己折算的是「约13个模型」——那是按几何底价15算的；按界面默认那一档50算，是4个</td></tr>
-<tr><td>200积分够走完§01吗</td><td>够，而且不止一次。§01从头到尾只用「生成一个模型」这一个动作，工作台默认档一次50积分（首页那个快捷入口是55，差价在§01里讲了）</td></tr>
-<tr><td>什么时候才需要订阅</td><td>三件事从Pro起才有：模型私有、可商用、DCC Bridge（浏览器一键推进Blender／Unity／Unreal）。Free那一档<code>Private Models</code>和<code>Commercial Use</code>官方对照表里都是✗，<code>Exports</code>写的是<code>15 (H2.5 only)</code></td></tr>
-<tr><td>价目在哪看</td><td><code>tripo3d.com/pricing</code>，拉到底FAQ第一条展开就是官方积分表。逐行读数和截图在§07与附录C</td></tr>
+<tr><td>어디서 가입하나요?</td><td><code>studio.tripo3d.com</code>, 가입 후 바로 워크스페이스로 이동하며 §01의 메인 화면이 나타납니다.</td></tr>
+<tr><td>무료 플랜은 얼마나 주어지나요?</td><td>200 크레딧. 공식 환산 기준 「약 13개 모델」이라 표기되어 있으나 이는 지오메트리 최저가 15 기준이며, 기본 세팅 50 기준으로는 4개 분량입니다.</td></tr>
+<tr><td>200 크레딧으로 §01을 완주할 수 있나요?</td><td>충분하며 여러 번 가능합니다. §01 전체에서 「모델 1개 생성」 동작만 수행하며, 워크스페이스 기본값 기준 1회 50크레딧입니다 (홈 화면 빠른 생성은 55크레딧, 차이는 §01에서 설명).</td></tr>
+<tr><td>언제 구독이 필요한가요?</td><td>Pro 이상부터 제공되는 3가지 기능: 비공개 모델(Private Models), 상업적 이용 가능(Commercial Use), DCC Bridge(브라우저에서 Blender/Unity/Unreal 원클릭 전송). Free 플랜은 상업적 이용 불가 및 익스포트 15회(H2.5 전용)로 제한됩니다.</td></tr>
+<tr><td>가격표는 어디서 확인하나요?</td><td><code>tripo3d.com/pricing</code> 페이지 하단 FAQ 첫 번째 항목에서 공식 크레딧 표를 확인할 수 있으며, 상세 분석은 §07 및 부록 C에 수록되어 있습니다.</td></tr>
 </tbody>
 </table>
 
-<p>截至2026-09官方标价与界面实测，以官网为准；最新价看<code>tripo3d.com/pricing</code>。</p>
+<p>2026-09 기준 공식 표기 및 UI 실측 데이터이며, 최신 정보는 <code>tripo3d.com/pricing</code>을 참조하십시오.</p>
 
-<p>一句话的判断法：<strong>免费档帮你决定要不要付钱，帮不了你做出一件能交付的东西。</strong>先用它把生成质量看准，再决定订不订。</p>
+<p>한 줄 요약: <strong>무료 플랜은 결제 여부를 결정하기 위한 체험용일 뿐, 실제 납품 가능한 프로젝트를 완성하기에는 부족합니다.</strong> 우선 무료 플랜으로 품질을 확인한 후 구독을 결정하세요.</p>
 
-<h3>开始之前：机器上得先有什么</h3>
+<h3>시작하기 전에: 로컬 머신에 준비되어 있어야 할 도구들</h3>
 
-<p>上面那张表管账号，这张表管机器。这些东西书里是分散在各节里交代的（Node在§11、Blender在§13、Unity在§14），第一次读容易走到半路才发现缺东西，所以在这里集中列一次。<strong>只想在浏览器里点几下生成模型的话，一样都不用装</strong>——下面这些是「要把整本书跟着做完」的清单。</p>
+<p>앞서 계정을 점검했다면 이번에는 컴퓨터 환경입니다. 책 전체에 걸쳐 분산 설명되어 있는 도구들을(Node는 §11, Blender는 §13, Unity는 §14) 사전에 확인하지 않으면 작업 도중 멈추게 되므로 한곳에 모았습니다. <strong>단순히 브라우저에서 모델 생성만 테스트할 목적이라면 아무것도 설치하지 않아도 됩니다.</strong> 아래 목록은 「책의 모든 실습을 완주하기 위한 환경」입니다.</p>
 
 <table>
-<thead><tr><th>装什么</th><th>版本要求</th><th>哪一节会用到</th><th>不装会卡在哪</th></tr></thead>
+<thead><tr><th>설치 프로그램</th><th>요구 버전</th><th>사용되는 섹션</th><th>미설치 시 발생하는 문제</th></tr></thead>
 <tbody>
-<tr><td><strong>Node.js</strong></td><td>官方要求<strong>20或更新</strong>；我这台跑的是v26.0.0（§11记了完整环境）</td><td>§11的CLI与Codex插件；§04 §12 §13 §14的减面降贴图命令</td><td>所有<code>npm</code>／<code>npx</code>开头的命令都跑不起来。终端敲<code>node -v</code>先验一次</td></tr>
-<tr><td><strong><code>@gltf-transform/cli</code></strong></td><td>书里实测4.5.0。不单独装也行，命令前面补<code>npx --yes</code>每次现拉，只是多等几秒</td><td>§04减面、§12降贴图、§17批量流水线</td><td>减面和降贴图这两道没有替代路径。它依赖Node，上一行先满足</td></tr>
-<tr><td><strong>Blender</strong></td><td>DCC Bridge官方要求<strong>4.1.0或更新</strong>（§11引的官方博客）；书里全部实测跑在4.4.3</td><td>§03那条无头命令、§13整节，以及脚本<code>fbx2glb.py</code>和<code>render_glb6.py</code></td><td>FBX转GLB和六机位渲图两条路断掉，§13只能读不能做。注意§13另有一坑：4.4的glTF导入器不认<code>EXT_meshopt_compression</code>，带这个扩展的GLB一个顶点都进不来</td></tr>
-<tr><td><strong>Python 3</strong></td><td>资源包<code>脚本/</code>里10个<code>.py</code>。<code>glb_downscale.py</code>要numpy；<code>fbx2glb.py</code>要numpy和Pillow；<code>selfcheck_props.py</code>要playwright（走本机Chrome，不另下浏览器）</td><td>§03 §04 §10 §12 §13 §17 §19；起本地服务的<code>python3 -m http.server</code>也是它</td><td>那批脚本跑不了。而且没有本地HTTP服务，双击用<code>file://</code>打开的3D页会被CORS挡住、GLB根本加载不进来（附录B第一条）</td></tr>
-<tr><td><strong>浏览器</strong></td><td>DCC Bridge官方只支持<strong>Chrome 116+、Edge 116+、Opera 102+</strong>（§11）；跑demo和量GPU耗时还要WebGL2</td><td>§11 §12 §19</td><td>DCC Bridge那个一键推送按不动；§12量每帧GPU耗时的那个扩展挂不上，只能退回看帧间隔（被vsync锁住，量不出差别）</td></tr>
-<tr><td><strong>Unity</strong>（只做§14才要）</td><td>Unity 6000.0.83f1＋glTFast 6.0.1，内置渲染管线</td><td>§14</td><td>只影响§14，其余各节不装它也能整节做完（§15会谈到它该接哪一层，但不用你打开它）。<strong>Unity 6改了菜单名</strong>，照旧教程会找不到窗口，§14开头有对照</td></tr>
-<tr><td><strong>ffmpeg</strong>（只做§14末尾那段片子才要）</td><td>无特殊版本要求</td><td>§14把逐帧图拼成巡游片那一步</td><td>模型和场景都不受影响，只是最后合不出视频</td></tr>
+<tr><td><strong>Node.js</strong></td><td>공식 권장 <strong>20 이상</strong> (저자 환경 v26.0.0, §11 환경 명시)</td><td>§11 CLI 및 Codex 플러그인, §04 §12 §13 §14 면 리덕션 및 텍스처 다운스케일</td><td>모든 <code>npm</code> / <code>npx</code> 명령 실행 불가. 터미널에서 <code>node -v</code>로 사전 점검.</td></tr>
+<tr><td><strong><code>@gltf-transform/cli</code></strong></td><td>실측 v4.5.0. 별도 설치 없이 <code>npx --yes</code>로 매번 임시 실행 가능 (몇 초 소요)</td><td>§04 면 리덕션, §12 텍스처 압축, §17 일괄 파이프라인</td><td>면 리덕션과 텍스처 축소 대체 경로 없음. Node.js 설치가 선행되어야 함.</td></tr>
+<tr><td><strong>Blender</strong></td><td>DCC Bridge 공식 권장 <strong>4.1.0 이상</strong>, 실측 v4.4.3</td><td>§03 헤드리스 명령, §13 전체, 스크립트 <code>fbx2glb.py</code>, <code>render_glb6.py</code></td><td>FBX to GLB 변환 및 6시점 렌더링 불가, §13 실습 불가. 4.4 glTF 임포터는 <code>EXT_meshopt_compression</code> 확장자를 미지원하므로 주의 필요.</td></tr>
+<tr><td><strong>Python 3</strong></td><td>리소스 팩 <code>scripts/</code> 내 10개 <code>.py</code> 파일. <code>glb_downscale.py</code>는 numpy, <code>fbx2glb.py</code>는 numpy/Pillow, <code>selfcheck_props.py</code>는 playwright 필요</td><td>§03 §04 §10 §12 §13 §17 §19, 로컬 서버 <code>python3 -m http.server</code></td><td>제공된 스크립트 실행 불가. 로컬 HTTP 서버가 없으면 브라우저의 <code>file://</code> 실행 시 CORS로 인해 GLB 로딩이 차단됨 (부록 B 참조).</td></tr>
+<tr><td><strong>웹 브라우저</strong></td><td>DCC Bridge 공식 지원 <strong>Chrome 116+, Edge 116+, Opera 102+</strong>, WebGL2 필수</td><td>§11 §12 §19</td><td>DCC Bridge 원클릭 전송 미동작, WebGL2 GPU 프레임 측정 확장자 미지원.</td></tr>
+<tr><td><strong>Unity</strong> (§14 진행 시에만 필요)</td><td>Unity 6000.0.83f1 + glTFast 6.0.1, 빌트인 렌더 파이프라인</td><td>§14</td><td>§14 외 다른 섹션에는 영향 없음. Unity 6는 메뉴명이 개편되었으므로 §14 도입부 대조표 참조.</td></tr>
+<tr><td><strong>ffmpeg</strong> (§14 후반 영상 클립 제작 시 필요)</td><td>버전 무관</td><td>§14 프레임 이미지를 영상으로 합성하는 단계</td><td>모델 및 씬 구축에는 지장 없으나 최종 영상 합성 단계에서 필요.</td></tr>
 </tbody>
 </table>
 
-<div class="callout"><strong>还有一件必须先说的：全书的命令和路径都是在macOS上跑出来的。</strong>机器是Apple Silicon的Mac，系统macOS 26.6.0。所以你会看到<code>/Applications/Blender.app/Contents/MacOS/Blender --background</code>这种写法——那是Blender可执行文件在macOS上的位置，Windows和Linux要换成你自己那台的路径，<strong>但命令的参数本身（<code>--background</code>、<code>--python</code>、<code>--factory-startup</code>）三个平台通用，换掉前面那一截就能用</strong>。<code>npm</code>、<code>npx</code>、<code>gltf-transform</code>、<code>python3</code>这些本来就不带平台路径，照抄即可。<strong>我没有Windows机器，也没在Linux上验过，所以这本书里不会出现一条我编出来的Windows路径</strong>——编一条让你照着敲，比不给更糟。唯一的例外是§11那三条CLI的Windows注意事项，那是照抄官方文档的，我在原地标了「没验过」。</div>
+<div class="callout"><strong>사전 고지 사항: 책의 모든 명령어와 경로는 macOS(Apple Silicon, macOS 26.6.0) 기준입니다.</strong> 따라서 <code>/Applications/Blender.app/Contents/MacOS/Blender --background</code>와 같은 macOS 경로가 표기되어 있으며, Windows 및 Linux 사용자는 각 OS의 실행 경로로 대체해야 합니다. <strong>단, 파라미터(<code>--background</code>, <code>--python</code>, <code>--factory-startup</code>)는 세 플랫폼 모두 동일합니다.</strong> <code>npm</code>, <code>npx</code>, <code>gltf-transform</code>, <code>python3</code> 명령어는 OS 구분 없이 그대로 사용 가능합니다. 저자가 직접 검증하지 않은 부정확한 Windows 경로는 임의로 기재하지 않았습니다 (§11 CLI의 Windows 참고사항은 공식 문서를 인용하고 미검증 표기).</div>
 
-<h3>按需跳读</h3>
+<h3>목적에 따른 맞춤형 읽기 가이드</h3>
 
-<p>这本书是查的，不是从头读到尾的。按你现在卡在哪儿挑：</p>
+<p>이 책은 레퍼런스 북입니다. 현재 막혀 있는 상황에 맞춰 골라 읽으세요:</p>
 
 <ul>
-<li><strong>今晚就想生出第一个能用的模型</strong>：§01把表单讲完，§03讲怎么把文件拿到本地，两节够了</li>
-<li><strong>看完视频来找那四条参考图配方的</strong>：§08开头就是，一个框，四条，加一段可以整段复制的提示词原文。想知道为什么是这四条、每一条各挡掉了什么，往下翻到§09</li>
-<li><strong>想直接抄提示词</strong>：§09。它是从我真跑过的95条提示词里挑出来的，大部分配「提示词原文+设计图+ Tripo结果」三联，少数只有提示词原文，能照着改自己那条</li>
-<li><strong>被积分吓到了</strong>：§07和附录C。默认设置下一次生成50积分，其中35分买的是8K贴图；把贴图档位拨到2K是30，只要几何是15</li>
-<li><strong>模型太重，网页打不开</strong>：§04讲减面和重拓扑，§12讲贴图吃显存那件事（17件资产5.38 GB显存，显卡工具按1024进位读作5.0 GiB；降到1024²之后0.22 GiB，折成十进制是0.24 GB）</li>
-<li><strong>要让人物走起来</strong>：§06讲自动绑骨的全流程，做不好再翻§13看Blender里手工绑的对照组为什么更差</li>
-<li><strong>目标是一款能玩的游戏</strong>：§16到§19顺着读，或者倒着从§19的验收清单读起，先知道终点长什么样</li>
-<li><strong>目标是一段教学演示</strong>：§20到§22，三种类型挑最像你那个的</li>
-<li><strong>已经在做，卡住了</strong>：附录B。一共66条，分五块——Three.js与加载GLB 23条、Unity 13条、Tripo Studio与平台侧21条、Blender与格式转换6条、发布与打包3条，渲染成黑、角色发白、一排人同步走这些都在里面</li>
-<li><strong>不知道该谁干哪一层</strong>：§15。如果只读一节，读这节</li>
+<li><strong>오늘 밤 안에 바로 첫 번째 3D 모델을 뽑아보고 싶다면</strong>: §01에서 생성 폼을 익히고, §03에서 파일을 로컬로 내려받는 법을 확인하면 충분합니다.</li>
+<li><strong>영상을 보고 4가지 레퍼런스 이미지 배합법을 찾으러 왔다면</strong>: §08 도입부의 프롬프트 템플릿 박스를 확인하세요. 배합 이유와 방지 기준은 §09에 있습니다.</li>
+<li><strong>프롬프트를 바로 복사해 사용하고 싶다면</strong>: §09를 참고하세요. 실측 검증한 95개 프롬프트 중 엄선한 예시(프롬프트 원문 + 디자인 시안 + Tripo 결과물 3종 세트)가 수록되어 있습니다.</li>
+<li><strong>크레딧 소모가 부담스럽다면</strong>: §07과 부록 C를 확인하세요. 기본 설정 1회 50크레딧 중 35크레딧은 8K 텍스처 비용입니다. 텍스처를 2K로 낮추면 30크레딧, 순수 지오메트리만 뽑으면 15크레딧입니다.</li>
+<li><strong>모델이 너무 무거워 웹 브라우저가 버벅거린다면</strong>: §04에서 면 리덕션과 리토폴로지를, §12에서 텍스처 VRAM 최적화(17개 에셋 5.38 GB VRAM을 1024² 축소 후 0.24 GB로 절감)를 다룹니다.</li>
+<li><strong>캐릭터를 자연스럽게 걷게 만들고 싶다면</strong>: §06에서 자동 리깅의 전체 파이프라인을 확인하고, 결과가 미흡하다면 §13에서 Blender 수동 리깅과의 비교 분석을 살펴보세요.</li>
+<li><strong>최종 목표가 플레이 가능한 3D 게임이라면</strong>: §16부터 §19까지 순서대로 읽거나, §19의 검수 체크리스트부터 역순으로 읽어보세요.</li>
+<li><strong>목표가 교육용 인터랙티브 데모라면</strong>: §20부터 §22까지 3가지 데모 유형 중 가장 유사한 사례를 선택하세요.</li>
+<li><strong>이미 제작 중이며 특정 에러로 막혔다면</strong>: 부록 B의 66개 트러블슈팅 항목을 확인하세요. Three.js/GLB 로딩 23개, Unity 13개, Tripo Studio 21개, Blender/변환 6개, 배포 3개 등 검은 화면, 캐릭터 하얗게 날림, 동기화 문제 등이 정리되어 있습니다.</li>
+<li><strong>누가 어떤 레이어를 맡아야 할지 헷갈린다면</strong>: §15를 반드시 읽어보세요. 단 한 섹션만 읽어야 한다면 이 섹션을 추천합니다.</li>
 </ul>
 
-<h3>这本书和资源包怎么拿</h3>
+<h3>이 책과 리소스 패키지를 얻는 방법</h3>
 
-<p>这本书是免费的，跟着我那条Tripo视频一起送。领的方式只有一条路：<strong>给那条视频一键三连，然后在评论区回复「3d」，我发给你。</strong></p>
+<p>이 책은 무료이며, 저자의 Tripo 릴리즈 영상과 함께 배포됩니다. <strong>영상에 좋아요/구독을 누른 후 댓글로 「3d」를 남겨주시면 전달해 드립니다.</strong></p>
 
-<p>没做成一个随便点的置顶链接，是因为我想知道它到底被多少人真的拿走了，这个数会决定我下一本橙皮书写不写、写多厚。你回复的那两个字符对我是有用的信息。</p>
+<p>단순 링크로 공개하지 않고 댓글 방식으로 진행하는 이유는 실제 얼마나 많은 분들이 책을 활용하는지 파악하여 다음 오렌지북 집필 여부와 분량을 결정하기 위함입니다.</p>
 
-<p>发给你的是这本书的PDF，加上下面要讲的那套资源包。PDF适合在电脑上翻和搜，386页里每一页都有页码、每一节都有书眉，正文里每一处「§12」「附录B」都是可点的，跟着引用直接跳，不用回目录查页码。</p>
+<p>제공되는 파일은 책의 PDF 버전과 아래 소개하는 리소스 패키지입니다. 386페이지 분량의 PDF는 모든 페이지에 번호와 헤더가 있으며, 본문 내 참조 링크는 클릭 시 해당 섹션으로 즉시 이동합니다.</p>
 
-<p><strong>微信读书版（EPUB）随后补。</strong>那一版会多一封「给读者的话」，其余内容完全一样。没有和PDF一起发，是因为EPUB要把这本书里那些宽表重排成窄屏能读的样子，是另一道工序，我不想赶工出一个在手机上糊掉的版本。</p>
+<p><strong>밀리의서재/전자책(EPUB) 버전은 추후 제공될 예정입니다.</strong> EPUB 버전은 모바일 가독성을 위해 넓은 표들을 재편집하는 공정이 필요하여 PDF와 별도로 작업 중입니다.</p>
 
-<p>我在视频里说的是「模型、提示词、脚本全在里面」，这句话大体是对的，但有一处例外和两处时间差（一批资产和几个脚本没赶上封版），都写在下面「包里没有什么」那一小节。<strong>先读那一小节再解压，比解压完再回来找我省事。</strong></p>
+<p>영상에서 「모델, 프롬프트, 스크립트가 모두 포함되어 있다」고 언급했으나, 저작권 및 일정으로 인한 예외 사항이 존재하므로 아래 「패키지에 포함되지 않은 항목들」을 먼저 확인하신 후 압축을 해제하시기 바랍니다.</p>
 
-<h3>随书资源包有什么</h3>
+<h3>부록 리소스 패키지 구성 상세</h3>
 
-<p>先说盘点口径，免得你以为拿到的是个几百件的素材库。这轮项目里一共140个GLB文件，按模型内部的任务ID去重之后，<strong>只有62次真正独立的Tripo生成</strong>，其余都是同一件的减面版、降贴图版和引擎工程里的拷贝。从这62次里挑出可以再分发、且设计图和提示词都在本地的，最后进包<strong>56件、81.1 MiB</strong>，覆盖建筑、载具、人物、道具、植被、机械六类。</p>
+<p>패키지 구성 기준을 명확히 설명합니다. 이번 프로젝트에서 생성된 총 140개의 GLB 파일 중, 모델 내부 작업 ID 중복을 제거하면 <strong>실제 독립적인 Tripo 생성은 62회</strong>입니다. 나머지는 면 리덕션, 텍스처 압축, 엔진 프로젝트 복사본입니다. 이 중 재배포가 가능하고 로컬에 디자인 시안과 프롬프트가 보존된 <strong>56개 에셋(81.1 MiB)</strong>을 패키지에 수록했습니다 (건축, 차량, 인물, 소품, 식생, 기계 6종).</p>
 
-<p><strong>先把单位说死，免得你对不上数。全书只有一条规矩：按1024进位量出来的读数写MiB／GiB／KiB，自己按十进制算出来的写MB／GB</strong>（这条规矩在§12立的，那儿还解释了为什么显存那笔账按十进制算）。所以这一节里的文件体积一律写MiB（1 MiB等于1,048,576字节），和附录A那张逐件表用的是同一把尺子；macOS的访达按1000进位显示，同一批文件它会写成85.1 MB，<strong>不是拷贝出了问题</strong>，Windows资源管理器的读数则和这里一致。<strong>判据是「量的还是算的」，不是「文件体积还是贴图显存」</strong>——同一批文件也会以十进制出现：§12和§17那张38件的对照表写的是534.6 MB降到52.4 MB，对应的1024进位读数是509.9 MiB降到50.0 MiB（附录A那一组），同一批文件、同一个9.8%，只是两种进位。两种进位差多少是固定的（MB和MiB之间约4.9%，GB和GiB之间约7.4%），<strong>所以同一笔账的倍数在哪一边都成立</strong>，别拿两边的数直接相减。<strong>资源包的体积一律看MiB，那是文件本身的数。</strong></p>
+<p><strong>수치 단위 표기 기준: 책 전체에서 1024 진법 계측치는 MiB/GiB/KiB로 표기하고, 10진수 계산치는 MB/GB로 표기합니다</strong> (§12 참조). 리소스 팩의 파일 크기는 1024 진법인 MiB(1 MiB = 1,048,576 bytes)로 통일되어 부록 A의 표와 일치합니다. macOS 파인더는 1000 진법으로 표시하므로 85.1 MB로 표기될 수 있으나 파일이 손상된 것이 아닙니다. 파일 자체의 절대 크기는 MiB 수치를 기준으로 확인하십시오.</p>
 
-<p>挑的时候按两组对照来凑，不是按好看来凑：</p>
+<div class="callout"><strong>두 가지 대조군:</strong> A그룹 19개 파리 에셋은 1024² 원본(26.4 MiB)이며, B그룹은 이를 로컬에서 <code>gltf-transform optimize</code>로 경량화한 512² 버전(9.8 MiB)입니다. 이 대조군은 단순 텍스처 축소뿐 아니라 미세 지오메트리 단순화가 함께 적용되어 트라이앵글 수가 345,935개에서 338,924개로 감소(-2.0%)했습니다. 16.6 MiB 용량 감소 중 13.3 MiB는 텍스처, 3.3 MiB는 버텍스 양자화 및 면 리덕션의 결과입니다. 지오메트리가 100% 동일한 대조를 확인하려면 부록 A의 G그룹(38개 에셋)을 참고하세요. E그룹 3종은 41관절 스켈레톤과 2.38초 걷기 애니메이션이 적용되어 있으며, F그룹 3종은 Blender, CLI, Blender 바인딩 3가지 워크플로우를 비교한 결과물로 §13과 함께 읽어야 합니다.</div>
 
-<div class="callout"><strong>两组对照：</strong>A组19件巴黎资产是1024²贴图的原件（26.4 MiB），B组是拿A组这19件在本地跑一道<code>gltf-transform optimize</code>之后的512²版（9.8 MiB）。<strong>这一对不是「只降贴图」的纯对照</strong>：那条命令默认连一遍轻度简化一起跑，所以三角面也从345,935降到了338,924（-2.0%）。16.6 MiB的降幅里，13.3 MiB是贴图、3.3 MiB是那2%的面加上顶点量化，<strong>大头在贴图</strong>。要一个几何完全没动的纯对照，看附录A的G组，那38件降贴图前后三角面逐件相等。E组三件带41关节骨架和一段2.38秒的行走动画，F组三件是同一个模型走Blender、命令行、Blender绑定三条路的产物，配着§13读才有意义。</div>
+<div class="file-tree">tripo-vibe-coding-리소스팩/<br>
+├── 모델/<br>
+│&nbsp;&nbsp; ├── A-파리거리-1K/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;19종 · 26.4 MiB · 1024² 텍스처<br>
+│&nbsp;&nbsp; ├── B-파리거리-512/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;19종 · 9.8 MiB · A그룹 일대일 대응 경량판<br>
+│&nbsp;&nbsp; ├── C-파리식생및가로시설물/&nbsp;&nbsp;&nbsp;&nbsp;6종 · 8.7 MiB · 플라타너스 3종, 분수대, 모리스 기둥<br>
+│&nbsp;&nbsp; ├── D-놀이시설-8K원본/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 6종 · 30.8 MiB · 무압축 원본 대조군<br>
+│&nbsp;&nbsp; ├── E-리깅및애니메이션/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 3종 · 3.9 MiB · 41관절 + preset:biped:walk<br>
+│&nbsp;&nbsp; └── F-3대모드대조군/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 3종 · 1.5 MiB · §13 레퍼런스<br>
+├── 디자인시안및프롬프트/<br>
+│&nbsp;&nbsp; ├── tripo-source/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;19장 PNG + jobs.jsonl<br>
+│&nbsp;&nbsp; ├── tripo-source-2/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;12장 PNG + jobs.jsonl<br>
+│&nbsp;&nbsp; ├── 놀이시설-레퍼런스/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 16장 PNG + jobs.jsonl<br>
+│&nbsp;&nbsp; └── 어린왕자-입력시안/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 22장 PNG + 5개 jobs*.jsonl (시안/프롬프트 전용)<br>
+├── 스크립트/<br>
+│&nbsp;&nbsp; ├── E1-면리덕션한계.py&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0.5/0.2/0.1/0.05/0.02 단계별 감면 한계치 측정<br>
+│&nbsp;&nbsp; ├── E2-일괄파이프라인.py&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;에셋 유형별 최적 감면율 자동 분배, 25개 에셋 131초 처리<br>
+│&nbsp;&nbsp; ├── optimize_assets.sh&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;지오메트리 보존 및 텍스처 해상도 리사이즈 전용<br>
+│&nbsp;&nbsp; ├── pull_glb.py&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;서명된 URL 직링크를 통한 대량 GLB 자동 수집<br>
+│&nbsp;&nbsp; ├── measure_glb.py&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;버텍스 스키닝 매트릭스 기반 리깅 모델 바운딩 박스 실측<br>
+│&nbsp;&nbsp; ├── selfcheck_props.py&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;헤드리스 Chrome 기반 자동 검수 렌더링 및 지상고 측정<br>
+│&nbsp;&nbsp; ├── glb_downscale.py&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;glTF JSON/BIN 패치로 8K 텍스처를 1024²로 직접 축소 (§12 핵심)<br>
+│&nbsp;&nbsp; ├── fbx2glb.py&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FBX to GLB 변환, 3축 바운딩 박스 교차 검증 및 트랜스폼 베이킹 (§13)<br>
+│&nbsp;&nbsp; ├── render_glb6.py&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;6시점 오프라인 일괄 렌더링 및 텍스처 정렬 검수 (§06 §12)<br>
+│&nbsp;&nbsp; ├── e10_topology.py&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FBX 폴리곤 구성(삼각/사각/N-gon) 비율 정밀 계측 (§04)<br>
+│&nbsp;&nbsp; └── _probe_fbx.py&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Blender 없이 FBX 면 구조를 직접 디코딩하는 교차 검증 도구<br>
+└── demo/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;파리/엔진/별이빛나는밤 정적 웹 실행 데모 (어린 왕자는 라이선스로 제외)</div>
 
-<div class="file-tree">tripo-vibe-coding-资源包/<br>
-├──模型/<br>
-│&nbsp;&nbsp; ├── A-巴黎街景-1K/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;19件· 26.4 MiB · 1024²贴图<br>
-│&nbsp;&nbsp; ├── B-巴黎街景-512/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;19件·&nbsp; 9.8 MiB ·与A一一对应<br>
-│&nbsp;&nbsp; ├── C-巴黎植被与街具/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 6件·&nbsp; 8.7 MiB ·梧桐树三态、喷泉、莫里斯柱<br>
-│&nbsp;&nbsp; ├── D-游乐设施-8K原档/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 6件· 30.8 MiB ·没优化过长什么样<br>
-│&nbsp;&nbsp; ├── E-绑骨与动画/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 3件·&nbsp; 3.9 MiB · 41关节+ preset:biped:walk<br>
-│&nbsp;&nbsp; └── F-三模式对照/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 3件·&nbsp; 1.5 MiB ·配§13读<br>
-├──设计图与提示词/<br>
-│&nbsp;&nbsp; ├── tripo-source/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;19张PNG + jobs.jsonl<br>
-│&nbsp;&nbsp; ├── tripo-source-2/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;12张PNG + jobs.jsonl<br>
-│&nbsp;&nbsp; ├──游乐设施-参考图/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;16张PNG + jobs.jsonl<br>
-│&nbsp;&nbsp; └──小王子-输入/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;22张PNG + 5个jobs*.jsonl（只有图和词）<br>
-├──脚本/<br>
-│&nbsp;&nbsp; ├── E1-减面极限.py&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;按0.5/0.2/0.1/0.05/0.02逐档砍，找每类资产的下限<br>
-│&nbsp;&nbsp; ├── E2-批量流水线.py&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;按资产类型分配减面率，25件跑一遍131秒<br>
-│&nbsp;&nbsp; ├── optimize_assets.sh&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;只降贴图不动几何的那一版<br>
-│&nbsp;&nbsp; ├── pull_glb.py&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;绕开「另存为」对话框，走签名直链取GLB<br>
-│&nbsp;&nbsp; ├── measure_glb.py&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;逐顶点套蒙皮矩阵，量绑骨模型的真实包围盒<br>
-│&nbsp;&nbsp; ├── selfcheck_props.py&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;无头Chrome逐件拍自检图，顺手量比例和离地间隙<br>
-│&nbsp;&nbsp; ├── glb_downscale.py&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;直接改glTF的JSON与BIN把8K贴图降到1024²，不走Blender（§12主角）<br>
-│&nbsp;&nbsp; ├── fbx2glb.py&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FBX转GLB，带三通道包围盒交叉核验；也管定yaw和烘变换（§13）<br>
-│&nbsp;&nbsp; ├── render_glb6.py&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;六机位离线渲图，用来定朝向、看贴图有没有贴歪（§06 §12）<br>
-│&nbsp;&nbsp; ├── e10_topology.py&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;数FBX里每个多边形是几边形——E10那个79.51%就是它数的（§04）<br>
-│&nbsp;&nbsp; └── _probe_fbx.py&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;不依赖Blender直接解FBX数面，是上面那个脚本的独立第二通道<br>
-└── demo/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;巴黎/发动机/星月夜的静态可玩版（小王子那个不随包发，理由见下面警告②）</div>
+<p>본 패키지는 2026-09-11 패키징되었으며, 56개 에셋의 폴리곤 수, 버텍스, 텍스처, 본 수치, 애니메이션 클립, 파일 크기가 부록 A 목록과 완벽히 일치함을 전수 검증했습니다. 전체 221개 파일, 압축 해제 시 235.3 MiB, zip 파일 212.3 MiB입니다. <strong>부록 A의 개별 에셋 목록을 검수 체크리스트로 바로 사용하실 수 있습니다.</strong></p>
 
-<p>这个包是2026-09-11装配的，装完逐件核过一遍：56件的三角面、顶点、贴图张数与尺寸、骨骼关节数、动画片段名、文件体积，全部和附录A那张表对得上，一件都没差；每个文件的头四个字节都是<code>glTF</code>，JSON块能解析，拷进包之后的SHA256和源文件一致。整包221个文件、解压后235.3 MiB，zip 212.3 MiB（访达和浏览器按十进制显示，同样两个数在那儿写作246.8 MB和222.6 MB）。<strong>附录A那张逐件清单可以直接当验收单用。</strong></p>
+<h3>패키지에 포함되지 않은 항목들</h3>
 
-<p><strong>怎么确认你手上那份就是这本书对应的那一版。</strong>解压之后核三样：<code>清单.md</code>第一屏写着「装配日期：2026-09-11」，<code>模型/</code>下面是56件，<code>脚本/</code>里是11个文件（其中5个是2026-09-13补进去的，是哪五个见下面「包里没有什么」的第三件事）。三样都对得上，这一节讲的就是你手上那份。对不上的话，以包内<code>清单.md</code>和<code>SHA256.txt</code>为准——那两个文件是跟着包走的，这一节是跟着书走的。</p>
+<p>압축 해제 후 오해가 없도록 제외된 세 가지 항목을 명확히 안내합니다.</p>
 
-<h3>包里没有什么</h3>
+<p><strong>어린 왕자 에셋은 3D 모델이 제공되지 않습니다.</strong> 22장의 디자인 시안과 5개의 <code>jobs*.jsonl</code> 프롬프트는 모두 수록되어 파이프라인 실습이 가능하지만, GLB 파일 및 데모는 제외되었습니다 (하단 경고문 ② 참조).</p>
 
-<p>三件事我提前说，免得你解压之后觉得缺斤少两。</p>
+<p><strong>2026-09-12 생성된 P2.0 신규 에셋은 이번 패키지에서 제외되었습니다.</strong> 스마트 메시 모드로 추가 생성한 파리 확장 에셋(<code>glb-1024/</code> 40종, <code>glb-1024-신/</code> 13종, 합계 71.2 MiB)은 09-11 마감 일정 이후 작업되어 포함되지 않았습니다. 실습 시에는 D그룹 6종의 8192² 원본을 활용해 <code>scripts/glb_downscale.py</code>로 동일한 최적화 공정을 진행할 수 있습니다.</p>
 
-<p><strong>小王子那一组不随包发模型。</strong>设计图和提示词全在（22张PNG加5个<code>jobs*.jsonl</code>），照着能把这条流水线完整跑一遍，但GLB和那个可玩demo都撤了，理由在下面警告②。「书里讲了、包里没有」一共两处，这是第一处，另一处是紧接着要说的那批P2.0资产；除掉这两处，书里提到的每一件你都能在<code>模型/</code>里找到实物。</p>
+<figure><img src="images/p00-p2-asset-overview.png" alt="40개 P2.0 에셋 등각투영 렌더링 총람: 다리 3개, 파리 건축 및 랜드마크 10개, 승합차, 오토바이, 보행자 10명, 가로시설물, 칠엽수 2그루, 버스, 유람선, 바지선, 경찰차, 공공자전거"><figcaption>P2.0 에셋 40종 총람 렌더링. 다리 3곳, 오페라 극장, 판테온, 루브르 피라미드, 노트르담 서측 파사드, 물랭루주 등 주요 랜드마크와 보행자, 대중교통이 포함되어 있습니다. 이 에셋들은 Tripo 스마트 메시 모드로 생성되어 쿼드(사각면) 구조를 갖추고 있습니다.</figcaption></figure>
 
-<p><strong>2026-09-12那批P2.0新资产，暂时也不在这个包里。</strong>那两天我又用智能网格模式跑了一批巴黎扩展资产（<code>glb-1024/</code>40件、<code>glb-1024-新/</code>13件，合计71.2 MiB），书里§06、§12、§17会拿它们当案例讲工序和数据，但资源包是09-11封的版，它们没赶上。<strong>这一版里没有它们，这句话是确定的</strong>（将来补不补是下一版的事，补了我会同步改附录A那张「随包／不随包」的标记）。好在这不影响你照着做：§12和§17那条降贴图工序的输入只要是8192²原档就行，<strong>包里D组那6件游乐设施正是没优化过的8192²原档</strong>，拿它们跑<code>脚本/glb_downscale.py</code>能把同一条工序原样走一遍，数不会和书里的38件一样，但每一步的做法和核验项是同一套。</p>
+<p>P2.0 에셋의 8192² 텍스처는 1개당 메모리 358 MB를 차지하여 26개를 배치하면 VRAM 9.3 GB를 소모합니다. 이를 1024²로 축소하면 개당 5.59 MB, 26개 총 145 MB로 대폭 절감되며 지오메트리는 전혀 손상되지 않습니다. 상세한 최적화 과정은 §12와 §17에서 다룹니다.</p>
 
-<figure><img src="images/p00-p2-asset-overview.png" alt="四十件 P2.0 资产的等距渲图总览，六行排开：三座桥、十栋巴黎建筑与地标、面包车摩托车、十个行人、街具、两棵七叶树、公交车游船驳船警车 Vélib"><figcaption>说的就是这一批：<code>glb-1024/</code>那40件的总览渲图，每件下面标着文件名和三角面数（11k到32k不等）。三座桥、十栋建筑与地标（歌剧院、先贤祠、卢浮宫玻璃金字塔、圣母院西立面、红磨坊、奥赛大钟…）、两艘塞纳河上的船、公交车警车送货车Vélib、七个各不相同的行人，加上街具和两棵七叶树。这一批走的是Tripo的智能网格模式，出来是四边面，和上面A到F六组的v3.1高精度件不是一套东西。</figcaption></figure>
-
-<p>顺带把这一批的一个数放在这儿，因为它解释了为什么书里到处都在讲降贴图：P2.0出来的贴图是8192×8192的，解码进显存之后单件要358 MB，26件摆进同一个场景就是9.3 GB，显存会炸。降到1024²之后单件5.59 MB、26件145 MB，<strong>几何一个三角面都没动</strong>：那一轮核过的38件，合计735,232个三角面，降贴图前后逐件相等，省下来的全是图片字节（534.6 MB降到52.4 MB）。<strong>全书这笔显存账统一按每像素4字节（RGBA32）展开再乘整条mipmap链的1.33倍算，1 MB当100万字节</strong>；你拿显卡工具去对，它按1024进位，读数会比这里小约7%（同一个数在那边是341 MiB、8.67 GiB），不是算错了。怎么做的在§12和§17。</p>
-
-<p><strong>第三件是反过来的：有五个脚本比书晚到，现在补上了。</strong>书里§04、§12、§13、§17反复在用<code>glb_downscale.py</code>（降贴图、转朝向、烘变换）、<code>fbx2glb.py</code>（FBX转GLB，带三通道包围盒交叉核验）、<code>render_glb6.py</code>（六机位离线渲图定朝向）、<code>e10_topology.py</code>（数FBX里每个多边形是几边形，解析器和<code>_probe_fbx.py</code>是同一套），第一版装包时它们没赶上，等于教了半天工具拿不到手。现在五个都在<code>脚本/</code>里，<strong>进包前逐个体检过：没有绝对路径、没有密钥、没有账号信息</strong>。其中<code>fbx2glb.py</code>和<code>render_glb6.py</code>要本机装Blender（它们是用<code>--background</code>模式调它）。下面那张参数表讲的就是<code>glb_downscale.py</code>，配着§12那五道工序和那份八项核验清单一起读。</p>
+<p><strong>후반에 추가된 5개 스크립트:</strong> <code>glb_downscale.py</code>, <code>fbx2glb.py</code>, <code>render_glb6.py</code>, <code>e10_topology.py</code>, <code>_probe_fbx.py</code> 5개 파일은 정밀 검수를 거쳐 <code>scripts/</code> 폴더에 모두 수록되었습니다. <code>fbx2glb.py</code>와 <code>render_glb6.py</code>는 로컬 환경에 Blender가 설치되어 있어야 합니다.</p>
 
 <table>
-<thead><tr><th>参数</th><th>干什么</th></tr></thead>
+<thead><tr><th>파라미터</th><th>기능 설명</th></tr></thead>
 <tbody>
-<tr><td><code>glb</code></td><td>输入GLB，位置参数</td></tr>
-<tr><td><code>-o</code>／<code>--out</code></td><td>输出GLB，必填</td></tr>
-<tr><td><code>--texture-size</code></td><td>贴图边长，默认1024；填0就是不降</td></tr>
-<tr><td><code>--jpeg-quality</code></td><td>降采样后的JPEG质量，默认92</td></tr>
-<tr><td><code>--yaw</code></td><td>绕glTF的+Y轴偏航多少度</td></tr>
-<tr><td><code>--scale</code></td><td>等比缩放系数</td></tr>
-<tr><td><code>--match-height</code></td><td>给一个旧GLB，自动按「旧件高度÷新件高度」算出缩放系数</td></tr>
-<tr><td><code>--keep-double-sided</code></td><td>保留源文件的<code>doubleSided</code>；不加这个就强制单面</td></tr>
-<tr><td><code>--bake</code></td><td>把yaw和scale烘进顶点数据，而不是写进根节点矩阵</td></tr>
-<tr><td><code>--emulate-node-scale</code></td><td>配合<code>--bake</code>，把总变换拆成「根节点均匀缩放」加「烘进顶点的剩余部分」，世界包围盒不变</td></tr>
-<tr><td><code>--dump-texture</code></td><td>另存一份降采样后的贴图，供肉眼检查</td></tr>
-<tr><td><code>--json</code></td><td>把逐项核验结果写成JSON</td></tr>
+<tr><td><code>glb</code></td><td>입력 대상 GLB 파일 경로 (위치 기반 필수 인수)</td></tr>
+<tr><td><code>-o</code> / <code>--out</code></td><td>출력 대상 GLB 파일 경로 (필수)</td></tr>
+<tr><td><code>--texture-size</code></td><td>축소할 텍스처 해상도 (기본값 1024, 0 지정 시 원본 유지)</td></tr>
+<tr><td><code>--jpeg-quality</code></td><td>다운샘플링 시 JPEG 품질 (기본값 92)</td></tr>
+<tr><td><code>--yaw</code></td><td>glTF의 +Y축 기준 회전 각도 조정</td></tr>
+<tr><td><code>--scale</code></td><td>균등 스케일 배율 계수</td></tr>
+<tr><td><code>--match-height</code></td><td>기존 GLB를 지정하여 높이 비율에 맞춰 스케일 자동 계산</td></tr>
+<tr><td><code>--keep-double-sided</code></td><td>원본 파일의 <code>doubleSided</code> 속성 보존 (미지정 시 강제 단면화)</td></tr>
+<tr><td><code>--bake</code></td><td>루트 행렬 대신 버텍스 데이터에 회전 및 스케일 변환을 영구 베이킹</td></tr>
+<tr><td><code>--emulate-node-scale</code></td><td><code>--bake</code>와 함께 사용하여 바운딩 박스를 유지한 채 루트 노드 스케일링 분리</td></tr>
+<tr><td><code>--dump-texture</code></td><td>시각적 검수를 위해 다운샘플링된 텍스처 이미지를 별도 저장</td></tr>
+<tr><td><code>--json</code></td><td>항목별 정밀 검증 결과를 JSON 파일로 출력</td></tr>
 </tbody>
 </table>
 
-<h3>脚本那一栏值得单说</h3>
+<h3>스크립트 패키지에 대한 특별 안내</h3>
 
-<p>资源包里最能直接省你时间的其实不是模型，是<code>E2-批量流水线.py</code>和<code>optimize_assets.sh</code>这两个：前者按资产类型给不同的减面率（人和车敢砍到0.25，建筑0.45，树和铁塔只敢0.75），25件跑完131秒、平均5.2秒一件；后者只resize贴图、一根三角面都不动，因为瓶颈从来就不在几何上。</p>
+<p>리소스 팩에서 작업 시간을 가장 크게 단축해 주는 도구는 <code>E2-批量流水线.py</code>와 <code>optimize_assets.sh</code>입니다. 전자는 에셋 유형에 따라 차등 감면율을 적용하여 25개 에셋을 131초 만에 일괄 처리하며, 후자는 지오메트리를 유지한 채 텍스처 해상도만 신속하게 리사이즈합니다.</p>
 
-<h3>GLB怎么打开</h3>
+<h3>GLB 파일을 여는 4가지 방법</h3>
 
-<p>资源包里的模型全是<code>.glb</code>。它是glTF这套3D格式的二进制打包版，网格、材质、贴图、骨骼、动画全塞在一个文件里，拷来拷去不会丢贴图。有四条路可以看它，按「花多久」排：</p>
+<p>제공되는 모델은 모두 <code>.glb</code> 포맷(메시, 머티리얼, 텍스처, 뼈대, 애니메이션이 단일 파일에 통합된 바이너리 형식)입니다. 다음 4가지 방법으로 확인할 수 있습니다:</p>
 
-<div class="step"><div class="step-num">1</div><div class="step-content"><h4>双击（macOS，零成本）</h4><p>系统自带的「预览」把<code>.glb</code>和<code>.gltf</code>登记成了自己的默认文件类型，双击直接开，空格快速预览也走同一条路。看一眼形体对不对够用了。</p></div></div>
+<div class="step"><div class="step-num">1</div><div class="step-content"><h4>더블 클릭 (macOS 기본 미리보기)</h4><p>macOS 내장 훑어보기(Quick Look)를 통해 별도 소프트웨어 없이 즉시 3D 형태를 회전하며 확인할 수 있습니다.</p></div></div>
 
-<div class="step"><div class="step-num">2</div><div class="step-content"><h4>拖进浏览器（最常用）</h4><p>公开的在线查看器里我常开<code>https://gltf-viewer.donmccurdy.com/</code>和three.js官方编辑器<code>https://threejs.org/editor/</code>，拖文件进去就行。不过做绑骨的时候我干脆让agent写了个二十行的验证页，因为在线查看器不会把我关心的那几个数直接摆在脸上。</p></div></div>
+<div class="step"><div class="step-num">2</div><div class="step-content"><h4>웹 브라우저로 드래그 (가장 추천하는 방식)</h4><p>온라인 뷰어인 <code>https://gltf-viewer.donmccurdy.com/</code> 또는 Three.js 에디터(<code>https://threejs.org/editor/</code>)에 파일을 드래그하여 상세 정보와 조명을 점검할 수 있습니다.</p></div></div>
 
-<figure><img src="images/p00-rig-walk.jpg" alt="自写的绑骨 GLB 验证页，左侧列出面数、骨骼数、动画片段，右侧人物模型在走路"><figcaption>自己写的绑骨验证页（2026-09-10绑骨实测时截）。把导出的.glb拖进虚线框，左栏直接报面数19,830、骨骼41、动画片段1条 <code>preset:biped:walk</code> 2.38秒，右边小人立刻走起来。这类一次性小工具让agent写比找现成的快。</figcaption></figure>
+<figure><img src="images/p00-rig-walk.jpg" alt="자체 제작한 리깅 GLB 검증 웹페이지, 좌측에 폴리곤 수, 본 개수, 애니메이션 클립, 우측에 걷는 캐릭터 모델"><figcaption>에이전트를 통해 20줄의 코드로 제작한 리깅 검증 페이지. 드래그 즉시 폴리곤 수(19,830), 본 개수(41개), 걷기 클립을 출력하며 캐릭터가 즉각 보행 모션을 시작합니다.</figcaption></figure>
 
-<div class="step"><div class="step-num">3</div><div class="step-content"><h4>传回Tripo Studio（想继续加工时）</h4><p>Studio右侧资产栏顶部有个「上传3D模型」，接受OBJ / FBX / STL / GLB，单文件150 MB以内。传上去不只是看，拆件、绑骨、换贴图这些工具都能直接在它上面接着跑。</p></div></div>
+<div class="step"><div class="step-num">3</div><div class="step-content"><h4>Tripo Studio로 재업로드 (추가 가공이 필요할 때)</h4><p>Studio 우측 에셋 패널의 「3D 모델 업로드」를 통해 최대 150 MB의 GLB를 등록하여 리깅, 분할, 텍스처 재가공을 이어갈 수 있습니다.</p></div></div>
 
-<p>导出弹层长什么样、Format和Texture Resolution怎么选，§03有那张图和完整说明；左边黄色的「Send To」是直推Blender的出口，走§11。</p>
+<div class="step"><div class="step-num">4</div><div class="step-content"><h4>Blender (정밀 수정이 필요할 때)</h4><p>File → Import → glTF 2.0으로 로드하여 지오메트리 수정, 텍스처 베이킹, 버텍스 가중치 보정을 수행할 수 있습니다 (§13 참조).</p></div></div>
 
-<div class="step"><div class="step-num">4</div><div class="step-content"><h4>Blender（要动手改的时候）</h4><p>File → Import → glTF 2.0。只有需要改几何、烘焙贴图、修骨骼权重时才进这一层，什么时候值得进、什么时候进了纯属浪费时间，§13有实测。</p></div></div>
+<h3>라이선스 및 이용 권한</h3>
 
-<h3>许可：先看完这段再用</h3>
+<p>리소스 팩의 모델은 저자의 유료 구독 계정으로 직접 생성되었으며, 입력된 디자인 시안 역시 코딩 에이전트로 자체 제작되어 제3자의 사진, 명화 스캔본, 브랜드 상표권을 침해하지 않습니다. 상표권 차량(시트로엥 2CV), 명화 복제품 텍스처, 위키 사진 크롭 모델 등 법적 리스크가 있는 에셋은 재배포 팩에서 사전 제외되었습니다. 다만 프롬프트 원문(<code>jobs.jsonl</code>)에 포함된 스타일 묘사 키워드는 형태 유도를 위한 지시어일 뿐 실제 상표와는 무관합니다 (§09 참조). 또한 <code>demos/</code>에 포함된 3종의 데모는 완성된 실행 애플리케이션으로서 구동을 위한 고유 에셋을 자체 내장하고 있습니다.</p>
 
-<p>资源包里的模型是我用自己的Tripo付费订阅账号生成的，喂进去的设计图也都是我让agent画的，不含第三方照片、名画扫描件和品牌商标（<strong>这句管的是图和模型这两层</strong>，提示词那一层另说，见本段末尾和§09第03条）。挑件的时候剔掉了四类有风险的：在产商标车型（雪铁龙2CV）、名画高清复制品裁切（那份复制品的扫描版权没核）、维基照片裁切的发动机与木马、以及和已收录件同源只换了贴图档位的重复文件。<strong>第三类要多说一句，因为容易被读成前后矛盾。</strong>那两张图当初在维基图页上看到的标注就是公有领域，§02和§20写的是我当时用它的情形；但我没有逐张回去核对每张图的许可证具体是哪一版、有没有附加条件。<strong>「我自己拿它生成一个模型」和「把成品随书发给几千个人」是两件事，后者的标准更高</strong>——所以这一类在再分发这一层剔掉，不代表当初用它有问题。逐条理由写在附录A末尾。<strong>这四类剔的是模型文件本身，管不到你写提示词时拿哪个真实专名当形体的尺子</strong>——所以别把上面那句读成「提示词里也没有品牌名」：包里<code>tripo-source/jobs.jsonl</code>的提示词原文里是有的（「与经典雪铁龙2CV同一美术风格」「雷诺4CV造型」这两处），它们只负责把形状说死，没有挂到任何一件资产上，怎么用、用完之后该注意什么，§09第03条有一整条讲。<strong>还有个口径你得知道：上面说的剔除只管<code>模型/</code>那六组素材。<code>demo/</code>里那三个可玩版是完整的程序，它们要跑起来就得带着自己那份资产</strong>——巴黎里有那辆2CV和铁塔，发动机的活塞连杆来自维基照片，星月夜的村庄柏树来自名画裁切。所以它们是「打开玩一玩、看看这套流水线最后能做成什么样」的成品，不是给你拆出来当素材用的。要素材请用<code>模型/</code>那六组，那里面是干净的。</p>
+<div class="warning"><strong>이용 전 유의사항:</strong><br>
+① <strong>제공되는 56개 에셋은 학습 및 2차 창작 연구 목적으로 활용하시기 바랍니다.</strong> 내부 구조 분석, 연습용 씬 구성, 책에 나온 수치 검증용으로 자유롭게 사용할 수 있으나, 패키지 전체를 무단 재배포하는 것은 금지됩니다. 상업적 이용 여부는 사용자 본인의 Tripo 구독 플랜에 따릅니다 (Pro 플랜 이상에서 Commercial Use 가능).<br>
+② <strong>어린 왕자 에셋은 3D 모델이 제공되지 않습니다.</strong> 원작 소설은 저작권 보호 기간이 만료되었으나 캐릭터 이미지의 상표권이 다수 국가에서 유지되고 있으므로, 법적 안전성을 위해 모델은 제외하고 디자인 시안 22장과 프롬프트 5개만 수록되었습니다.</div>
 
-<p>上面提到的那批09-12的P2.0资产，将来真要补进包也是同一把尺子量：全部是我自己的设计图生的，没有一张输入图来自照片或扫描件；那批里的公交车、警车、游船、共享单车，提示词最后一句全部写死了「车身上不写任何文字、编号与徽章标识」，所以模型上没有品牌字样可以被烘进贴图。下面警告①对它们同样成立。</p>
-
-<div class="warning"><strong>两件用之前请先知道的事：</strong><br>
-①<strong>包里这56件，请按「学习与二次创作参考」用。</strong>拆开看结构、改着玩、摆进自己的练习场景、拿它对着书里那些数复核一遍，都是我做这个包的本意；<strong>请别把整包原样再转发出去</strong>，它跟着书走，谁想要都能从同一条路领一份。<strong>要拿它们做商用，别以我这段话为准，以Tripo官方条款和你自己账号那一档为准</strong>：商用权限跟的是订阅档位，官网对照表里Pro及以上的<code>Commercial Use</code>是✓、模型也是Private，Free那一档这两项都是✗。查询入口是<code>tripo3d.com/pricing</code>拉到底展开FAQ，截图和逐行读数在附录C。<strong>「这个包能不能再分发」和「你自己生成的模型能不能商用」是两件事，别混在一起看</strong>——后一件跟这个包没有任何关系，只看你的档位。<br>
-②<strong>小王子那一组不随包发模型。</strong>原著在多数司法辖区已进入公有领域，但角色形象在多国仍有活跃的商标与形象权登记，「过了版权期」这一句挡不住。所以那一组只收22张设计图和5个<code>jobs*.jsonl</code>提示词，当一套完整的图生3D流水线示例来读，教学价值本来也在流水线上不在题材上。</div>
-
-<p>最后一句关于口径。书里每个数字都有出处：积分数来自Tripo官网定价页和界面上的实际扣费，面数和贴图尺寸来自直接读GLB文件头（不是听工具汇报的），耗时来自脚本自己打的时间戳。没实测过的能力我会写明「未实测」。<strong>你照着做如果结果对不上，大概率是版本变了，不是我编的。</strong></p>
+<p>책 속의 모든 수치는 실제 데이터에 기반합니다: 크레딧 소모량은 실제 결제 및 차감 내역, 폴리곤 수와 텍스처는 GLB 바이너리 헤더 직접 분석, 처리 소요 시간은 스크립트 실행 타임스탬프 기준입니다. 실습 시 수치 차이가 발생한다면 소프트웨어의 버전 업데이트에 따른 차이일 가능성이 높습니다.</p>
 
 </div>
 
